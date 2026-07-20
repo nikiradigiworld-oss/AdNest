@@ -600,7 +600,7 @@
     <div id="portal-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;max-width:780px;margin:0 auto;">
 
       <!-- VIEWER CARD -->
-      <a href="viewer-dashboard.html" style="text-decoration:none;">
+      <a href="viewer-dashboard.html" style="text-decoration:none;" id="portal-viewer-wrap">
         <div class="portal-card" id="portal-viewer">
           <div class="portal-glow viewer-glow"></div>
           <div class="portal-icon">👁️</div>
@@ -617,7 +617,7 @@
       </a>
 
       <!-- ADVERTISER CARD -->
-      <a href="advertiser-dashboard.html" style="text-decoration:none;">
+      <a href="advertiser-dashboard.html" style="text-decoration:none;" id="portal-adv-wrap">
         <div class="portal-card" id="portal-advertiser">
           <div class="portal-glow adv-glow"></div>
           <div class="portal-icon">📢</div>
@@ -1154,12 +1154,7 @@
       setTimeout(() => { toast.style.display = 'none'; }, 5000);
       document.getElementById('nav-logout-btn').style.display = 'block';
       document.getElementById('nav-login-btn').style.display  = 'none';
-      if (session.user.user_metadata?.role === 'admin') {
-        document.getElementById('nav-admin-btn').style.display    = 'block';
-        document.getElementById('portal-admin-wrap').style.display = 'block';
-        document.getElementById('portal-grid').style.gridTemplateColumns = '1fr 1fr 1fr';
-        document.getElementById('portal-grid').style.maxWidth = '1100px';
-      }
+      applyRolePortals(role);
     }
     if (event === 'SIGNED_OUT') {
       document.getElementById('nav-logout-btn').style.display     = 'none';
@@ -1171,17 +1166,39 @@
     }
   });
 
+  // Apply role-based portal visibility
+  function applyRolePortals(role) {
+    const viewer = document.getElementById('portal-viewer-wrap');
+    const adv    = document.getElementById('portal-adv-wrap');
+    const admin  = document.getElementById('portal-admin-wrap');
+    const grid   = document.getElementById('portal-grid');
+
+    if (role === 'viewer') {
+      viewer.style.display = 'block';
+      adv.style.display    = 'none';
+    } else if (role === 'advertiser') {
+      viewer.style.display = 'none';
+      adv.style.display    = 'block';
+    } else if (role === 'both') {
+      viewer.style.display = 'block';
+      adv.style.display    = 'block';
+    } else if (role === 'admin') {
+      viewer.style.display = 'block';
+      adv.style.display    = 'block';
+      admin.style.display  = 'block';
+      grid.style.gridTemplateColumns = '1fr 1fr 1fr';
+      grid.style.maxWidth = '1100px';
+      document.getElementById('nav-admin-btn').style.display = 'block';
+    }
+  }
+
   // Show correct button on page load
   _db.auth.getSession().then(({ data: { session } }) => {
     if (session) {
       document.getElementById('nav-logout-btn').style.display = 'block';
       document.getElementById('nav-login-btn').style.display  = 'none';
-      if (session.user.user_metadata?.role === 'admin') {
-        document.getElementById('nav-admin-btn').style.display    = 'block';
-        document.getElementById('portal-admin-wrap').style.display = 'block';
-        document.getElementById('portal-grid').style.gridTemplateColumns = '1fr 1fr 1fr';
-        document.getElementById('portal-grid').style.maxWidth = '1100px';
-      }
+      const role = session.user.user_metadata?.role || 'viewer';
+      applyRolePortals(role);
     } else {
       document.getElementById('nav-login-btn').style.display  = 'block';
       document.getElementById('nav-logout-btn').style.display = 'none';

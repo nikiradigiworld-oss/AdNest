@@ -180,6 +180,9 @@
     <div class="sidebar-item" onclick="switchView('history', this)">
       <span class="sidebar-icon">📜</span> History
     </div>
+    <div class="sidebar-item" onclick="switchView('upgrade', this)">
+      <span class="sidebar-icon">⬆️</span> Upgrade Role
+    </div>
     <div class="sidebar-divider"></div>
     <a class="sidebar-item" id="view-admin-link" href="admin.html" style="display:none;">
       <span class="sidebar-icon">⚙️</span> Admin Panel
@@ -269,6 +272,28 @@
             </tbody>
           </table>
         </div>
+      </div>
+    </div>
+
+    <!-- UPGRADE ROLE VIEW -->
+    <div class="view" id="view-upgrade">
+      <div class="page-title">⬆️ Upgrade Your Role</div>
+      <p style="color:#888;margin-bottom:1.5rem;font-size:.9rem;">Switch from Viewer to Advertiser or get both roles.</p>
+      <div id="upgrade-alert" style="display:none;padding:.8rem 1rem;border-radius:10px;margin-bottom:1rem;font-weight:600;font-size:.88rem;"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;max-width:600px;">
+
+        <div onclick="upgradeRole('advertiser')" style="border:2px solid #e0e0e0;border-radius:16px;padding:1.5rem;text-align:center;cursor:pointer;transition:all .2s;" onmouseover="this.style.borderColor='var(--red)'" onmouseout="this.style.borderColor='#e0e0e0'">
+          <div style="font-size:2.5rem;margin-bottom:.5rem;">📢</div>
+          <div style="font-weight:800;font-size:1rem;margin-bottom:.3rem;">Advertiser</div>
+          <div style="font-size:.8rem;color:#888;">Run ads &amp; grow your business</div>
+        </div>
+
+        <div onclick="upgradeRole('both')" style="border:2px solid #e0e0e0;border-radius:16px;padding:1.5rem;text-align:center;cursor:pointer;transition:all .2s;" onmouseover="this.style.borderColor='var(--red)'" onmouseout="this.style.borderColor='#e0e0e0'">
+          <div style="font-size:2.5rem;margin-bottom:.5rem;">⭐</div>
+          <div style="font-weight:800;font-size:1rem;margin-bottom:.3rem;">Both</div>
+          <div style="font-size:.8rem;color:#888;">Watch ads &amp; also run your own</div>
+        </div>
+
       </div>
     </div>
 
@@ -416,6 +441,34 @@
     const t = document.getElementById('toast');
     t.textContent = msg; t.style.display = 'block';
     setTimeout(() => { t.style.display = 'none'; }, 3000);
+  }
+
+  // ── Upgrade Role ──────────────────────────────────────
+  async function upgradeRole(newRole) {
+    const alertEl = document.getElementById('upgrade-alert');
+    alertEl.style.display = 'block';
+    alertEl.style.background = '#fff3cd';
+    alertEl.style.color = '#856404';
+    alertEl.textContent = 'Upgrading your role…';
+
+    const { error: authErr } = await db.auth.updateUser({
+      data: { role: newRole }
+    });
+    if (authErr) {
+      alertEl.style.background = '#f8d7da'; alertEl.style.color = '#721c24';
+      alertEl.textContent = 'Error: ' + authErr.message; return;
+    }
+
+    const { data: { user } } = await db.auth.getUser();
+    await db.from('users').update({ role: newRole }).eq('id', user.id);
+
+    if (newRole === 'advertiser' || newRole === 'both') {
+      await db.from('advertisers').upsert({ user_id: user.id, wallet_balance: 0 });
+    }
+
+    alertEl.style.background = '#d4edda'; alertEl.style.color = '#155724';
+    alertEl.textContent = '✅ Role upgraded to ' + (newRole === 'both' ? 'Viewer & Advertiser' : 'Advertiser') + '! Redirecting…';
+    setTimeout(() => { window.location.href = newRole === 'both' ? 'index.html' : 'advertiser-dashboard.html'; }, 1500);
   }
 
   // ── Logout ────────────────────────────────────────────

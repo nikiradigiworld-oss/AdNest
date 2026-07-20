@@ -378,7 +378,9 @@
   async function init() {
     const { data: { user } } = await db.auth.getUser();
     if (!user) { window.location.href = 'login.html'; return; }
-    if (user.user_metadata?.role === 'admin') {
+    const role = user.user_metadata?.role || 'viewer';
+    if (role === 'viewer') { window.location.href = 'viewer-dashboard.html'; return; }
+    if (role === 'admin') {
       document.getElementById('adv-admin-link').style.display = 'flex';
     }
     loadStats(user);
