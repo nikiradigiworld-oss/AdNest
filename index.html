@@ -635,6 +635,7 @@
           <div class="p-role" id="drop-role">—</div>
         </div>
         <a class="profile-item" id="drop-dashboard" href="viewer-dashboard.html">🏠 My Dashboard</a>
+        <div class="profile-item" onclick="openProfileModal()">👤 Edit Profile</div>
         <div class="profile-item" onclick="openRoleModal()">🔄 Change Role</div>
         <a class="profile-item" id="nav-admin-btn" href="admin.html" style="display:none;">⚙️ Admin Panel</a>
         <div class="profile-item danger" onclick="navLogout()">🚪 Logout</div>
@@ -1297,6 +1298,144 @@
     await _db.auth.signOut();
     hideProfile();
     window.location.reload();
+  }
+</script>
+
+<!-- ── EDIT PROFILE MODAL ── -->
+<div id="profile-modal-overlay" onclick="closeProfileModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:2000;align-items:center;justify-content:center;overflow-y:auto;padding:1rem;">
+  <div onclick="event.stopPropagation()" style="background:#fff;border-radius:20px;padding:2rem 1.8rem;max-width:440px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.3);margin:auto;">
+    <div style="text-align:center;margin-bottom:1.5rem;">
+      <div style="font-size:2.2rem;margin-bottom:.5rem;">👤</div>
+      <h3 style="font-size:1.2rem;font-weight:800;color:#1a1a1a;">Edit Profile</h3>
+      <p style="font-size:.83rem;color:#888;margin-top:.3rem;">Update your personal information</p>
+    </div>
+
+    <div id="profile-modal-msg" style="display:none;text-align:center;margin-bottom:1rem;font-size:.84rem;font-weight:600;"></div>
+
+    <div class="pf-field">
+      <label class="pf-label">Full Name</label>
+      <input class="pf-input" type="text" id="pf-name" placeholder="Your full name" />
+    </div>
+    <div class="pf-field">
+      <label class="pf-label">Mobile Number</label>
+      <input class="pf-input" type="tel" id="pf-mobile" placeholder="10-digit mobile number" maxlength="10" />
+    </div>
+    <div class="pf-field">
+      <label class="pf-label">Date of Birth</label>
+      <input class="pf-input" type="date" id="pf-dob" />
+    </div>
+    <div class="pf-field">
+      <label class="pf-label">Gender</label>
+      <select class="pf-input" id="pf-gender">
+        <option value="">Select gender</option>
+        <option value="male">Male</option>
+        <option value="female">Female</option>
+        <option value="other">Other</option>
+        <option value="prefer_not">Prefer not to say</option>
+      </select>
+    </div>
+    <div class="pf-field">
+      <label class="pf-label">State</label>
+      <select class="pf-input" id="pf-state" onchange="populateDistricts()">
+        <option value="">Select state</option>
+        <option>Andhra Pradesh</option><option>Arunachal Pradesh</option><option>Assam</option>
+        <option>Bihar</option><option>Chhattisgarh</option><option>Goa</option>
+        <option>Gujarat</option><option>Haryana</option><option>Himachal Pradesh</option>
+        <option>Jharkhand</option><option>Karnataka</option><option>Kerala</option>
+        <option>Madhya Pradesh</option><option>Maharashtra</option><option>Manipur</option>
+        <option>Meghalaya</option><option>Mizoram</option><option>Nagaland</option>
+        <option>Odisha</option><option>Punjab</option><option>Rajasthan</option>
+        <option>Sikkim</option><option>Tamil Nadu</option><option>Telangana</option>
+        <option>Tripura</option><option>Uttar Pradesh</option><option>Uttarakhand</option>
+        <option>West Bengal</option><option>Delhi</option><option>Jammu &amp; Kashmir</option>
+        <option>Ladakh</option><option>Puducherry</option><option>Chandigarh</option>
+        <option>Other</option>
+      </select>
+    </div>
+    <div class="pf-field">
+      <label class="pf-label">District</label>
+      <input class="pf-input" type="text" id="pf-district" placeholder="Enter your district" />
+    </div>
+
+    <div style="display:flex;gap:.75rem;margin-top:1.4rem;">
+      <button onclick="closeProfileModal()" style="flex:1;padding:.75rem;border:1.5px solid #e0e0e0;border-radius:10px;background:#fff;font-size:.9rem;font-weight:600;color:#666;cursor:pointer;">Cancel</button>
+      <button onclick="saveProfile()" id="pf-save-btn" style="flex:2;padding:.75rem;border:none;border-radius:10px;background:var(--red);color:#fff;font-size:.9rem;font-weight:700;cursor:pointer;">Save Profile</button>
+    </div>
+  </div>
+</div>
+
+<style>
+  .pf-field { margin-bottom:1rem; }
+  .pf-label { display:block;font-size:.8rem;font-weight:700;color:#555;margin-bottom:.35rem; }
+  .pf-input { width:100%;padding:.65rem .9rem;border:1.5px solid #e0e0e0;border-radius:10px;font-size:.9rem;color:#1a1a1a;outline:none;transition:border .2s; }
+  .pf-input:focus { border-color:var(--red); }
+</style>
+
+<script>
+  async function openProfileModal() {
+    document.getElementById('profile-wrap').classList.remove('open');
+    document.getElementById('profile-modal-msg').style.display = 'none';
+    document.getElementById('profile-modal-overlay').style.display = 'flex';
+
+    const { data: { user } } = await _db.auth.getUser();
+    if (!user) return;
+
+    const { data: profile } = await _db.from('users').select('name,mobile,dob,gender,state,district').eq('id', user.id).single();
+    if (profile) {
+      document.getElementById('pf-name').value     = profile.name     || user.user_metadata?.name || '';
+      document.getElementById('pf-mobile').value   = profile.mobile   || profile.phone || '';
+      document.getElementById('pf-dob').value      = profile.dob      || '';
+      document.getElementById('pf-gender').value   = profile.gender   || '';
+      document.getElementById('pf-state').value    = profile.state    || '';
+      document.getElementById('pf-district').value = profile.district || '';
+    }
+  }
+
+  function closeProfileModal() {
+    document.getElementById('profile-modal-overlay').style.display = 'none';
+  }
+
+  async function saveProfile() {
+    const btn = document.getElementById('pf-save-btn');
+    const msg = document.getElementById('profile-modal-msg');
+    msg.style.display = 'none';
+
+    const name     = document.getElementById('pf-name').value.trim();
+    const mobile   = document.getElementById('pf-mobile').value.trim();
+    const dob      = document.getElementById('pf-dob').value;
+    const gender   = document.getElementById('pf-gender').value;
+    const state    = document.getElementById('pf-state').value;
+    const district = document.getElementById('pf-district').value.trim();
+
+    if (mobile && !/^\d{10}$/.test(mobile)) {
+      msg.style.display = 'block'; msg.style.color = 'var(--red2)';
+      msg.textContent = 'Mobile number must be 10 digits.'; return;
+    }
+
+    btn.disabled = true; btn.textContent = 'Saving…';
+
+    const { data: { user } } = await _db.auth.getUser();
+    const { error } = await _db.from('users')
+      .update({ name, mobile, dob: dob || null, gender: gender || null, state: state || null, district: district || null })
+      .eq('id', user.id);
+
+    if (name) await _db.auth.updateUser({ data: { name } });
+
+    btn.disabled = false; btn.textContent = 'Save Profile';
+
+    if (error) {
+      msg.style.display = 'block'; msg.style.color = 'var(--red2)';
+      msg.textContent = 'Failed to save: ' + error.message;
+    } else {
+      msg.style.display = 'block'; msg.style.color = '#27ae60';
+      msg.textContent = '✅ Profile saved successfully!';
+      if (name) {
+        document.getElementById('profile-name').textContent = name.split(' ')[0];
+        document.getElementById('drop-name').textContent = name;
+        document.getElementById('profile-avatar').textContent = name.charAt(0).toUpperCase();
+      }
+      setTimeout(closeProfileModal, 1200);
+    }
   }
 </script>
 
