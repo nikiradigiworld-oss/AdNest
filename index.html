@@ -140,6 +140,43 @@
       color: var(--red);
       display: flex; align-items: center; gap: 5px;
     }
+    /* ── PROFILE DROPDOWN ── */
+    .profile-wrap { position: relative; display: none; }
+    .profile-btn {
+      display: flex; align-items: center; gap: 8px;
+      background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 24px; padding: 4px 12px 4px 4px;
+      cursor: pointer; transition: background .2s;
+    }
+    .profile-btn:hover { background: rgba(255,255,255,0.25); }
+    .profile-avatar {
+      width: 30px; height: 30px; border-radius: 50%;
+      background: var(--gold2); color: var(--red);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 900; font-size: .9rem; flex-shrink: 0;
+    }
+    .profile-name { color: #fff; font-size: .82rem; font-weight: 700; max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .profile-dropdown {
+      position: absolute; top: calc(100% + 8px); right: 0;
+      background: #fff; border-radius: 14px; min-width: 200px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+      overflow: hidden; display: none; z-index: 999;
+    }
+    .profile-wrap.open .profile-dropdown { display: block; }
+    .profile-info {
+      padding: .9rem 1rem; border-bottom: 1px solid #f0f0f0;
+    }
+    .profile-info .p-name  { font-weight: 800; font-size: .9rem; color: var(--dark); }
+    .profile-info .p-role  { font-size: .75rem; color: #999; margin-top: 2px; }
+    .profile-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: .65rem 1rem; font-size: .85rem; font-weight: 600;
+      color: var(--dark); text-decoration: none; cursor: pointer;
+      transition: background .15s;
+    }
+    .profile-item:hover { background: #f8f8f8; }
+    .profile-item.danger { color: var(--red2); border-top: 1px solid #f0f0f0; }
+
     .nav-links {
       display: flex; gap: 1.2rem; list-style: none;
     }
@@ -583,9 +620,25 @@
   </a>
   <div style="display:flex;align-items:center;gap:.75rem;">
     <div class="nav-coin">&#8377; 400 <span>&#127873;</span></div>
-    <a id="nav-admin-btn" href="admin.html" style="display:none;background:var(--gold2);color:var(--red);border-radius:8px;padding:5px 14px;font-size:0.82rem;font-weight:800;text-decoration:none;">⚙️ Admin</a>
     <a id="nav-login-btn" href="login.html" style="display:none;background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.3);border-radius:8px;padding:5px 14px;font-size:0.82rem;font-weight:600;text-decoration:none;">Login</a>
-    <button id="nav-logout-btn" onclick="navLogout()" style="display:none;background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.3);border-radius:8px;padding:5px 14px;font-size:0.82rem;font-weight:600;cursor:pointer;">Logout</button>
+
+    <!-- Profile dropdown (shown when logged in) -->
+    <div class="profile-wrap" id="profile-wrap" onclick="toggleProfileMenu(event)">
+      <div class="profile-btn">
+        <div class="profile-avatar" id="profile-avatar">U</div>
+        <span class="profile-name" id="profile-name">Account</span>
+        <span style="color:#fff;font-size:.7rem;">▾</span>
+      </div>
+      <div class="profile-dropdown" id="profile-dropdown">
+        <div class="profile-info">
+          <div class="p-name" id="drop-name">—</div>
+          <div class="p-role" id="drop-role">—</div>
+        </div>
+        <a class="profile-item" id="drop-dashboard" href="viewer-dashboard.html">🏠 My Dashboard</a>
+        <a class="profile-item" id="nav-admin-btn" href="admin.html" style="display:none;">⚙️ Admin Panel</a>
+        <div class="profile-item danger" onclick="navLogout()">🚪 Logout</div>
+      </div>
+    </div>
   </div>
 </nav>
 
@@ -1152,19 +1205,47 @@
       const toast = document.getElementById('verify-toast');
       toast.style.display = 'block';
       setTimeout(() => { toast.style.display = 'none'; }, 5000);
-      document.getElementById('nav-logout-btn').style.display = 'block';
-      document.getElementById('nav-login-btn').style.display  = 'none';
+      showProfile(session.user);
       applyRolePortals(role);
     }
     if (event === 'SIGNED_OUT') {
-      document.getElementById('nav-logout-btn').style.display     = 'none';
-      document.getElementById('nav-login-btn').style.display      = 'block';
-      document.getElementById('nav-admin-btn').style.display      = 'none';
+      hideProfile();
+      document.getElementById('portal-viewer-wrap').style.display = 'block';
+      document.getElementById('portal-adv-wrap').style.display    = 'block';
       document.getElementById('portal-admin-wrap').style.display  = 'none';
       document.getElementById('portal-grid').style.gridTemplateColumns = '1fr 1fr';
       document.getElementById('portal-grid').style.maxWidth = '780px';
     }
   });
+
+  // Close profile menu when clicking outside
+  document.addEventListener('click', e => {
+    const wrap = document.getElementById('profile-wrap');
+    if (wrap && !wrap.contains(e.target)) wrap.classList.remove('open');
+  });
+  function toggleProfileMenu(e) { e.stopPropagation(); document.getElementById('profile-wrap').classList.toggle('open'); }
+
+  function showProfile(user) {
+    const role  = user.user_metadata?.role || 'viewer';
+    const name  = user.user_metadata?.name || user.email || 'User';
+    const initial = name.charAt(0).toUpperCase();
+    const roleLabel = role === 'advertiser' ? 'Advertiser' : role === 'both' ? 'Viewer & Advertiser' : role === 'admin' ? 'Admin' : 'Viewer';
+    const dashHref  = role === 'advertiser' ? 'advertiser-dashboard.html' : role === 'admin' ? 'admin.html' : role === 'both' ? 'viewer-dashboard.html' : 'viewer-dashboard.html';
+
+    document.getElementById('profile-avatar').textContent = initial;
+    document.getElementById('profile-name').textContent   = name.split(' ')[0];
+    document.getElementById('drop-name').textContent      = name;
+    document.getElementById('drop-role').textContent      = roleLabel;
+    document.getElementById('drop-dashboard').href        = dashHref;
+    document.getElementById('profile-wrap').style.display = 'flex';
+    document.getElementById('nav-login-btn').style.display = 'none';
+  }
+
+  function hideProfile() {
+    document.getElementById('profile-wrap').style.display  = 'none';
+    document.getElementById('nav-login-btn').style.display = 'block';
+    document.getElementById('nav-admin-btn').style.display = 'none';
+  }
 
   // Apply role-based portal visibility
   function applyRolePortals(role) {
@@ -1192,23 +1273,21 @@
     }
   }
 
-  // Show correct button on page load
+  // Show correct state on page load
   _db.auth.getSession().then(({ data: { session } }) => {
     if (session) {
-      document.getElementById('nav-logout-btn').style.display = 'block';
-      document.getElementById('nav-login-btn').style.display  = 'none';
+      showProfile(session.user);
       const role = session.user.user_metadata?.role || 'viewer';
       applyRolePortals(role);
     } else {
-      document.getElementById('nav-login-btn').style.display  = 'block';
-      document.getElementById('nav-logout-btn').style.display = 'none';
+      document.getElementById('nav-login-btn').style.display = 'block';
     }
   });
 
   async function navLogout() {
     await _db.auth.signOut();
-    document.getElementById('nav-logout-btn').style.display = 'none';
-    document.getElementById('nav-login-btn').style.display  = 'block';
+    hideProfile();
+    window.location.reload();
   }
 </script>
 
