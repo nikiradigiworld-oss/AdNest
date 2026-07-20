@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Panel – Anaar</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL  = 'https://lnlfmpyznaimyzrybimq.supabase.co';
+    const SUPABASE_ANON = 'sb_publishable_uZtjIPPj-lOpWfSu-x6BbA_2qT6aIP8';
+    const { createClient } = supabase;
+    const db = createClient(SUPABASE_URL, SUPABASE_ANON);
+  </script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --red:   #8B1A1A; --red2: #B22222; --gold: #FFD700;
+      --dark:  #1a1a1a; --gray: #f4f4f4; --white: #ffffff;
+      --green: #27ae60; --orange: #e67e22; --blue: #2980b9;
+      --shadow: 0 4px 20px rgba(0,0,0,0.10);
+    }
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--gray); color: var(--dark); display: flex; min-height: 100vh; }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      width: 220px; background: var(--red); min-height: 100vh;
+      display: flex; flex-direction: column;
+      position: fixed; top: 0; left: 0; z-index: 100;
+    }
+    .sb-brand {
+      display: flex; align-items: center; gap: 10px;
+      padding: 1.4rem 1.2rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.15);
+    }
+    .sb-logo {
+      width: 38px; height: 38px; border-radius: 50%;
+      background: var(--gold); display: flex; align-items: center; justify-content: center;
+      font-weight: 900; font-size: 1.1rem; color: var(--red); flex-shrink: 0;
+    }
+    .sb-title { color: #fff; font-weight: 800; font-size: 1rem; line-height: 1.2; }
+    .sb-subtitle { color: rgba(255,255,255,0.6); font-size: 0.72rem; }
+    .sb-menu { flex: 1; padding: 1rem 0; }
+    .sb-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: .75rem 1.2rem; color: rgba(255,255,255,0.75);
+      cursor: pointer; font-size: 0.9rem; font-weight: 600;
+      transition: all .2s; border-left: 3px solid transparent;
+    }
+    .sb-item:hover  { background: rgba(255,255,255,0.1); color: #fff; }
+    .sb-item.active { background: rgba(255,255,255,0.15); color: #fff; border-left-color: var(--gold); }
+    .sb-item .icon  { font-size: 1.1rem; width: 22px; text-align: center; }
+    .sb-footer { padding: 1rem 1.2rem; border-top: 1px solid rgba(255,255,255,0.15); }
+    .btn-logout {
+      width: 100%; background: rgba(255,255,255,0.15); color: #fff;
+      border: 1px solid rgba(255,255,255,0.3); border-radius: 8px;
+      padding: .55rem; font-size: 0.85rem; font-weight: 600; cursor: pointer;
+    }
+    .btn-logout:hover { background: rgba(255,255,255,0.25); }
+
+    /* ── MAIN ── */
+    .main { margin-left: 220px; flex: 1; padding: 2rem; }
+
+    .page-title { font-size: 1.5rem; font-weight: 800; color: var(--dark); margin-bottom: .3rem; }
+    .page-sub   { font-size: 0.85rem; color: #888; margin-bottom: 1.8rem; }
+
+    /* ── VIEWS ── */
+    .view { display: none; }
+    .view.active { display: block; }
+
+    /* ── STAT CARDS ── */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+    .stat-card {
+      background: var(--white); border-radius: 14px; padding: 1.2rem 1.4rem;
+      box-shadow: var(--shadow); display: flex; flex-direction: column; gap: .3rem;
+    }
+    .stat-card .label { font-size: 0.78rem; color: #999; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
+    .stat-card .value { font-size: 1.7rem; font-weight: 900; color: var(--dark); }
+    .stat-card .icon  { font-size: 1.4rem; margin-bottom: .2rem; }
+
+    /* ── TABLE ── */
+    .card {
+      background: var(--white); border-radius: 14px;
+      box-shadow: var(--shadow); overflow: hidden; margin-bottom: 1.5rem;
+    }
+    .card-head {
+      padding: 1rem 1.4rem; border-bottom: 1px solid #f0f0f0;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .card-head h3 { font-size: 1rem; font-weight: 800; }
+    .badge {
+      display: inline-block; font-size: 0.72rem; font-weight: 700;
+      padding: 2px 10px; border-radius: 20px; text-transform: uppercase;
+    }
+    .badge-pending   { background: #fff3cd; color: #856404; }
+    .badge-active    { background: #d4edda; color: #155724; }
+    .badge-completed { background: #d1ecf1; color: #0c5460; }
+    .badge-rejected  { background: #f8d7da; color: #721c24; }
+    .badge-paused    { background: #e2e3e5; color: #383d41; }
+    .badge-viewer    { background: #cce5ff; color: #004085; }
+    .badge-advertiser{ background: #fff3cd; color: #856404; }
+    .badge-both      { background: #d4edda; color: #155724; }
+    .badge-admin     { background: #f8d7da; color: #721c24; }
+
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: .75rem 1.2rem; text-align: left; font-size: 0.86rem; }
+    th { background: #fafafa; font-weight: 700; color: #666; font-size: 0.78rem; text-transform: uppercase; letter-spacing: .4px; }
+    tr:not(:last-child) td { border-bottom: 1px solid #f5f5f5; }
+    tr:hover td { background: #fafafa; }
+
+    /* Action buttons */
+    .btn-approve, .btn-reject, .btn-view {
+      border: none; border-radius: 6px; padding: 4px 12px;
+      font-size: 0.78rem; font-weight: 700; cursor: pointer; transition: opacity .2s;
+    }
+    .btn-approve { background: #d4edda; color: #155724; }
+    .btn-reject  { background: #f8d7da; color: #721c24; margin-left: 4px; }
+    .btn-approve:hover, .btn-reject:hover { opacity: .75; }
+
+    /* ── EMPTY STATE ── */
+    .empty { text-align: center; padding: 3rem; color: #bbb; }
+    .empty .e-icon { font-size: 3rem; margin-bottom: .8rem; }
+
+    /* ── TOAST ── */
+    .toast {
+      position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+      background: var(--dark); color: #fff; border-radius: 10px;
+      padding: .75rem 1.4rem; font-size: 0.88rem; font-weight: 600;
+      opacity: 0; transform: translateY(10px); transition: all .3s;
+      pointer-events: none;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+
+    /* ── SEARCH ── */
+    .search-bar {
+      width: 220px; padding: .5rem .9rem; border: 1.5px solid #e0e0e0;
+      border-radius: 8px; font-size: 0.85rem; outline: none;
+    }
+    .search-bar:focus { border-color: var(--red); }
+
+    /* ── SECTION TAG ── */
+    .section-tag {
+      display: inline-block; background: var(--gold); color: var(--red);
+      font-size: 0.7rem; font-weight: 800; padding: 3px 10px; border-radius: 20px;
+      text-transform: uppercase; letter-spacing: 1px; margin-bottom: .5rem;
+    }
+
+    @media (max-width: 768px) {
+      .sidebar { width: 60px; }
+      .sb-title, .sb-subtitle, .sb-item span { display: none; }
+      .main { margin-left: 60px; padding: 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── SIDEBAR ── -->
+<aside class="sidebar">
+  <div class="sb-brand">
+    <div class="sb-logo">A</div>
+    <div>
+      <div class="sb-title">Anaar</div>
+      <div class="sb-subtitle">Admin Panel</div>
+    </div>
+  </div>
+  <nav class="sb-menu">
+    <div class="sb-item active" onclick="switchView('overview',this)">
+      <span class="icon">📊</span><span>Overview</span>
+    </div>
+    <div class="sb-item" onclick="switchView('ads',this)">
+      <span class="icon">📋</span><span>Manage Ads</span>
+    </div>
+    <div class="sb-item" onclick="switchView('users',this)">
+      <span class="icon">👥</span><span>Users</span>
+    </div>
+    <div class="sb-item" onclick="switchView('transactions',this)">
+      <span class="icon">💰</span><span>Transactions</span>
+    </div>
+    <div class="sb-item" onclick="switchView('payments',this)">
+      <span class="icon">💳</span><span>Payments</span>
+    </div>
+    <div class="sb-item" onclick="window.location.href='index.html'">
+      <span class="icon">🏠</span><span>Home</span>
+    </div>
+  </nav>
+  <div class="sb-footer">
+    <button class="btn-logout" onclick="logout()">🚪 Logout</button>
+  </div>
+</aside>
+
+<!-- ── MAIN ── -->
+<main class="main">
+
+  <!-- OVERVIEW -->
+  <div class="view active" id="view-overview">
+    <div class="section-tag">Admin</div>
+    <div class="page-title">Platform Overview</div>
+    <div class="page-sub" id="admin-email">Loading...</div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="icon">👥</div>
+        <div class="label">Total Users</div>
+        <div class="value" id="s-users">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="icon">📢</div>
+        <div class="label">Total Ads</div>
+        <div class="value" id="s-ads">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="icon">⏳</div>
+        <div class="label">Pending Ads</div>
+        <div class="value" id="s-pending">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="icon">✅</div>
+        <div class="label">Active Ads</div>
+        <div class="value" id="s-active">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="icon">👁️</div>
+        <div class="label">Total Views</div>
+        <div class="value" id="s-views">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="icon">🪙</div>
+        <div class="label">Coins Issued</div>
+        <div class="value" id="s-coins">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="icon">💰</div>
+        <div class="label">Revenue (₹)</div>
+        <div class="value" id="s-revenue">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="icon">🏪</div>
+        <div class="label">Advertisers</div>
+        <div class="value" id="s-advertisers">—</div>
+      </div>
+    </div>
+
+    <!-- Pending ads quick panel -->
+    <div class="card">
+      <div class="card-head">
+        <h3>⏳ Pending Ads — Needs Approval</h3>
+        <span id="pending-count" class="badge badge-pending">0 pending</span>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Type</th>
+            <th>Target</th>
+            <th>Budget</th>
+            <th>Views</th>
+            <th>Submitted</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="pending-tbody">
+          <tr><td colspan="7" class="empty">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- MANAGE ADS -->
+  <div class="view" id="view-ads">
+    <div class="section-tag">Ads</div>
+    <div class="page-title">Manage Ads</div>
+    <div class="page-sub">View, approve and reject advertiser campaigns</div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3>All Ads</h3>
+        <input class="search-bar" id="ads-search" placeholder="🔍 Search ads..." oninput="filterAds()" />
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Type</th>
+            <th>Status</th>
+            <th>Target</th>
+            <th>Budget</th>
+            <th>Views</th>
+            <th>Date</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="all-ads-tbody">
+          <tr><td colspan="8" class="empty">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- USERS -->
+  <div class="view" id="view-users">
+    <div class="section-tag">Users</div>
+    <div class="page-title">All Users</div>
+    <div class="page-sub">Registered viewers and advertisers</div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3>Users</h3>
+        <input class="search-bar" id="users-search" placeholder="🔍 Search users..." oninput="filterUsers()" />
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Coins</th>
+            <th>Joined</th>
+          </tr>
+        </thead>
+        <tbody id="users-tbody">
+          <tr><td colspan="5" class="empty">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- TRANSACTIONS -->
+  <div class="view" id="view-transactions">
+    <div class="section-tag">Transactions</div>
+    <div class="page-title">Coin Transactions</div>
+    <div class="page-sub">All earn and redeem events</div>
+
+    <div class="card">
+      <div class="card-head"><h3>Recent Transactions</h3></div>
+      <table>
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Type</th>
+            <th>Coins</th>
+            <th>Description</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody id="tx-tbody">
+          <tr><td colspan="5" class="empty">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- PAYMENTS -->
+  <div class="view" id="view-payments">
+    <div class="section-tag">Payments</div>
+    <div class="page-title">Payment Records</div>
+    <div class="page-sub">Advertiser wallet deductions and top-ups</div>
+
+    <div class="card">
+      <div class="card-head"><h3>All Payments</h3></div>
+      <table>
+        <thead>
+          <tr>
+            <th>Advertiser</th>
+            <th>Amount</th>
+            <th>Method</th>
+            <th>Status</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody id="pay-tbody">
+          <tr><td colspan="5" class="empty">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  let allAds   = [];
+  let allUsers = [];
+
+  // ── Auth guard ────────────────────────────────────
+  async function init() {
+    const { data: { user } } = await db.auth.getUser();
+    if (!user) { window.location.href = 'login.html'; return; }
+
+    document.getElementById('admin-email').textContent = 'Logged in as: ' + user.email;
+
+    loadOverview();
+    loadAllAds();
+    loadUsers();
+    loadTransactions();
+    loadPayments();
+  }
+
+  // ── View switching ────────────────────────────────
+  function switchView(name, el) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById('view-' + name).classList.add('active');
+    document.querySelectorAll('.sb-item').forEach(i => i.classList.remove('active'));
+    if (el) el.classList.add('active');
+  }
+
+  // ── Toast ─────────────────────────────────────────
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  // ── Overview stats ────────────────────────────────
+  async function loadOverview() {
+    const [
+      { count: totalUsers },
+      { count: totalAds },
+      { count: pendingAds },
+      { count: activeAds },
+      { data: viewsData },
+      { data: coinsData },
+      { data: revenueData },
+      { count: totalAdv }
+    ] = await Promise.all([
+      db.from('users').select('*', { count: 'exact', head: true }),
+      db.from('ads').select('*', { count: 'exact', head: true }),
+      db.from('ads').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
+      db.from('ads').select('*', { count: 'exact', head: true }).eq('status', 'active'),
+      db.from('ads').select('views_delivered'),
+      db.from('coin_wallets').select('coins'),
+      db.from('payments').select('total_amount').eq('status', 'success'),
+      db.from('advertisers').select('*', { count: 'exact', head: true })
+    ]);
+
+    const totalViews   = (viewsData  || []).reduce((s,r) => s + (r.views_delivered||0), 0);
+    const totalCoins   = (coinsData  || []).reduce((s,r) => s + (r.coins||0), 0);
+    const totalRevenue = (revenueData|| []).reduce((s,r) => s + parseFloat(r.total_amount||0), 0);
+
+    document.getElementById('s-users').textContent      = totalUsers  || 0;
+    document.getElementById('s-ads').textContent        = totalAds    || 0;
+    document.getElementById('s-pending').textContent    = pendingAds  || 0;
+    document.getElementById('s-active').textContent     = activeAds   || 0;
+    document.getElementById('s-views').textContent      = totalViews.toLocaleString();
+    document.getElementById('s-coins').textContent      = totalCoins.toLocaleString();
+    document.getElementById('s-revenue').textContent    = '₹' + totalRevenue.toFixed(2);
+    document.getElementById('s-advertisers').textContent = totalAdv   || 0;
+    document.getElementById('pending-count').textContent = (pendingAds||0) + ' pending';
+
+    loadPendingAds();
+  }
+
+  // ── Pending ads ───────────────────────────────────
+  async function loadPendingAds() {
+    const { data } = await db.from('ads').select('*').eq('status', 'pending').order('created_at', { ascending: false });
+    const tbody = document.getElementById('pending-tbody');
+    if (!data || data.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#aaa;padding:2rem">No pending ads 🎉</td></tr>';
+      return;
+    }
+    tbody.innerHTML = data.map(ad => `
+      <tr id="row-${ad.id}">
+        <td><strong>${ad.title}</strong></td>
+        <td>${ad.ad_type.replace('_',' ')}</td>
+        <td>${ad.target_area}${ad.target_value ? ': '+ad.target_value : ''}</td>
+        <td>₹${parseFloat(ad.budget_total||0).toFixed(2)}</td>
+        <td>${(ad.views_ordered||0).toLocaleString()}</td>
+        <td>${new Date(ad.created_at).toLocaleDateString()}</td>
+        <td>
+          <button class="btn-approve" onclick="approveAd('${ad.id}')">✅ Approve</button>
+          <button class="btn-reject"  onclick="rejectAd('${ad.id}')">❌ Reject</button>
+        </td>
+      </tr>`).join('');
+  }
+
+  // ── All ads ───────────────────────────────────────
+  async function loadAllAds() {
+    const { data } = await db.from('ads').select('*').order('created_at', { ascending: false });
+    allAds = data || [];
+    renderAllAds(allAds);
+  }
+
+  function renderAllAds(list) {
+    const tbody = document.getElementById('all-ads-tbody');
+    if (!list.length) {
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#aaa;padding:2rem">No ads found</td></tr>';
+      return;
+    }
+    tbody.innerHTML = list.map(ad => `
+      <tr id="adrow-${ad.id}">
+        <td><strong>${ad.title}</strong></td>
+        <td>${ad.ad_type.replace('_',' ')}</td>
+        <td><span class="badge badge-${ad.status}">${ad.status}</span></td>
+        <td>${ad.target_area}</td>
+        <td>₹${parseFloat(ad.budget_total||0).toFixed(2)}</td>
+        <td>${(ad.views_delivered||0)}/${(ad.views_ordered||0)}</td>
+        <td>${new Date(ad.created_at).toLocaleDateString()}</td>
+        <td>
+          ${ad.status === 'pending' ? `
+            <button class="btn-approve" onclick="approveAd('${ad.id}')">✅</button>
+            <button class="btn-reject"  onclick="rejectAd('${ad.id}')">❌</button>` : '—'}
+        </td>
+      </tr>`).join('');
+  }
+
+  function filterAds() {
+    const q = document.getElementById('ads-search').value.toLowerCase();
+    renderAllAds(allAds.filter(a =>
+      a.title.toLowerCase().includes(q) || a.ad_type.includes(q) || a.status.includes(q)
+    ));
+  }
+
+  // ── Approve / Reject ──────────────────────────────
+  async function approveAd(id) {
+    const { data, error } = await db.rpc('admin_approve_ad', { p_ad_id: id });
+    if (error) { showToast('Error: ' + error.message); return; }
+    showToast('✅ Ad approved and now active!');
+    document.getElementById('row-' + id)?.remove();
+    loadOverview();
+    loadAllAds();
+  }
+
+  async function rejectAd(id) {
+    if (!confirm('Reject this ad?')) return;
+    const { error } = await db.rpc('admin_reject_ad', { p_ad_id: id });
+    if (error) { showToast('Error: ' + error.message); return; }
+    showToast('❌ Ad rejected.');
+    document.getElementById('row-' + id)?.remove();
+    loadOverview();
+    loadAllAds();
+  }
+
+  // ── Users ─────────────────────────────────────────
+  async function loadUsers() {
+    const { data: users } = await db.from('users').select('*').order('created_at', { ascending: false });
+    const { data: wallets } = await db.from('coin_wallets').select('user_id,coins');
+    const coinMap = {};
+    (wallets||[]).forEach(w => coinMap[w.user_id] = w.coins);
+    allUsers = (users||[]).map(u => ({ ...u, coins: coinMap[u.id] || 0 }));
+    renderUsers(allUsers);
+  }
+
+  function renderUsers(list) {
+    const tbody = document.getElementById('users-tbody');
+    if (!list.length) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#aaa;padding:2rem">No users yet</td></tr>';
+      return;
+    }
+    tbody.innerHTML = list.map(u => `
+      <tr>
+        <td><strong>${u.name || '—'}</strong></td>
+        <td>${u.email || '—'}</td>
+        <td><span class="badge badge-${u.role}">${u.role}</span></td>
+        <td>🪙 ${Number(u.coins).toLocaleString()}</td>
+        <td>${new Date(u.created_at).toLocaleDateString()}</td>
+      </tr>`).join('');
+  }
+
+  function filterUsers() {
+    const q = document.getElementById('users-search').value.toLowerCase();
+    renderUsers(allUsers.filter(u =>
+      (u.name||'').toLowerCase().includes(q) ||
+      (u.email||'').toLowerCase().includes(q) ||
+      u.role.includes(q)
+    ));
+  }
+
+  // ── Transactions ──────────────────────────────────
+  async function loadTransactions() {
+    const { data } = await db.from('coin_transactions')
+      .select('*, users(name,email)')
+      .order('created_at', { ascending: false })
+      .limit(100);
+    const tbody = document.getElementById('tx-tbody');
+    if (!data || !data.length) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#aaa;padding:2rem">No transactions yet</td></tr>';
+      return;
+    }
+    tbody.innerHTML = data.map(t => `
+      <tr>
+        <td>${t.users?.name || t.users?.email || '—'}</td>
+        <td><span class="badge badge-${t.type === 'earn' ? 'active' : t.type === 'redeem' ? 'pending' : 'completed'}">${t.type}</span></td>
+        <td style="font-weight:700;color:${t.coins > 0 ? 'var(--green)' : 'var(--red)'}">
+          ${t.coins > 0 ? '+' : ''}${t.coins} 🪙
+        </td>
+        <td style="color:#666;font-size:0.82rem">${t.description || '—'}</td>
+        <td>${new Date(t.created_at).toLocaleDateString()}</td>
+      </tr>`).join('');
+  }
+
+  // ── Payments ──────────────────────────────────────
+  async function loadPayments() {
+    const { data } = await db.from('payments')
+      .select('*, advertisers(user_id, users(name,email))')
+      .order('paid_at', { ascending: false })
+      .limit(100);
+    const tbody = document.getElementById('pay-tbody');
+    if (!data || !data.length) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#aaa;padding:2rem">No payments yet</td></tr>';
+      return;
+    }
+    tbody.innerHTML = data.map(p => {
+      const name = p.advertisers?.users?.name || p.advertisers?.users?.email || '—';
+      return `
+        <tr>
+          <td><strong>${name}</strong></td>
+          <td>₹${parseFloat(p.total_amount||0).toFixed(2)}</td>
+          <td>${p.payment_method || '—'}</td>
+          <td><span class="badge badge-${p.status === 'success' ? 'active' : 'pending'}">${p.status}</span></td>
+          <td>${new Date(p.paid_at).toLocaleDateString()}</td>
+        </tr>`;
+    }).join('');
+  }
+
+  // ── Logout ────────────────────────────────────────
+  async function logout() {
+    await db.auth.signOut();
+    window.location.href = 'login.html';
+  }
+
+  init();
+</script>
+</body>
+</html>
