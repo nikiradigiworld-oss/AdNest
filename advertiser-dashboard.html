@@ -203,6 +203,9 @@
       <span class="sidebar-icon">💳</span> Wallet
     </div>
     <div class="sidebar-divider"></div>
+    <a class="sidebar-item" id="adv-admin-link" href="admin.html" style="display:none;">
+      <span class="sidebar-icon">⚙️</span> Admin Panel
+    </a>
     <a class="sidebar-item" href="index.html">
       <span class="sidebar-icon">🏠</span> Home
     </a>
@@ -375,6 +378,9 @@
   async function init() {
     const { data: { user } } = await db.auth.getUser();
     if (!user) { window.location.href = 'login.html'; return; }
+    if (user.user_metadata?.role === 'admin') {
+      document.getElementById('adv-admin-link').style.display = 'flex';
+    }
     loadStats(user);
   }
 

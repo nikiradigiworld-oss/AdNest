@@ -245,6 +245,7 @@
     .portal-card:hover { transform: translateY(-6px); box-shadow: 0 16px 40px rgba(0,0,0,0.14); }
     #portal-viewer:hover    { border-color: #25D366; }
     #portal-advertiser:hover { border-color: var(--red); }
+    #portal-admin:hover      { border-color: #FFD700; }
 
     .portal-glow {
       position: absolute; inset: 0; opacity: 0;
@@ -254,6 +255,7 @@
     #portal-advertiser:hover .portal-glow { opacity: 1; }
     .viewer-glow { background: radial-gradient(circle at 50% 0%, rgba(37,211,102,0.12), transparent 70%); }
     .adv-glow    { background: radial-gradient(circle at 50% 0%, rgba(139,26,26,0.10), transparent 70%); }
+    .admin-glow  { background: radial-gradient(circle at 50% 0%, rgba(255,215,0,0.15),  transparent 70%); }
 
     .portal-icon { font-size: 3.5rem; margin-bottom: .8rem; line-height: 1; }
 
@@ -579,7 +581,12 @@
     <div class="nav-logo">A</div>
     <span class="nav-title">Anaar</span>
   </a>
-  <div class="nav-coin">&#8377; 400 <span>&#127873;</span></div>
+  <div style="display:flex;align-items:center;gap:.75rem;">
+    <div class="nav-coin">&#8377; 400 <span>&#127873;</span></div>
+    <a id="nav-admin-btn" href="admin.html" style="display:none;background:var(--gold2);color:var(--red);border-radius:8px;padding:5px 14px;font-size:0.82rem;font-weight:800;text-decoration:none;">⚙️ Admin</a>
+    <a id="nav-login-btn" href="login.html" style="display:none;background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.3);border-radius:8px;padding:5px 14px;font-size:0.82rem;font-weight:600;text-decoration:none;">Login</a>
+    <button id="nav-logout-btn" onclick="navLogout()" style="display:none;background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.3);border-radius:8px;padding:5px 14px;font-size:0.82rem;font-weight:600;cursor:pointer;">Logout</button>
+  </div>
 </nav>
 
 <!-- ── PORTAL CHOOSER ── -->
@@ -590,7 +597,7 @@
       <h2>Choose Your Portal</h2>
       <p class="subtitle">Are you here to earn coins or grow your business?</p>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;max-width:780px;margin:0 auto;">
+    <div id="portal-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;max-width:780px;margin:0 auto;">
 
       <!-- VIEWER CARD -->
       <a href="viewer-dashboard.html" style="text-decoration:none;">
@@ -623,6 +630,23 @@
             <li>💬 WhatsApp Business connect</li>
           </ul>
           <div class="portal-btn adv-btn">Enter Advertiser Dashboard →</div>
+        </div>
+      </a>
+
+      <!-- ADMIN CARD (hidden until admin login) -->
+      <a href="admin.html" style="text-decoration:none;display:none;" id="portal-admin-wrap">
+        <div class="portal-card" id="portal-admin">
+          <div class="portal-glow admin-glow"></div>
+          <div class="portal-icon">⚙️</div>
+          <div class="portal-badge" style="background:#1a1a1a;color:var(--gold);">ADMIN</div>
+          <h3>Admin Panel</h3>
+          <p>Manage ads, users, transactions and platform settings.</p>
+          <ul class="portal-perks">
+            <li>✅ Approve &amp; reject ads</li>
+            <li>👥 View all users</li>
+            <li>📊 Platform analytics</li>
+          </ul>
+          <div class="portal-btn" style="background:#1a1a1a;color:var(--gold);">Enter Admin Panel →</div>
         </div>
       </a>
 
@@ -1128,8 +1152,47 @@
       const toast = document.getElementById('verify-toast');
       toast.style.display = 'block';
       setTimeout(() => { toast.style.display = 'none'; }, 5000);
+      document.getElementById('nav-logout-btn').style.display = 'block';
+      document.getElementById('nav-login-btn').style.display  = 'none';
+      if (session.user.user_metadata?.role === 'admin') {
+        document.getElementById('nav-admin-btn').style.display    = 'block';
+        document.getElementById('portal-admin-wrap').style.display = 'block';
+        document.getElementById('portal-grid').style.gridTemplateColumns = '1fr 1fr 1fr';
+        document.getElementById('portal-grid').style.maxWidth = '1100px';
+      }
+    }
+    if (event === 'SIGNED_OUT') {
+      document.getElementById('nav-logout-btn').style.display     = 'none';
+      document.getElementById('nav-login-btn').style.display      = 'block';
+      document.getElementById('nav-admin-btn').style.display      = 'none';
+      document.getElementById('portal-admin-wrap').style.display  = 'none';
+      document.getElementById('portal-grid').style.gridTemplateColumns = '1fr 1fr';
+      document.getElementById('portal-grid').style.maxWidth = '780px';
     }
   });
+
+  // Show correct button on page load
+  _db.auth.getSession().then(({ data: { session } }) => {
+    if (session) {
+      document.getElementById('nav-logout-btn').style.display = 'block';
+      document.getElementById('nav-login-btn').style.display  = 'none';
+      if (session.user.user_metadata?.role === 'admin') {
+        document.getElementById('nav-admin-btn').style.display    = 'block';
+        document.getElementById('portal-admin-wrap').style.display = 'block';
+        document.getElementById('portal-grid').style.gridTemplateColumns = '1fr 1fr 1fr';
+        document.getElementById('portal-grid').style.maxWidth = '1100px';
+      }
+    } else {
+      document.getElementById('nav-login-btn').style.display  = 'block';
+      document.getElementById('nav-logout-btn').style.display = 'none';
+    }
+  });
+
+  async function navLogout() {
+    await _db.auth.signOut();
+    document.getElementById('nav-logout-btn').style.display = 'none';
+    document.getElementById('nav-login-btn').style.display  = 'block';
+  }
 </script>
 
 </body>

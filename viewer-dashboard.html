@@ -181,6 +181,9 @@
       <span class="sidebar-icon">📜</span> History
     </div>
     <div class="sidebar-divider"></div>
+    <a class="sidebar-item" id="view-admin-link" href="admin.html" style="display:none;">
+      <span class="sidebar-icon">⚙️</span> Admin Panel
+    </a>
     <a class="sidebar-item" href="index.html">
       <span class="sidebar-icon">🏠</span> Home
     </a>
@@ -284,6 +287,9 @@
     const { data: { user } } = await db.auth.getUser();
     if (!user) { window.location.href = 'login.html'; return; }
     currentUser = user;
+    if (user.user_metadata?.role === 'admin') {
+      document.getElementById('view-admin-link').style.display = 'flex';
+    }
     loadWallet();
     loadAds();
   }
