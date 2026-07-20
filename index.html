@@ -1190,6 +1190,7 @@
 
 <script>
   // Handle Supabase email verification redirect
+  let _currentRole = 'viewer';
   const { createClient: _createClient } = supabase;
   const _db = _createClient(
     'https://qkbpdmeghjuucplbnnsz.supabase.co',
@@ -1358,8 +1359,6 @@
 </style>
 
 <script>
-  let _currentRole = 'viewer';
-
   function openRoleModal() {
     document.getElementById('profile-wrap').classList.remove('open');
     highlightCurrentRole(_currentRole);
