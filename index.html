@@ -11,8 +11,8 @@
     // ── Supabase Config ──────────────────────────────────
     // Replace these with your values from:
     // Supabase Dashboard → Project Settings → API
-    const SUPABASE_URL  = 'https://lnlfmpyznaimyzrybimq.supabase.co';
-    const SUPABASE_ANON = 'sb_publishable_uZtjIPPj-lOpWfSu-x6BbA_2qT6aIP8';
+    const SUPABASE_URL  = 'https://qkbpdmeghjuucplbnnsz.supabase.co';
+    const SUPABASE_ANON = 'sb_publishable_fCjXonXrWcaS9nmTW5B8Tw_CCNw5ybn';
 
     const { createClient } = supabase;
     const db = createClient(SUPABASE_URL, SUPABASE_ANON);
@@ -1138,8 +1138,8 @@
   // Handle Supabase email verification redirect
   const { createClient: _createClient } = supabase;
   const _db = _createClient(
-    'https://lnlfmpyznaimyzrybimq.supabase.co',
-    'sb_publishable_uZtjIPPj-lOpWfSu-x6BbA_2qT6aIP8'
+    'https://qkbpdmeghjuucplbnnsz.supabase.co',
+    'sb_publishable_fCjXonXrWcaS9nmTW5B8Tw_CCNw5ybn'
   );
 
   _db.auth.onAuthStateChange((event, session) => {
