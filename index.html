@@ -1215,6 +1215,7 @@
       document.getElementById('portal-admin-wrap').style.display  = 'none';
       document.getElementById('portal-grid').style.gridTemplateColumns = '1fr 1fr';
       document.getElementById('portal-grid').style.maxWidth = '780px';
+      document.getElementById('dashboard').style.display = 'block';
     }
   });
 
@@ -1249,24 +1250,29 @@
 
   // Apply role-based portal visibility
   function applyRolePortals(role) {
-    const viewer = document.getElementById('portal-viewer-wrap');
-    const adv    = document.getElementById('portal-adv-wrap');
-    const admin  = document.getElementById('portal-admin-wrap');
-    const grid   = document.getElementById('portal-grid');
+    const viewer  = document.getElementById('portal-viewer-wrap');
+    const adv     = document.getElementById('portal-adv-wrap');
+    const admin   = document.getElementById('portal-admin-wrap');
+    const grid    = document.getElementById('portal-grid');
+    const advDash = document.getElementById('dashboard');
 
     if (role === 'viewer') {
-      viewer.style.display = 'block';
-      adv.style.display    = 'none';
+      viewer.style.display  = 'block';
+      adv.style.display     = 'none';
+      advDash.style.display = 'none';
     } else if (role === 'advertiser') {
-      viewer.style.display = 'none';
-      adv.style.display    = 'block';
+      viewer.style.display  = 'none';
+      adv.style.display     = 'block';
+      advDash.style.display = 'block';
     } else if (role === 'both') {
-      viewer.style.display = 'block';
-      adv.style.display    = 'block';
+      viewer.style.display  = 'block';
+      adv.style.display     = 'block';
+      advDash.style.display = 'block';
     } else if (role === 'admin') {
-      viewer.style.display = 'block';
-      adv.style.display    = 'block';
-      admin.style.display  = 'block';
+      viewer.style.display  = 'block';
+      adv.style.display     = 'block';
+      admin.style.display   = 'block';
+      advDash.style.display = 'block';
       grid.style.gridTemplateColumns = '1fr 1fr 1fr';
       grid.style.maxWidth = '1100px';
       document.getElementById('nav-admin-btn').style.display = 'block';
