@@ -3,8 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#8B1A1A" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Anaar" />
+  <link rel="apple-touch-icon" href="icon.svg" />
   <title>Advertiser Dashboard – Anaar</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.2.0/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/nsfwjs@2.4.2/dist/nsfwjs.min.js"></script>
   <script>
     const SUPABASE_URL  = 'https://qkbpdmeghjuucplbnnsz.supabase.co';
     const SUPABASE_ANON = 'sb_publishable_fCjXonXrWcaS9nmTW5B8Tw_CCNw5ybn';
@@ -46,6 +53,19 @@
       cursor: pointer; transition: background .2s;
     }
     .topnav .btn-logout:hover { background: rgba(255,255,255,0.25); }
+    .topnav .user-chip {
+      display: flex; align-items: center; gap: 6px;
+      background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25);
+      border-radius: 20px; padding: 3px 12px 3px 4px;
+    }
+    .topnav .user-av {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: var(--gold); color: var(--red);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 900; font-size: .9rem; flex-shrink: 0;
+    }
+    .topnav .user-chip span { color: #fff; font-size: .82rem; font-weight: 700; max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .online-dot { width: 8px; height: 8px; border-radius: 50%; background: #2ecc71; display: inline-block; margin-left: 2px; box-shadow: 0 0 6px #2ecc71; flex-shrink: 0; }
 
     /* ── LAYOUT ── */
     .layout { display: flex; min-height: calc(100vh - 60px); }
@@ -103,6 +123,10 @@
     .upload-area .u-icon { font-size: 2.5rem; margin-bottom: .5rem; }
     .upload-area p { font-size: 0.85rem; color: #666; }
     .upload-area img { max-width: 100%; max-height: 180px; border-radius: 8px; margin-top: .8rem; display: none; }
+    .upload-area video { max-width: 100%; max-height: 180px; border-radius: 8px; margin-top: .8rem; display: none; }
+    .upload-error { background: #c0392b; color: #fff; border-radius: 8px; padding: .6rem 1rem; font-size: .83rem; font-weight: 700; margin-top: .6rem; display: none; }
+    .upload-checking { color: #888; font-size: .82rem; margin-top: .5rem; display: none; text-align: center; animation: pulse 1s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
 
     /* ── FORM ROWS ── */
     .form-row { display: flex; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; }
@@ -159,10 +183,114 @@
     .view { display: none; }
     .view.active { display: block; }
 
+    /* ── CHAT ── */
+    .chat-wrap { display:flex; flex-direction:column; height:calc(100vh - 240px); min-height:400px; background:var(--white); border-radius:0 0 14px 14px; }
+    .chat-messages { flex:1; overflow-y:auto; padding:1.2rem; display:flex; flex-direction:column; gap:.8rem; }
+    .chat-bubble { max-width:78%; padding:.65rem 1rem; border-radius:16px; font-size:.88rem; line-height:1.55; word-break:break-word; }
+    .bubble-user  { align-self:flex-end; background:var(--gold); color:#111; border-bottom-right-radius:4px; font-weight:600; }
+    .bubble-admin { align-self:flex-start; background:var(--gray); color:var(--text); border-bottom-left-radius:4px; border:1px solid #ddd; }
+    .bubble-meta  { font-size:.7rem; color:#aaa; margin-top:3px; }
+    .chat-input-row { display:flex; gap:.6rem; padding:1rem; border-top:1px solid #eee; }
+    .chat-input { flex:1; background:var(--gray); border:1px solid #ddd; border-radius:10px; padding:.65rem 1rem; color:var(--text); font-size:.88rem; resize:none; font-family:inherit; outline:none; }
+    .chat-input:focus { border-color:var(--red); }
+    .chat-send-btn { background:var(--red); color:#fff; border:none; border-radius:10px; padding:.65rem 1.3rem; font-weight:700; cursor:pointer; font-size:.88rem; transition:.2s; }
+    .chat-send-btn:hover { background:var(--red2); }
+    .chat-send-btn:disabled { opacity:.5; cursor:not-allowed; }
+    .chat-empty { text-align:center; padding:3rem 1rem; color:#aaa; }
+    .chat-empty .ce-icon { font-size:3rem; margin-bottom:.8rem; }
+    .chat-badge { background:#e53935; color:#fff; border-radius:50%; width:18px; height:18px; font-size:.65rem; font-weight:900; display:inline-flex; align-items:center; justify-content:center; margin-left:auto; }
+
     /* ── ALERT ── */
     .alert { border-radius: 8px; padding: .7rem 1rem; font-size: .83rem; font-weight: 600; margin-bottom: 1rem; display: none; }
     .alert.success { background: #eafaf1; color: var(--green); display: block; }
     .alert.error   { background: #fdecea; color: #e74c3c; display: block; }
+
+    /* ── PROFILE VIEW ── */
+    .prof-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    @media(max-width:640px) { .prof-grid { grid-template-columns: 1fr; } }
+    .prof-field { display: flex; flex-direction: column; gap: .35rem; }
+    .prof-label { font-size: .8rem; font-weight: 700; color: #555; text-transform: uppercase; letter-spacing: .04em; }
+    .prof-input {
+      border: 1.5px solid #e0e0e0; border-radius: 10px;
+      padding: .65rem 1rem; font-size: .93rem; outline: none;
+      transition: border-color .15s; width: 100%; box-sizing: border-box;
+    }
+    .prof-input:focus { border-color: var(--red); }
+    .gst-info-box {
+      display: flex; align-items: flex-start; gap: .7rem;
+      background: #f0f7ff; border: 1.5px solid #bdd9f7; border-radius: 10px;
+      padding: .8rem 1rem; font-size: .82rem; color: #1a5276;
+      margin-bottom: 1.1rem; line-height: 1.5;
+    }
+    .gst-info-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+
+    /* ── LOW BALANCE BANNER ── */
+    .low-bal-banner {
+      display: none; align-items: center; gap: .8rem;
+      background: linear-gradient(135deg, #fff3cd, #ffe08a);
+      border: 1.5px solid #f5c518; border-radius: 12px;
+      padding: .9rem 1.2rem; margin-bottom: 1.2rem;
+    }
+    .low-bal-banner.show { display: flex; }
+    .low-bal-banner .lbb-icon { font-size: 1.8rem; flex-shrink: 0; }
+    .low-bal-banner .lbb-text { flex: 1; }
+    .low-bal-banner .lbb-title { font-weight: 800; font-size: .9rem; color: #7a5c00; }
+    .low-bal-banner .lbb-sub   { font-size: .78rem; color: #a07800; margin-top: 2px; }
+    .lbb-btn { background: var(--red); color: #fff; border: none; border-radius: 8px; padding: .5rem 1.1rem; font-weight: 700; font-size: .82rem; cursor: pointer; white-space: nowrap; }
+
+    /* ── ADD FUNDS MODAL ── */
+    .funds-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.55); z-index: 2000;
+      align-items: center; justify-content: center; padding: 1rem;
+    }
+    .funds-overlay.open { display: flex; }
+    .funds-modal {
+      background: #fff; border-radius: 20px; width: 100%; max-width: 440px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.25); overflow: hidden;
+    }
+    .funds-header {
+      background: linear-gradient(135deg, var(--red), #5a0000);
+      padding: 1.4rem 1.5rem; color: #fff;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .funds-header h3 { font-size: 1.1rem; font-weight: 800; margin: 0; }
+    .funds-header .cur-bal { font-size: .8rem; opacity: .8; margin-top: 3px; }
+    .funds-close { background: rgba(255,255,255,.2); border: none; color: #fff; border-radius: 50%; width: 30px; height: 30px; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .funds-body { padding: 1.5rem; }
+    .funds-amounts { display: grid; grid-template-columns: repeat(3,1fr); gap: .6rem; margin-bottom: 1rem; }
+    .amt-chip {
+      border: 2px solid #e0e0e0; border-radius: 10px; padding: .55rem;
+      text-align: center; font-weight: 700; font-size: .9rem; cursor: pointer;
+      transition: .15s; color: var(--dark);
+    }
+    .amt-chip:hover, .amt-chip.sel { border-color: var(--red); background: #fff5f5; color: var(--red); }
+    .amt-chip small { display: block; font-size: .68rem; font-weight: 500; color: #aaa; margin-top: 1px; }
+    .funds-custom { display: flex; align-items: center; gap: .5rem; margin-bottom: 1.2rem; }
+    .funds-custom input { flex: 1; border: 1.5px solid #ddd; border-radius: 10px; padding: .6rem 1rem; font-size: .95rem; font-weight: 700; outline: none; }
+    .funds-custom input:focus { border-color: var(--red); }
+    .funds-divider { text-align: center; font-size: .78rem; color: #bbb; margin: 1rem 0; position: relative; }
+    .funds-divider::before { content: ''; position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: #eee; }
+    .funds-divider span { background: #fff; padding: 0 .8rem; position: relative; }
+    .upi-options { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; margin-bottom: 1rem; }
+    .upi-btn {
+      display: flex; align-items: center; gap: .5rem; justify-content: center;
+      border: 1.5px solid #e0e0e0; border-radius: 10px; padding: .65rem;
+      font-size: .82rem; font-weight: 700; cursor: pointer; background: #fff;
+      transition: .15s; color: var(--dark);
+    }
+    .upi-btn:hover { border-color: var(--red); background: #fff5f5; }
+    .upi-id-row { display: flex; gap: .5rem; margin-bottom: 1rem; }
+    .upi-id-input { flex: 1; border: 1.5px solid #ddd; border-radius: 10px; padding: .6rem .9rem; font-size: .85rem; outline: none; }
+    .upi-id-input:focus { border-color: var(--red); }
+    .funds-pay-btn {
+      width: 100%; background: linear-gradient(135deg, var(--red), #a00); color: #fff;
+      border: none; border-radius: 12px; padding: .9rem; font-size: 1rem;
+      font-weight: 800; cursor: pointer; transition: opacity .2s; margin-top: .5rem;
+    }
+    .funds-pay-btn:hover { opacity: .9; }
+    .funds-pay-btn:disabled { opacity: .5; cursor: not-allowed; }
+    .funds-note { font-size: .75rem; color: #aaa; text-align: center; margin-top: .8rem; line-height: 1.5; }
 
     @media (max-width: 700px) {
       .sidebar { display: none; }
@@ -181,7 +309,12 @@
     <span class="brand-name">Anaar · Advertiser</span>
   </a>
   <div class="nav-right">
-    <div class="balance-chip">💰 ₹<span id="wallet-bal">0.00</span></div>
+    <div class="balance-chip">🪙 <span id="wallet-bal">0</span> coins</div>
+    <div class="user-chip" id="nav-user-chip" style="display:none">
+      <div class="user-av" id="nav-user-av">U</div>
+      <span id="nav-user-name">User</span>
+      <span class="online-dot"></span>
+    </div>
     <button class="btn-logout" onclick="logout()">Sign Out</button>
   </div>
 </nav>
@@ -201,6 +334,13 @@
     </div>
     <div class="sidebar-item" onclick="switchView('wallet')">
       <span class="sidebar-icon">💳</span> Wallet
+    </div>
+    <div class="sidebar-item" id="sb-chat" onclick="switchView('chat')" style="display:flex;align-items:center;gap:6px;">
+      <span class="sidebar-icon">💬</span> Chat Support
+      <span class="chat-badge" id="chat-badge" style="display:none">!</span>
+    </div>
+    <div class="sidebar-item" onclick="switchView('profile', this)">
+      <span class="sidebar-icon">👤</span> My Profile
     </div>
     <div class="sidebar-divider"></div>
     <a class="sidebar-item" id="adv-admin-link" href="admin.html" style="display:none;">
@@ -242,21 +382,34 @@
     <div class="view active" id="view-post">
       <div class="page-title">📤 Post New Ad</div>
       <div class="panel">
-        <div class="panel-head"><h3>🖼️ Image Slide Ad – ₹0.30 / 1K Views</h3></div>
+        <div class="panel-head"><h3 id="post-panel-head">🖼️ Image Slide Ad – ₹0.30 / Click (CPC)</h3></div>
         <div class="panel-body">
           <div id="alert-post" class="alert"></div>
 
+          <!-- Low-balance banner -->
+          <div class="low-bal-banner" id="low-bal-banner">
+            <div class="lbb-icon">💰</div>
+            <div class="lbb-text">
+              <div class="lbb-title">Wallet is Empty</div>
+              <div class="lbb-sub">You need funds to post an ad. Add money to your wallet first.</div>
+            </div>
+            <button class="lbb-btn" onclick="openAddFunds('Add funds to post your ad.')">Add Funds</button>
+          </div>
+
           <!-- Image/Video Upload (image & video only) -->
-          <div class="upload-area" id="upload-area" onclick="document.getElementById('img-input').click()">
-            <input type="file" id="img-input" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="previewImg(event)" />
+          <div class="upload-area" id="upload-area" onclick="document.getElementById('media-input').click()">
+            <input type="file" id="media-input" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="handleFileSelect(event)" />
             <div id="upload-placeholder">
-              <div class="u-icon">🖼️</div>
-              <p><strong>Upload Image Slide</strong></p>
-              <p>JPG · PNG · WEBP &nbsp;|&nbsp; Max 5MB</p>
+              <div class="u-icon" id="upload-icon">🖼️</div>
+              <p id="upload-title"><strong>Upload Image Slide</strong></p>
+              <p id="upload-hint">JPG · PNG · WEBP &nbsp;|&nbsp; Max 5MB</p>
               <p style="margin-top:.4rem;font-size:.78rem;color:#bbb">Click or drag &amp; drop</p>
             </div>
             <img id="img-preview" alt="Preview" />
+            <video id="vid-preview" muted playsinline controls></video>
           </div>
+          <div class="upload-checking" id="upload-checking">🔍 Checking content for policy compliance…</div>
+          <div class="upload-error" id="upload-error"></div>
 
           <!-- Link Paste (social media & app/website only) -->
           <div id="link-field" style="display:none;margin-bottom:1rem;">
@@ -278,25 +431,58 @@
             <div class="form-group">
               <label>Ad Type</label>
               <select id="ad-type" onchange="recalc(); toggleWA()">
-                <option value="0.30">Image Slide – ₹0.30/1K</option>
-                <option value="0.50">Video – ₹0.50/1K</option>
-                <option value="0.80">Social Media – ₹0.80/1K</option>
-                <option value="2.00">App/Web – ₹2.00/install</option>
+                <option value="0.30">Image Slide – ₹0.30/Click (CPC)</option>
+                <option value="0.50">Video – ₹0.50/Click (CPC)</option>
+                <option value="0.80">Social Media – ₹0.80/Like (CPL)</option>
+                <option value="2.00">App/Web – ₹2.00/Click (CPI)</option>
               </select>
             </div>
             <div class="form-group">
-              <label>Views / Installs</label>
-              <input type="number" id="ad-views" value="5000" min="1000" step="1000" oninput="recalc()" />
+              <label id="qty-label">Max Clicks</label>
+              <input type="number" id="ad-views" value="1000" min="100" step="100" oninput="recalc()" />
+              <div id="qty-hint" style="font-size:.74rem;color:#888;margin-top:3px">Each click costs advertiser ₹0.30 · Viewer earns ₹0.15</div>
             </div>
             <div class="form-group">
               <label>Target Area</label>
-              <select id="ad-target">
+              <select id="ad-target" onchange="onTargetTypeChange()">
                 <option value="pincode">Pincode</option>
                 <option value="district">District</option>
                 <option value="state">State</option>
                 <option value="nationwide">Nationwide</option>
               </select>
             </div>
+          </div>
+
+          <!-- ── Cascading Country / State / District / Pincode ── -->
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;margin-bottom:1rem;">
+
+            <div class="form-group" id="tgt-country-wrap">
+              <label>Country</label>
+              <select id="tgt-country" onchange="onTgtCountryChange()">
+                <option value="">Loading countries…</option>
+              </select>
+            </div>
+
+            <div class="form-group" id="tgt-state-wrap" style="display:none">
+              <label>State / Province</label>
+              <select id="tgt-state" onchange="onTgtStateChange()">
+                <option value="">Select state…</option>
+              </select>
+            </div>
+
+            <div class="form-group" id="tgt-district-wrap" style="display:none">
+              <label>District / City</label>
+              <select id="tgt-district">
+                <option value="">Select district…</option>
+              </select>
+            </div>
+
+            <div class="form-group" id="tgt-pincode-wrap" style="display:none">
+              <label>Pincode</label>
+              <input type="text" id="tgt-pincode" placeholder="e.g. 560001" maxlength="10"
+                     style="padding:.55rem .8rem;border:1.5px solid #ddd;border-radius:8px;font-size:.88rem;width:100%;outline:none;" />
+            </div>
+
           </div>
 
           <!-- Optional WhatsApp (image & video only) -->
@@ -312,7 +498,7 @@
           </div>
 
           <div class="cost-box">
-            <span>Estimated Cost + 18% GST</span>
+            <span id="cost-label">Estimated Budget + 5% GST</span>
             <span id="cost-display">₹1.50 + ₹0.27 = ₹1.77</span>
           </div>
 
@@ -356,16 +542,127 @@
       </div>
     </div>
 
+    <!-- PROFILE VIEW -->
+    <div class="view" id="view-profile">
+      <div class="page-title">👤 My Profile</div>
+      <div id="alert-profile" class="alert"></div>
+
+      <!-- Account Info -->
+      <div class="panel" style="margin-bottom:1.2rem">
+        <div class="panel-head"><h3>🧑 Account Information</h3></div>
+        <div class="panel-body">
+          <div class="prof-grid">
+            <div class="prof-field">
+              <label class="prof-label">Full Name</label>
+              <input class="prof-input" id="prof-name" type="text" placeholder="Your full name" />
+            </div>
+            <div class="prof-field">
+              <label class="prof-label">Email</label>
+              <input class="prof-input" id="prof-email" type="email" placeholder="your@email.com" disabled style="opacity:.6;cursor:not-allowed" />
+            </div>
+            <div class="prof-field">
+              <label class="prof-label">Mobile Number</label>
+              <input class="prof-input" id="prof-mobile" type="tel" placeholder="+91 9876543210" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Business Info -->
+      <div class="panel" style="margin-bottom:1.2rem">
+        <div class="panel-head"><h3>🏢 Business Information</h3></div>
+        <div class="panel-body">
+          <div class="prof-grid">
+            <div class="prof-field">
+              <label class="prof-label">Business / Company Name</label>
+              <input class="prof-input" id="prof-biz-name" type="text" placeholder="e.g. Ravi Traders Pvt Ltd" />
+            </div>
+            <div class="prof-field">
+              <label class="prof-label">Business Category</label>
+              <select class="prof-input" id="prof-biz-cat">
+                <option value="">Select category</option>
+                <option>Retail / Shop</option>
+                <option>Food &amp; Restaurant</option>
+                <option>Education</option>
+                <option>Healthcare</option>
+                <option>Real Estate</option>
+                <option>Technology / App</option>
+                <option>Fashion &amp; Beauty</option>
+                <option>Travel &amp; Tourism</option>
+                <option>Finance &amp; Insurance</option>
+                <option>Other</option>
+              </select>
+            </div>
+            <div class="prof-field">
+              <label class="prof-label">Business Website / App Link <span style="color:#aaa;font-weight:400">(optional)</span></label>
+              <input class="prof-input" id="prof-biz-url" type="url" placeholder="https://yourbusiness.com" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- GST Info -->
+      <div class="panel" style="margin-bottom:1.2rem">
+        <div class="panel-head"><h3>📋 GST Information</h3></div>
+        <div class="panel-body">
+          <div class="gst-info-box">
+            <span class="gst-info-icon">ℹ️</span>
+            <span>Add your GSTIN to get GST-compliant invoices for all your ad spends. This will appear on your billing receipts.</span>
+          </div>
+          <div class="prof-grid">
+            <div class="prof-field">
+              <label class="prof-label">GSTIN <span style="color:#aaa;font-weight:400">(optional)</span></label>
+              <div style="position:relative">
+                <input class="prof-input" id="prof-gstin" type="text" placeholder="e.g. 29ABCDE1234F1Z5" maxlength="15"
+                  oninput="this.value=this.value.toUpperCase();validateGSTIN(this)" style="text-transform:uppercase;letter-spacing:.08em;padding-right:2.4rem" />
+                <span id="gstin-check" style="position:absolute;right:.8rem;top:50%;transform:translateY(-50%);font-size:1rem;display:none"></span>
+              </div>
+              <div id="gstin-hint" style="font-size:.74rem;color:#aaa;margin-top:4px">15-character GST Identification Number</div>
+            </div>
+            <div class="prof-field">
+              <label class="prof-label">GST Registered State</label>
+              <input class="prof-input" id="prof-gst-state" type="text" placeholder="e.g. Karnataka" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn-submit" style="max-width:220px" onclick="saveProfile()">💾 Save Profile</button>
+    </div>
+
     <!-- WALLET VIEW -->
     <div class="view" id="view-wallet">
       <div class="page-title">💳 Wallet</div>
       <div class="panel">
         <div class="panel-head"><h3>Account Balance</h3></div>
         <div class="panel-body" style="text-align:center;padding:2.5rem">
-          <div style="font-size:3rem;margin-bottom:.5rem">💰</div>
-          <div style="font-size:2.5rem;font-weight:900;color:var(--red)">₹<span id="wallet-display">0.00</span></div>
-          <div style="color:#888;margin-top:.4rem;font-size:.9rem">Available Balance</div>
-          <button class="btn-submit" style="max-width:240px;margin:1.5rem auto 0" onclick="alert('Payment gateway coming soon!')">+ Add Funds</button>
+          <div style="font-size:3rem;margin-bottom:.5rem">🪙</div>
+          <div style="font-size:2.5rem;font-weight:900;color:var(--red)"><span id="wallet-display">0</span> coins</div>
+          <div style="color:#888;margin-top:.4rem;font-size:.9rem">Coin Balance</div>
+          <div style="margin-top:.6rem;font-size:1.1rem;font-weight:700;color:#444">= ₹<span id="wallet-cash">0.00</span></div>
+          <div style="color:#aaa;font-size:.8rem;margin-top:.2rem">Cash Value &nbsp;·&nbsp; ₹0.05 = 100 coins</div>
+          <button class="btn-submit" style="max-width:240px;margin:1.5rem auto 0" onclick="openAddFunds()">+ Add Funds</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CHAT VIEW -->
+    <div class="view" id="view-chat">
+      <div class="page-title">💬 Chat with Admin</div>
+      <div class="panel" style="padding:0;overflow:hidden;">
+        <div class="panel-head">
+          <h3>Support Chat</h3>
+          <span style="font-size:.82rem;color:#aaa">Admin typically replies within a few hours</span>
+        </div>
+        <div class="chat-wrap">
+          <div class="chat-messages" id="chat-messages">
+            <div class="chat-empty"><div class="ce-icon">💬</div><p>Loading…</p></div>
+          </div>
+          <div class="chat-input-row">
+            <textarea id="chat-input" class="chat-input" placeholder="Type your message… (Enter to send)" rows="2"
+              onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChatMsg();}"></textarea>
+            <button id="chat-send-btn" class="chat-send-btn" onclick="sendChatMsg()">Send</button>
+          </div>
         </div>
       </div>
     </div>
@@ -374,16 +671,125 @@
 </div>
 
 <script>
+  let _walletBalance = 0;
+  const ADV_CPR = 2000; // ₹0.05 = 100 coins → ₹1 = 2000 coins
+  function _rupToCoins(r) { return Math.round(r * ADV_CPR).toLocaleString('en-IN'); }
+
+  // ── AI Content Filter (NSFW) ──────────────────────────
+  let _nsfwModel = null;
+  (async () => {
+    try {
+      _nsfwModel = await nsfwjs.load('https://nsfwjs.com/quant_nsfw_model/');
+    } catch(e) { console.warn('NSFW model unavailable:', e); }
+  })();
+
+  async function _isNSFW(imgEl) {
+    if (!_nsfwModel) return false;
+    try {
+      const preds = await _nsfwModel.classify(imgEl);
+      const get   = cls => preds.find(p => p.className === cls)?.probability || 0;
+      return get('Porn') > 0.45 || get('Hentai') > 0.45 || get('Sexy') > 0.75;
+    } catch(e) { return false; }
+  }
+
+  function _uploadErr(msg) {
+    const el = document.getElementById('upload-error');
+    if (!el) return;
+    el.textContent = msg; el.style.display = msg ? 'block' : 'none';
+  }
+  function _uploadChecking(show) {
+    const el = document.getElementById('upload-checking');
+    if (el) el.style.display = show ? 'block' : 'none';
+  }
+
+  async function handleFileSelect(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    _uploadErr('');
+    if (file.type.startsWith('image/')) await _handleImage(file);
+    else if (file.type.startsWith('video/')) await _handleVideo(file);
+  }
+
+  async function _handleImage(file) {
+    if (file.size > 5 * 1024 * 1024) { _uploadErr('⛔ Max file size is 5MB.'); return; }
+    const reader = new FileReader();
+    reader.onload = async ev => {
+      const img = new Image();
+      img.onload = async () => {
+        _uploadChecking(true);
+        const bad = await _isNSFW(img);
+        _uploadChecking(false);
+        if (bad) {
+          _uploadErr('⛔ Explicit or nude content detected. This upload is not allowed on Anaar.');
+          document.getElementById('media-input').value = '';
+          return;
+        }
+        document.getElementById('img-preview').src = ev.target.result;
+        document.getElementById('img-preview').style.display = 'block';
+        document.getElementById('vid-preview').style.display = 'none';
+        document.getElementById('upload-placeholder').style.display = 'none';
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  async function _handleVideo(file) {
+    if (file.size > 50 * 1024 * 1024) { _uploadErr('⛔ Max video size is 50MB.'); return; }
+    const url = URL.createObjectURL(file);
+    const tmp = document.createElement('video');
+    tmp.muted = true; tmp.src = url;
+    tmp.onloadedmetadata = () => {
+      const dur = Math.round(tmp.duration);
+      if (dur < 10 || dur > 45) {
+        _uploadErr(`⛔ Video must be 10–45 seconds (yours: ${dur}s).`);
+        URL.revokeObjectURL(url);
+        document.getElementById('media-input').value = '';
+        return;
+      }
+      tmp.currentTime = Math.min(2, tmp.duration * 0.1);
+    };
+    tmp.onseeked = async () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 224; canvas.height = 224;
+      canvas.getContext('2d').drawImage(tmp, 0, 0, 224, 224);
+      const frameImg = new Image();
+      frameImg.onload = async () => {
+        _uploadChecking(true);
+        const bad = await _isNSFW(frameImg);
+        _uploadChecking(false);
+        if (bad) {
+          _uploadErr('⛔ Explicit or nude content detected in video. This upload is not allowed on Anaar.');
+          URL.revokeObjectURL(url);
+          document.getElementById('media-input').value = '';
+          return;
+        }
+        const vp = document.getElementById('vid-preview');
+        vp.src = url; vp.style.display = 'block';
+        document.getElementById('img-preview').style.display = 'none';
+        document.getElementById('upload-placeholder').style.display = 'none';
+      };
+      frameImg.src = canvas.toDataURL();
+    };
+    tmp.load();
+  }
+
   // ── Auth guard ────────────────────────────────────────
   async function init() {
     const { data: { user } } = await db.auth.getUser();
     if (!user) { window.location.href = 'login.html'; return; }
     const role = user.user_metadata?.role || 'viewer';
     if (role === 'viewer') { window.location.href = 'viewer-dashboard.html'; return; }
+    const uname = user.user_metadata?.name || user.email || user.phone || 'User';
+    document.getElementById('nav-user-av').textContent   = uname.charAt(0).toUpperCase();
+    document.getElementById('nav-user-name').textContent = uname.split(' ')[0];
+    document.getElementById('nav-user-chip').style.display = 'flex';
     if (role === 'admin') {
       document.getElementById('adv-admin-link').style.display = 'flex';
     }
     loadStats(user);
+    checkUnreadChat();
+    setInterval(checkUnreadChat, 30000);
   }
 
   // ── View switching ────────────────────────────────────
@@ -392,7 +798,9 @@
     document.getElementById('view-' + name).classList.add('active');
     document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
     event.currentTarget.classList.add('active');
-    if (name === 'myads') loadMyAds();
+    if (name === 'myads')   loadMyAds();
+    if (name === 'chat')    loadChat();
+    if (name === 'profile') loadProfile();
   }
 
   // ── Load stats via RPC ───────────────────────────────
@@ -402,15 +810,21 @@
       // fallback: direct query
       const { data: adv } = await db.from('advertisers').select('id,wallet_balance').eq('user_id', user.id).single();
       if (!adv) return;
-      const bal = adv.wallet_balance || 0;
-      document.getElementById('wallet-bal').textContent     = bal.toFixed(2);
-      document.getElementById('wallet-display').textContent = bal.toFixed(2);
+      const bal = parseFloat(adv.wallet_balance) || 0;
+      _walletBalance = bal;
+      document.getElementById('wallet-bal').textContent     = _rupToCoins(bal);
+      document.getElementById('wallet-display').textContent = _rupToCoins(bal);
+      const wc = document.getElementById('wallet-cash'); if (wc) wc.textContent = bal.toFixed(2);
+      _updateLowBalBanner();
       return;
     }
     const s = data;
     const bal = parseFloat(s.wallet_balance) || 0;
-    document.getElementById('wallet-bal').textContent     = bal.toFixed(2);
-    document.getElementById('wallet-display').textContent = bal.toFixed(2);
+    _walletBalance = bal;
+    document.getElementById('wallet-bal').textContent     = _rupToCoins(bal);
+    document.getElementById('wallet-display').textContent = _rupToCoins(bal);
+    const wc = document.getElementById('wallet-cash'); if (wc) wc.textContent = bal.toFixed(2);
+    _updateLowBalBanner();
     document.getElementById('stat-ads').textContent    = s.total_ads || 0;
     document.getElementById('stat-views').textContent  = Number(s.total_views || 0).toLocaleString();
     document.getElementById('stat-active').textContent = s.active_ads || 0;
@@ -442,28 +856,23 @@
       </tr>`).join('');
   }
 
-  // ── Image preview ─────────────────────────────────────
-  function previewImg(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    if (file.size > 5*1024*1024) { alert('Max 5MB allowed.'); return; }
-    const reader = new FileReader();
-    reader.onload = ev => {
-      document.getElementById('img-preview').src = ev.target.result;
-      document.getElementById('img-preview').style.display = 'block';
-      document.getElementById('upload-placeholder').style.display = 'none';
-    };
-    reader.readAsDataURL(file);
-  }
 
   // ── Cost calculator ───────────────────────────────────
   function recalc() {
-    const rate  = parseFloat(document.getElementById('ad-type').value) || 0.30;
-    const qty   = Math.max(1000, parseInt(document.getElementById('ad-views').value) || 1000);
-    const base  = (qty / 1000) * rate;
-    const gst   = base * 0.18;
+    const rate    = parseFloat(document.getElementById('ad-type').value) || 0.30;
+    const isCPC   = rate === 0.30 || rate === 0.50 || rate === 0.80 || rate === 2.00;
+    const isSoc   = rate === 0.80;
+    const minQty  = 100;
+    const qty     = Math.max(minQty, parseInt(document.getElementById('ad-views').value) || minQty);
+    const base    = isCPC ? qty * rate : (qty / 1000) * rate;
+    const gst     = base * 0.05;
+    const label   = document.getElementById('cost-label');
+    if (label) label.textContent = isCPC ? 'Max Budget (Pay Per Like/Click) + 5% GST' : 'Estimated Cost + 5% GST';
+    const unit = isSoc ? 'likes' : 'clicks';
     document.getElementById('cost-display').textContent =
-      '₹' + base.toFixed(2) + ' + ₹' + gst.toFixed(2) + ' = ₹' + (base+gst).toFixed(2);
+      isCPC
+        ? qty.toLocaleString() + ' ' + unit + ' × ₹' + rate.toFixed(2) + ' = ₹' + base.toFixed(2) + ' + ₹' + gst.toFixed(2) + ' GST = ₹' + (base+gst).toFixed(2)
+        : '₹' + base.toFixed(2) + ' + ₹' + gst.toFixed(2) + ' = ₹' + (base+gst).toFixed(2);
   }
 
   // ── Toggle upload vs link field + WhatsApp ───────────
@@ -474,6 +883,42 @@
     const isSoc  = rate === 0.80;
     const isApp  = rate === 2.00;
     const isLink = isSoc || isApp;
+
+    // Update qty label, hint, input constraints based on ad type
+    const qtyLabel = document.getElementById('qty-label');
+    const qtyHint  = document.getElementById('qty-hint');
+    const qtyInput = document.getElementById('ad-views');
+    const headEl   = document.getElementById('post-panel-head');
+    const mi = document.getElementById('media-input');
+    if (isImg) {
+      if (qtyLabel) qtyLabel.textContent = 'Max Clicks';
+      if (qtyHint)  qtyHint.innerHTML = 'Each click costs advertiser ₹0.30 · Viewer earns ₹0.15';
+      if (qtyInput) { qtyInput.min = 100; qtyInput.step = 100; if (parseInt(qtyInput.value) < 100) qtyInput.value = 1000; }
+      if (headEl)   headEl.textContent = '🖼️ Image Slide Ad – ₹0.30 / Click (CPC)';
+      if (mi) mi.accept = 'image/jpeg,image/png,image/webp';
+      const ic = document.getElementById('upload-icon'); if (ic) ic.textContent = '🖼️';
+      const ut = document.getElementById('upload-title'); if (ut) ut.innerHTML = '<strong>Upload Image Slide</strong>';
+      const uh = document.getElementById('upload-hint'); if (uh) uh.textContent = 'JPG · PNG · WEBP | Max 5MB';
+    } else if (isVid) {
+      if (qtyLabel) qtyLabel.textContent = 'Max Clicks';
+      if (qtyHint)  qtyHint.innerHTML = 'Each click costs advertiser ₹0.50 · Viewer earns ₹0.25';
+      if (qtyInput) { qtyInput.min = 100; qtyInput.step = 100; if (parseInt(qtyInput.value) < 100) qtyInput.value = 1000; }
+      if (headEl)   headEl.textContent = '🎬 Video Ad – ₹0.50 / Click (CPC)';
+      if (mi) mi.accept = 'video/mp4,video/webm,video/quicktime,video/x-m4v';
+      const ic = document.getElementById('upload-icon'); if (ic) ic.textContent = '🎬';
+      const ut = document.getElementById('upload-title'); if (ut) ut.innerHTML = '<strong>Upload Video Ad</strong>';
+      const uh = document.getElementById('upload-hint'); if (uh) uh.textContent = 'MP4 · MOV · WEBM | 10–45 sec | Max 50MB';
+    } else if (isSoc) {
+      if (qtyLabel) qtyLabel.textContent = 'Max Likes';
+      if (qtyHint)  qtyHint.innerHTML = 'Each like costs advertiser ₹0.80 · Viewer earns ₹0.40';
+      if (qtyInput) { qtyInput.min = 100; qtyInput.step = 100; if (parseInt(qtyInput.value) < 100) qtyInput.value = 1000; }
+      if (headEl)   headEl.textContent = '📲 Social Media – ₹0.80 / Like (CPL)';
+    } else if (isApp) {
+      if (qtyLabel) qtyLabel.textContent = 'Max Clicks';
+      if (qtyHint)  qtyHint.innerHTML = 'Each click costs advertiser ₹2.00 · Viewer earns ₹0.75';
+      if (qtyInput) { qtyInput.min = 100; qtyInput.step = 100; if (parseInt(qtyInput.value) < 100) qtyInput.value = 1000; }
+      if (headEl)   headEl.textContent = '📱 App/Website – ₹2.00 / Click (CPI)';
+    }
 
     // Upload area: show for image & video
     document.getElementById('upload-area').style.display  = isLink ? 'none' : 'block';
@@ -497,15 +942,49 @@
 
   // ── Submit ad ─────────────────────────────────────────
   async function submitAd() {
-    const title   = document.getElementById('ad-title').value.trim();
     const rate    = parseFloat(document.getElementById('ad-type').value);
-    const qty     = Math.max(1000, parseInt(document.getElementById('ad-views').value)||1000);
+    const isCPC   = rate === 0.30 || rate === 0.50 || rate === 0.80 || rate === 2.00;
+    const qty     = Math.max(100, parseInt(document.getElementById('ad-views').value)||100);
+    const base    = isCPC ? qty * rate : (qty/1000)*rate;
+    const gst     = base*0.05;
+    const adCost  = base + gst;
+
+    // Wallet balance gate — open Add Funds if insufficient
+    if (_walletBalance <= 0) {
+      openAddFunds('Your wallet is empty. Add funds to post an ad.');
+      return;
+    }
+    if (_walletBalance < adCost) {
+      openAddFunds(`Insufficient balance. This ad costs ₹${adCost.toFixed(2)} (incl. GST) but your wallet has ${_rupToCoins(_walletBalance)} coins (₹${_walletBalance.toFixed(2)}). Add at least ₹${(adCost - _walletBalance).toFixed(2)} more.`);
+      return;
+    }
+
+    const title   = document.getElementById('ad-title').value.trim();
     const target  = document.getElementById('ad-target').value;
     const wa      = document.getElementById('ad-whatsapp').value.trim();
-    const base    = (qty/1000)*rate;
-    const gst     = base*0.18;
+
+    // Build target_value from cascading location fields
+    const country  = document.getElementById('tgt-country');
+    const stateEl  = document.getElementById('tgt-state');
+    const distEl   = document.getElementById('tgt-district');
+    const countryName = country.options[country.selectedIndex]?.dataset.name || country.value || '';
+    const stateName   = stateEl.options[stateEl.selectedIndex]?.dataset.name || stateEl.value || '';
+    const distName    = distEl.value || '';
+    const pincode     = (document.getElementById('tgt-pincode')?.value || '').trim();
+
+    let targetValue = countryName;
+    if (stateName)  targetValue += ', ' + stateName;
+    if (distName && target !== 'state')   targetValue += ', ' + distName;
+    if (pincode  && target === 'pincode') targetValue += ' – ' + pincode;
 
     if (!title) { showAlert('post','Enter an ad title.','error'); return; }
+    if (!countryName) { showAlert('post','Please select a country.','error'); return; }
+    if ((target==='state'||target==='district'||target==='pincode') && !stateName)
+      { showAlert('post','Please select a state / province.','error'); return; }
+    if ((target==='district'||target==='pincode') && !distName)
+      { showAlert('post','Please select a district / city.','error'); return; }
+    if (target==='pincode' && !pincode)
+      { showAlert('post','Please enter a pincode.','error'); return; }
 
     const { data: { user } } = await db.auth.getUser();
     const { data: adv } = await db.from('advertisers').select('id').eq('user_id', user.id).single();
@@ -520,7 +999,9 @@
 
     const payload = {
       advertiser_id: adv.id, title, ad_type: adType,
-      target_area: target, views_ordered: qty, rate_per_1k: rate,
+      target_area: target, target_value: targetValue || null,
+      views_ordered: qty, rate_per_1k: rate,
+      pricing_model: isCPC ? 'cpc' : 'cpm',
       budget_base: base, budget_gst: gst, budget_total: base+gst,
       content_url: link || null
     };
@@ -534,7 +1015,10 @@
     document.getElementById('ad-whatsapp').value = '';
     document.getElementById('ad-link').value = '';
     document.getElementById('img-preview').style.display = 'none';
+    document.getElementById('vid-preview').style.display = 'none';
     document.getElementById('upload-placeholder').style.display = 'block';
+    document.getElementById('media-input').value = '';
+    _uploadErr('');
     recalc();
   }
 
@@ -551,7 +1035,7 @@
   ua.addEventListener('drop', e => {
     e.preventDefault(); ua.style.borderColor='';
     const f = e.dataTransfer.files[0];
-    if (f) { const dt = new DataTransfer(); dt.items.add(f); document.getElementById('img-input').files = dt.files; previewImg({target:{files:[f]}}); }
+    if (f) { const dt = new DataTransfer(); dt.items.add(f); document.getElementById('media-input').files = dt.files; handleFileSelect({target:{files:[f]}}); }
   });
 
   // ── Logout ────────────────────────────────────────────
@@ -562,6 +1046,363 @@
 
   recalc();
   init();
+
+  // ── Country / State / City API ────────────────────────
+  const _CSC_KEY  = 'a85b9043d62eea3506b72b62d99ccfa8a0a2d92de9dfd3d780f79c12c12a64cb';
+  const _CSC_BASE = 'https://api.countrystatecity.in/v1';
+
+  async function _csc(path) {
+    try {
+      const r = await fetch(_CSC_BASE + path, { headers: { 'X-CSCAPI-KEY': _CSC_KEY } });
+      return r.ok ? r.json() : [];
+    } catch { return []; }
+  }
+
+  function _setOpts(id, items, valFn, lblFn, placeholder, disabled) {
+    const el = document.getElementById(id);
+    el.disabled = !!disabled;
+    el.innerHTML = `<option value="">${placeholder}</option>` +
+      items.map(i => `<option value="${valFn(i)}" data-name="${lblFn(i)}">${lblFn(i)}</option>`).join('');
+  }
+
+  // Show/hide dropdowns based on selected target type
+  function onTargetTypeChange() {
+    const t = document.getElementById('ad-target').value;
+    document.getElementById('tgt-country-wrap').style.display  = 'block';
+    document.getElementById('tgt-state-wrap').style.display    = (t==='pincode'||t==='district'||t==='state') ? 'block' : 'none';
+    document.getElementById('tgt-district-wrap').style.display = (t==='pincode'||t==='district') ? 'block' : 'none';
+    document.getElementById('tgt-pincode-wrap').style.display  = t==='pincode' ? 'block' : 'none';
+    // reset downstream
+    document.getElementById('tgt-state').innerHTML    = '<option value="">Select state…</option>';
+    document.getElementById('tgt-district').innerHTML = '<option value="">Select district…</option>';
+    if (document.getElementById('tgt-pincode')) document.getElementById('tgt-pincode').value = '';
+  }
+
+  async function onTgtCountryChange() {
+    const iso2 = document.getElementById('tgt-country').value;
+    document.getElementById('tgt-state').innerHTML    = '<option value="">Select state…</option>';
+    document.getElementById('tgt-district').innerHTML = '<option value="">Select district…</option>';
+    if (!iso2) return;
+    const t = document.getElementById('ad-target').value;
+    if (t==='pincode'||t==='district'||t==='state') {
+      _setOpts('tgt-state', [], i=>i.iso2, i=>i.name, 'Loading states…', true);
+      const states = await _csc(`/countries/${iso2}/states`);
+      states.sort((a,b)=>a.name.localeCompare(b.name));
+      _setOpts('tgt-state', states, i=>i.iso2, i=>i.name, 'Select state / province');
+    }
+  }
+
+  async function onTgtStateChange() {
+    const stateEl   = document.getElementById('tgt-state');
+    const iso2      = stateEl.value;
+    const countryEl = document.getElementById('tgt-country');
+    const cIso2     = countryEl.value;
+    document.getElementById('tgt-district').innerHTML = '<option value="">Select district…</option>';
+    if (!iso2 || !cIso2) return;
+    const t = document.getElementById('ad-target').value;
+    if (t==='pincode'||t==='district') {
+      _setOpts('tgt-district', [], i=>i.name, i=>i.name, 'Loading cities…', true);
+      const cities = await _csc(`/countries/${cIso2}/states/${iso2}/cities`);
+      cities.sort((a,b)=>a.name.localeCompare(b.name));
+      _setOpts('tgt-district', cities, i=>i.name, i=>i.name, 'Select city / district');
+    }
+  }
+
+  // Load countries on page load
+  (async () => {
+    _setOpts('tgt-country', [], i=>i.iso2, i=>i.name, 'Loading countries…', true);
+    const countries = await _csc('/countries');
+    countries.sort((a,b)=>a.name.localeCompare(b.name));
+    const el = document.getElementById('tgt-country');
+    el.disabled = false;
+    el.innerHTML = '<option value="">Select country</option>' +
+      countries.map(c => `<option value="${c.iso2}" data-name="${c.name}">${c.name}</option>`).join('');
+    // Default to India
+    el.value = 'IN';
+    onTgtCountryChange();
+  })();
+
+  // Trigger initial show/hide for default "pincode" selection
+  onTargetTypeChange();
+
+  // ── Profile ───────────────────────────────────────────
+  async function loadProfile() {
+    const { data: { user } } = await db.auth.getUser();
+    if (!user) return;
+    const meta = user.user_metadata || {};
+    document.getElementById('prof-name').value    = meta.name    || '';
+    document.getElementById('prof-email').value   = user.email   || user.phone || '';
+    document.getElementById('prof-mobile').value  = meta.mobile  || (user.phone || '');
+
+    const { data: adv } = await db.from('advertisers')
+      .select('business_name, business_category, business_url, gstin, gst_state')
+      .eq('user_id', user.id).single();
+    if (adv) {
+      document.getElementById('prof-biz-name').value = adv.business_name  || '';
+      document.getElementById('prof-biz-cat').value  = adv.business_category || '';
+      document.getElementById('prof-biz-url').value  = adv.business_url   || '';
+      document.getElementById('prof-gstin').value    = adv.gstin           || '';
+      document.getElementById('prof-gst-state').value = adv.gst_state     || '';
+      if (adv.gstin) validateGSTIN(document.getElementById('prof-gstin'));
+    }
+  }
+
+  async function saveProfile() {
+    const { data: { user } } = await db.auth.getUser();
+    if (!user) return;
+
+    const name   = document.getElementById('prof-name').value.trim();
+    const mobile = document.getElementById('prof-mobile').value.trim();
+    const gstin  = document.getElementById('prof-gstin').value.trim().toUpperCase();
+
+    if (gstin && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(gstin)) {
+      showAlert('profile', 'Invalid GSTIN format. Please check and try again.', 'error');
+      return;
+    }
+
+    // Update user metadata
+    const { error: metaErr } = await db.auth.updateUser({
+      data: { name, mobile }
+    });
+    if (metaErr) { showAlert('profile', metaErr.message, 'error'); return; }
+
+    // Update advertisers table
+    const payload = {
+      business_name:     document.getElementById('prof-biz-name').value.trim(),
+      business_category: document.getElementById('prof-biz-cat').value,
+      business_url:      document.getElementById('prof-biz-url').value.trim() || null,
+      gstin:             gstin || null,
+      gst_state:         document.getElementById('prof-gst-state').value.trim() || null,
+    };
+    const { error: advErr } = await db.from('advertisers')
+      .update(payload).eq('user_id', user.id);
+    if (advErr) { showAlert('profile', advErr.message, 'error'); return; }
+
+    // Refresh nav name
+    if (name) {
+      document.getElementById('nav-user-av').textContent   = name.charAt(0).toUpperCase();
+      document.getElementById('nav-user-name').textContent = name.split(' ')[0];
+    }
+    showAlert('profile', '✅ Profile saved successfully!', 'success');
+  }
+
+  function validateGSTIN(input) {
+    const val = input.value.trim();
+    const ok  = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(val);
+    const chk = document.getElementById('gstin-check');
+    const hint = document.getElementById('gstin-hint');
+    if (!val) { chk.style.display = 'none'; hint.textContent = '15-character GST Identification Number'; hint.style.color = '#aaa'; return; }
+    chk.style.display = 'inline';
+    if (ok) {
+      chk.textContent = '✅'; hint.textContent = 'Valid GSTIN format'; hint.style.color = '#27ae60';
+    } else {
+      chk.textContent = '❌'; hint.textContent = 'Invalid format — e.g. 29ABCDE1234F1Z5'; hint.style.color = '#e74c3c';
+    }
+  }
+
+  // ── Wallet balance gate ───────────────────────────────
+  function _updateLowBalBanner() {
+    const banner = document.getElementById('low-bal-banner');
+    if (!banner) return;
+    if (_walletBalance <= 0) banner.classList.add('show');
+    else banner.classList.remove('show');
+  }
+
+  function openAddFunds(msg) {
+    document.getElementById('funds-cur-bal').textContent = _rupToCoins(_walletBalance) + ' coins (₹' + _walletBalance.toFixed(2) + ')';
+    const msgEl = document.getElementById('funds-msg');
+    if (msg) { msgEl.textContent = msg; msgEl.style.display = 'block'; }
+    else msgEl.style.display = 'none';
+    document.getElementById('funds-overlay').classList.add('open');
+    selectAmt(document.querySelector('.amt-chip.sel') || document.querySelector('.amt-chip'), 100);
+  }
+
+  function closeAddFunds() {
+    document.getElementById('funds-overlay').classList.remove('open');
+  }
+
+  function selectAmt(el, amt) {
+    document.querySelectorAll('.amt-chip').forEach(c => c.classList.remove('sel'));
+    if (el) el.classList.add('sel');
+    document.getElementById('funds-amount').value = amt;
+    document.getElementById('funds-pay-amt').textContent = amt.toLocaleString('en-IN');
+    const cp = document.getElementById('funds-coins-preview');
+    if (cp) cp.textContent = _rupToCoins(amt);
+  }
+
+  function clearChipSel(val) {
+    document.querySelectorAll('.amt-chip').forEach(c => c.classList.remove('sel'));
+    const n = parseInt(val) || 0;
+    document.getElementById('funds-pay-amt').textContent = n.toLocaleString('en-IN');
+    const cp = document.getElementById('funds-coins-preview');
+    if (cp) cp.textContent = _rupToCoins(n);
+  }
+
+  function payWith(provider) {
+    const amt = parseInt(document.getElementById('funds-amount').value) || 100;
+    const upiId = 'anaar@upi'; // merchant UPI
+    const note  = encodeURIComponent('Anaar Wallet Top-up');
+    const name  = encodeURIComponent('Anaar Ads');
+    const urls = {
+      gpay:    `tez://upi/pay?pa=${upiId}&pn=${name}&am=${amt}&cu=INR&tn=${note}`,
+      phonepe: `phonepe://pay?pa=${upiId}&pn=${name}&am=${amt}&cu=INR&tn=${note}`,
+      paytm:   `paytmmp://pay?pa=${upiId}&pn=${name}&am=${amt}&cu=INR&tn=${note}`,
+      bhim:    `upi://pay?pa=${upiId}&pn=${name}&am=${amt}&cu=INR&tn=${note}`,
+    };
+    const url = urls[provider] || urls.bhim;
+    window.location.href = url;
+  }
+
+  function payWithUpiId() {
+    const upiId = document.getElementById('funds-upi-id').value.trim();
+    if (!upiId.includes('@')) { alert('Please enter a valid UPI ID (e.g. name@upi)'); return; }
+    submitFundsPayment(upiId);
+  }
+
+  function submitFundsPayment(upiId) {
+    const amt = parseInt(document.getElementById('funds-amount').value) || 100;
+    if (amt < 50) { alert('Minimum ₹50 required.'); return; }
+    // In production, this would initiate a real payment gateway flow.
+    // For now, show a contact-admin instruction.
+    closeAddFunds();
+    alert(`To add ₹${amt} to your wallet:\n\nSend ₹${amt} to UPI ID: anaar@upi\nAfter payment, WhatsApp your screenshot to our support team and your balance will be updated within a few minutes.\n\nOr use the Chat Support to notify us!`);
+  }
+
+  // ── Chat helpers ──────────────────────────────────────
+  let _chatUser = null;
+  function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function fmtTime(ts) {
+    const d = new Date(ts);
+    return d.toLocaleDateString('en-IN',{day:'numeric',month:'short'}) + ' ' +
+           d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+  }
+
+  async function loadChat() {
+    const { data: { user } } = await db.auth.getUser();
+    if (!user) return;
+    _chatUser = user;
+    const box = document.getElementById('chat-messages');
+    const { data } = await db.from('support_messages')
+      .select('*').eq('user_id', user.id)
+      .order('created_at', { ascending: true });
+
+    if (!data || data.length === 0) {
+      box.innerHTML = '<div class="chat-empty"><div class="ce-icon">💬</div><p>No messages yet.<br><span style="font-size:.82rem">Send a message to get help from our support team.</span></p></div>';
+      return;
+    }
+    box.innerHTML = data.map(m => {
+      const isUser = m.sender === 'user';
+      return `<div>
+        <div class="chat-bubble ${isUser?'bubble-user':'bubble-admin'}">${esc(m.message)}</div>
+        <div class="bubble-meta" style="text-align:${isUser?'right':'left'}">${isUser?'You':'👤 Admin'} · ${fmtTime(m.created_at)}</div>
+      </div>`;
+    }).join('');
+    box.scrollTop = box.scrollHeight;
+    await db.from('support_messages').update({ is_read: true })
+      .eq('user_id', user.id).eq('sender', 'admin').eq('is_read', false);
+    document.getElementById('chat-badge').style.display = 'none';
+  }
+
+  async function sendChatMsg() {
+    const input = document.getElementById('chat-input');
+    const msg = input.value.trim();
+    if (!msg || !_chatUser) return;
+    const btn = document.getElementById('chat-send-btn');
+    btn.disabled = true;
+    const { error } = await db.from('support_messages').insert({
+      user_id: _chatUser.id, message: msg, sender: 'user'
+    });
+    if (!error) { input.value = ''; await loadChat(); }
+    btn.disabled = false;
+    input.focus();
+  }
+
+  async function checkUnreadChat() {
+    const { data: { user } } = await db.auth.getUser();
+    if (!user) return;
+    const { count } = await db.from('support_messages')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id).eq('sender', 'admin').eq('is_read', false);
+    const badge = document.getElementById('chat-badge');
+    if (count > 0) {
+      badge.textContent = count > 9 ? '9+' : count;
+      badge.style.display = 'inline-flex';
+    } else {
+      badge.style.display = 'none';
+    }
+  }
 </script>
+<script>if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js').catch(() => {}); }</script>
+
+<!-- ── ADD FUNDS MODAL ── -->
+<div class="funds-overlay" id="funds-overlay" onclick="if(event.target===this)closeAddFunds()">
+  <div class="funds-modal">
+    <div class="funds-header">
+      <div>
+        <h3>💳 Add Funds to Wallet</h3>
+        <div class="cur-bal">Current Balance: <span id="funds-cur-bal">0 coins (₹0.00)</span></div>
+      </div>
+      <button class="funds-close" onclick="closeAddFunds()">✕</button>
+    </div>
+    <div class="funds-body">
+      <div id="funds-msg" style="font-size:.82rem;color:#c0392b;margin-bottom:.8rem;font-weight:600;display:none"></div>
+
+      <!-- Quick amount chips -->
+      <div style="font-size:.8rem;font-weight:700;color:#888;margin-bottom:.5rem;text-transform:uppercase;letter-spacing:.05em">Select Amount</div>
+      <div class="funds-amounts">
+        <div class="amt-chip sel" onclick="selectAmt(this,100)">₹100<small>Starter</small></div>
+        <div class="amt-chip" onclick="selectAmt(this,300)">₹300<small>Popular</small></div>
+        <div class="amt-chip" onclick="selectAmt(this,500)">₹500<small>Best Value</small></div>
+        <div class="amt-chip" onclick="selectAmt(this,1000)">₹1,000<small>Power</small></div>
+        <div class="amt-chip" onclick="selectAmt(this,2000)">₹2,000<small>Pro</small></div>
+        <div class="amt-chip" onclick="selectAmt(this,5000)">₹5,000<small>Business</small></div>
+      </div>
+
+      <!-- Custom amount -->
+      <div class="funds-custom">
+        <span style="font-size:.85rem;color:#888;font-weight:600">₹</span>
+        <input type="number" id="funds-amount" value="100" min="50" max="100000" placeholder="Enter amount" oninput="clearChipSel(this.value)" />
+      </div>
+
+      <!-- Coin preview -->
+      <div style="text-align:center;margin:.6rem 0 .2rem;font-size:.9rem;color:var(--red);font-weight:700">
+        🪙 You'll receive <span id="funds-coins-preview">2,00,000</span> coins
+        <div style="font-size:.75rem;font-weight:400;color:#888;margin-top:2px">Rate: ₹0.05 = 100 coins</div>
+      </div>
+
+      <div class="funds-divider"><span>Pay via</span></div>
+
+      <!-- UPI app buttons -->
+      <div class="upi-options">
+        <button class="upi-btn" onclick="payWith('gpay')">
+          <span style="font-size:1.3rem">🟢</span> Google Pay
+        </button>
+        <button class="upi-btn" onclick="payWith('phonepe')">
+          <span style="font-size:1.3rem">🟣</span> PhonePe
+        </button>
+        <button class="upi-btn" onclick="payWith('paytm')">
+          <span style="font-size:1.3rem">🔵</span> Paytm
+        </button>
+        <button class="upi-btn" onclick="payWith('bhim')">
+          <span style="font-size:1.3rem">🇮🇳</span> BHIM UPI
+        </button>
+      </div>
+
+      <!-- Manual UPI ID -->
+      <div class="upi-id-row">
+        <input class="upi-id-input" id="funds-upi-id" placeholder="Or enter your UPI ID (e.g. name@upi)" type="text" />
+        <button class="lbb-btn" onclick="payWithUpiId()" style="padding:.6rem 1rem">Pay</button>
+      </div>
+
+      <button class="funds-pay-btn" id="funds-pay-btn" onclick="submitFundsPayment()">
+        Proceed to Pay ₹<span id="funds-pay-amt">100</span>
+      </button>
+      <div class="funds-note">
+        Payments are secure and encrypted.<br>
+        Funds will reflect in your wallet within a few minutes after verification.
+      </div>
+    </div>
+  </div>
+</div>
 </body>
 </html>

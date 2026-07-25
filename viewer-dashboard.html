@@ -4,6 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Viewer Dashboard – Anaar</title>
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#0d0d0d" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Anaar" />
+  <link rel="apple-touch-icon" href="icon.svg" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     const SUPABASE_URL  = 'https://qkbpdmeghjuucplbnnsz.supabase.co';
@@ -14,142 +19,359 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --red:   #8B1A1A; --red2: #B22222; --gold: #FFD700;
-      --dark:  #1a1a1a; --gray: #f4f4f4; --white: #ffffff;
-      --green: #27ae60; --shadow: 0 4px 20px rgba(0,0,0,0.10);
+      --red:    #E53935;
+      --red2:   #c62828;
+      --gold:   #FFD700;
+      --gold2:  #FFC107;
+      --bg:     #0d0d0d;
+      --bg2:    #141414;
+      --card:   #1a1a1a;
+      --card2:  #222222;
+      --border: #2a2a2a;
+      --text:   #e8e8e8;
+      --muted:  #888;
+      --green:  #2ecc71;
+      --shadow: 0 4px 24px rgba(0,0,0,0.5);
     }
-    body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--gray); color: var(--dark); }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
 
     /* ── TOP NAV ── */
     .topnav {
-      background: var(--red); height: 60px;
+      background: var(--bg2);
+      height: 60px;
       display: flex; align-items: center; justify-content: space-between;
-      padding: 0 1.5rem; position: sticky; top: 0; z-index: 100;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+      padding: 0 1.5rem;
+      position: sticky; top: 0; z-index: 100;
+      border-bottom: 1px solid var(--border);
+      box-shadow: 0 2px 16px rgba(0,0,0,0.6);
     }
     .topnav .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
     .topnav .logo {
       width: 36px; height: 36px; border-radius: 50%;
-      background: var(--gold); display: flex; align-items: center; justify-content: center;
-      font-weight: 900; font-size: 1rem; color: var(--red);
+      background: var(--gold);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 900; font-size: 1rem; color: #111;
     }
     .topnav .brand-name { color: #fff; font-weight: 700; font-size: 1.1rem; }
     .topnav .nav-right  { display: flex; align-items: center; gap: 1rem; }
     .topnav .coin-chip  {
-      background: var(--gold); color: var(--red); border-radius: 20px;
+      background: linear-gradient(135deg, #2a2000, #3d3000);
+      color: var(--gold);
+      border: 1px solid rgba(255,215,0,0.3);
+      border-radius: 20px;
       padding: 4px 14px; font-weight: 800; font-size: 0.85rem;
     }
     .topnav .btn-logout {
-      background: rgba(255,255,255,0.15); color: #fff;
-      border: 1px solid rgba(255,255,255,0.3); border-radius: 8px;
+      background: rgba(255,255,255,0.07);
+      color: rgba(255,255,255,0.7);
+      border: 1px solid var(--border);
+      border-radius: 8px;
       padding: 5px 14px; font-size: 0.82rem; font-weight: 600; cursor: pointer;
+      transition: .2s;
     }
-    .topnav .btn-logout:hover { background: rgba(255,255,255,0.25); }
+    .topnav .btn-logout:hover { background: rgba(255,255,255,0.12); color: #fff; }
+    .topnav .user-chip {
+      display: flex; align-items: center; gap: 6px;
+      background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 20px; padding: 3px 12px 3px 4px;
+    }
+    .topnav .user-av {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: var(--gold); color: #111;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 900; font-size: .9rem; flex-shrink: 0;
+    }
+    .topnav .user-chip span { color: #ddd; font-size: .82rem; font-weight: 700; max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .online-dot { width: 8px; height: 8px; border-radius: 50%; background: #2ecc71; display: inline-block; margin-left: 2px; box-shadow: 0 0 6px #2ecc71; flex-shrink: 0; }
 
     /* ── LAYOUT ── */
     .layout { display: flex; min-height: calc(100vh - 60px); }
 
     /* ── SIDEBAR ── */
-    .sidebar { width: 220px; background: var(--dark); padding: 1.5rem 0; flex-shrink: 0; }
+    .sidebar {
+      width: 220px; background: var(--bg2);
+      padding: 1.2rem 0; flex-shrink: 0;
+      border-right: 1px solid var(--border);
+    }
     .sidebar-item {
       display: flex; align-items: center; gap: 12px;
-      padding: .75rem 1.5rem; color: rgba(255,255,255,.65);
-      font-size: .88rem; font-weight: 500; cursor: pointer;
+      padding: .72rem 1.5rem; color: var(--muted);
+      font-size: .88rem; font-weight: 600; cursor: pointer;
       transition: all .2s; border-left: 3px solid transparent;
       text-decoration: none;
     }
-    .sidebar-item:hover { color: #fff; background: rgba(255,255,255,.06); }
-    .sidebar-item.active { color: var(--gold); border-left-color: var(--gold); background: rgba(255,215,0,.07); }
-    .sidebar-icon { font-size: 1.1rem; width: 20px; text-align: center; }
-    .sidebar-divider { height: 1px; background: rgba(255,255,255,.08); margin: .8rem 1.5rem; }
+    .sidebar-item:hover { color: #fff; background: rgba(255,255,255,.05); }
+    .sidebar-item.active { color: var(--gold); border-left-color: var(--gold); background: rgba(255,215,0,.06); }
+    .sidebar-icon { font-size: 1.05rem; width: 20px; text-align: center; }
+    .sidebar-divider { height: 1px; background: var(--border); margin: .8rem 1.5rem; }
 
     /* ── MAIN ── */
     .main { flex: 1; padding: 2rem; overflow-y: auto; }
-    .page-title { font-size: 1.4rem; font-weight: 800; margin-bottom: 1.5rem; }
+    .page-title { font-size: 1.35rem; font-weight: 800; margin-bottom: 1.5rem; color: #fff; }
 
     /* ── STAT CARDS ── */
     .stats-row { display: grid; grid-template-columns: repeat(auto-fit,minmax(150px,1fr)); gap: 1rem; margin-bottom: 2rem; }
-    .stat-card { background: var(--white); border-radius: 14px; padding: 1.2rem 1.5rem; box-shadow: var(--shadow); }
-    .stat-card .s-label { font-size: .78rem; color: #888; font-weight: 600; text-transform: uppercase; letter-spacing: .4px; }
-    .stat-card .s-value { font-size: 1.7rem; font-weight: 900; color: var(--red); margin: .3rem 0 0; }
-    .stat-card .s-sub   { font-size: .75rem; color: #aaa; }
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px; padding: 1.2rem 1.5rem;
+      box-shadow: var(--shadow);
+      position: relative; overflow: hidden;
+    }
+    .stat-card::after {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, var(--gold), var(--red));
+    }
+    .stat-card .s-label { font-size: .75rem; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
+    .stat-card .s-value { font-size: 1.7rem; font-weight: 900; color: var(--gold); margin: .3rem 0 0; }
+    .stat-card .s-sub   { font-size: .73rem; color: #555; margin-top: .2rem; }
 
     /* ── PANEL ── */
-    .panel { background: var(--white); border-radius: 16px; box-shadow: var(--shadow); overflow: hidden; margin-bottom: 1.5rem; }
-    .panel-head { background: var(--red); color: #fff; padding: 1rem 1.5rem; display: flex; align-items: center; justify-content: space-between; }
-    .panel-head h3 { font-size: 1rem; font-weight: 700; }
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px; box-shadow: var(--shadow);
+      overflow: hidden; margin-bottom: 1.5rem;
+    }
+    .panel-head {
+      background: var(--card2);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 1.5rem;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .panel-head h3 { font-size: 1rem; font-weight: 700; color: #fff; }
     .panel-body { padding: 1.5rem; }
 
     /* ── AD CARDS ── */
     .ads-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(260px,1fr)); gap: 1.2rem; }
-    .ad-card  { border-radius: 14px; overflow: hidden; box-shadow: var(--shadow); transition: transform .2s; }
-    .ad-card:hover { transform: translateY(-4px); }
+    .ad-card  {
+      border-radius: 14px; overflow: hidden;
+      background: var(--card2);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow); transition: transform .2s, border-color .2s;
+    }
+    .ad-card:hover { transform: translateY(-4px); border-color: rgba(255,215,0,.3); }
     .ad-card .ad-img {
       width: 100%; height: 160px; object-fit: cover; display: block;
-      background: linear-gradient(135deg,var(--red),var(--red2));
     }
     .ad-img-placeholder {
       width: 100%; height: 160px;
-      background: linear-gradient(135deg,var(--red),#5a0000);
+      background: linear-gradient(135deg, #1a0a0a, #2d1010);
       display: flex; align-items: center; justify-content: center;
       font-size: 3rem;
+      border-bottom: 1px solid var(--border);
     }
-    .ad-card .ad-body { padding: 1rem; background: var(--white); }
-    .ad-card .ad-title { font-weight: 700; font-size: .92rem; margin-bottom: .4rem; }
-    .ad-card .ad-meta  { font-size: .78rem; color: #888; margin-bottom: .8rem; }
+    .ad-card .ad-body { padding: 1rem; }
+    .ad-card .ad-title { font-weight: 700; font-size: .92rem; margin-bottom: .4rem; color: #fff; }
+    .ad-card .ad-meta  { font-size: .78rem; color: var(--muted); margin-bottom: .8rem; }
     .ad-card .ad-reward {
-      background: #fff8e1; border-radius: 8px;
+      background: rgba(255,215,0,.08);
+      border: 1px solid rgba(255,215,0,.2);
+      border-radius: 8px;
       padding: .4rem .8rem; font-size: .8rem; font-weight: 700;
-      color: var(--red); display: flex; justify-content: space-between;
-      align-items: center; margin-bottom: .8rem;
+      color: var(--gold);
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: .8rem;
     }
     .btn-watch {
-      display: block; width: 100%; background: var(--red); color: #fff;
+      display: block; width: 100%;
+      background: linear-gradient(135deg, var(--red), var(--red2));
+      color: #fff;
       border: none; border-radius: 8px; padding: .6rem;
       font-weight: 700; font-size: .85rem; cursor: pointer; transition: opacity .2s;
     }
-    .btn-watch:hover { opacity: .88; }
-    .btn-watch.watched { background: var(--green); cursor: default; }
+    .btn-watch:hover { opacity: .85; }
+    .btn-watch.watched { background: linear-gradient(135deg, #1a4a2e, #27ae60); cursor: default; }
+    .btn-watch.btn-click { background: linear-gradient(135deg, #7a5c00, var(--gold)); color: #1a1a1a; }
 
     /* ── WALLET CARD ── */
     .wallet-hero {
-      background: linear-gradient(135deg,var(--red),var(--red2));
+      background: linear-gradient(135deg, #1a0a00, #2d1500, #1a0a00);
+      border: 1px solid rgba(255,215,0,.2);
       border-radius: 16px; padding: 2rem; color: #fff;
       text-align: center; margin-bottom: 1.5rem;
+      box-shadow: 0 0 40px rgba(255,215,0,.06);
     }
     .wallet-hero .w-coins { font-size: 2.8rem; font-weight: 900; color: var(--gold); }
-    .wallet-hero .w-cash  { font-size: 1.1rem; opacity: .85; margin-top: .3rem; }
-    .wallet-hero .w-label { font-size: .82rem; opacity: .65; margin-bottom: .5rem; }
+    .wallet-hero .w-cash  { font-size: 1.1rem; color: rgba(255,255,255,.7); margin-top: .3rem; }
+    .wallet-hero .w-label { font-size: .82rem; color: rgba(255,215,0,.6); margin-bottom: .5rem; }
 
     /* ── HISTORY TABLE ── */
     .hist-table { width: 100%; border-collapse: collapse; font-size: .85rem; }
-    .hist-table th { background: #f9f9f9; padding: .7rem 1rem; text-align: left; font-weight: 700; color: #555; font-size: .78rem; text-transform: uppercase; }
-    .hist-table td { padding: .7rem 1rem; border-bottom: 1px solid #f0f0f0; }
+    .hist-table th {
+      background: var(--bg);
+      padding: .7rem 1rem; text-align: left;
+      font-weight: 700; color: var(--muted);
+      font-size: .75rem; text-transform: uppercase; letter-spacing: .4px;
+      border-bottom: 1px solid var(--border);
+    }
+    .hist-table td { padding: .7rem 1rem; border-bottom: 1px solid var(--border); color: var(--text); }
     .hist-table tr:last-child td { border: none; }
+    .hist-table tr:hover td { background: rgba(255,255,255,.02); }
     .earn-badge { color: var(--green); font-weight: 700; }
 
     /* ── EMPTY STATE ── */
-    .empty { text-align: center; padding: 3rem 1rem; color: #aaa; }
+    .empty { text-align: center; padding: 3rem 1rem; color: #555; }
     .empty .e-icon { font-size: 3rem; margin-bottom: .8rem; }
 
     /* ── VIEWS ── */
-    .view { display: none; }
+    .view { display: none; animation: fadeIn .2s ease; }
     .view.active { display: block; }
+    @keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:none} }
+
+    /* ── UPGRADE CARDS ── */
+    .upgrade-card {
+      border: 2px solid var(--border);
+      border-radius: 16px; padding: 1.5rem;
+      text-align: center; cursor: pointer;
+      transition: all .2s;
+      background: var(--card);
+      color: var(--text);
+    }
+    .upgrade-card:hover { border-color: var(--gold); background: rgba(255,215,0,.04); }
+
+    /* ── CHAT ── */
+    .chat-wrap { display:flex; flex-direction:column; height:calc(100vh - 230px); min-height:400px; background:var(--card); border-radius:0 0 14px 14px; }
+    .chat-messages { flex:1; overflow-y:auto; padding:1.2rem; display:flex; flex-direction:column; gap:.8rem; }
+    .chat-bubble { max-width:78%; padding:.65rem 1rem; border-radius:16px; font-size:.88rem; line-height:1.55; word-break:break-word; }
+    .bubble-user  { align-self:flex-end; background:var(--gold); color:#111; border-bottom-right-radius:4px; font-weight:600; }
+    .bubble-admin { align-self:flex-start; background:var(--card2); color:var(--text); border-bottom-left-radius:4px; border:1px solid var(--border); }
+    .bubble-meta  { font-size:.7rem; color:var(--muted); margin-top:3px; }
+    .chat-input-row { display:flex; gap:.6rem; padding:1rem; border-top:1px solid var(--border); }
+    .chat-input { flex:1; background:var(--card2); border:1px solid var(--border); border-radius:10px; padding:.65rem 1rem; color:var(--text); font-size:.88rem; resize:none; font-family:inherit; outline:none; }
+    .chat-input:focus { border-color:var(--gold); }
+    .chat-send-btn { background:var(--red); color:#fff; border:none; border-radius:10px; padding:.65rem 1.3rem; font-weight:700; cursor:pointer; font-size:.88rem; transition:.2s; }
+    .chat-send-btn:hover { background:var(--red2); }
+    .chat-send-btn:disabled { opacity:.5; cursor:not-allowed; }
+    .chat-empty { text-align:center; padding:3rem 1rem; color:var(--muted); }
+    .chat-empty .ce-icon { font-size:3rem; margin-bottom:.8rem; }
+    .chat-badge { background:#e53935; color:#fff; border-radius:50%; width:18px; height:18px; font-size:.65rem; font-weight:900; display:inline-flex; align-items:center; justify-content:center; margin-left:auto; }
 
     /* ── TOAST ── */
     #toast {
       display:none; position:fixed; bottom:1.5rem; right:1.5rem;
-      background:var(--dark); color:#fff; padding:.8rem 1.2rem;
+      background: var(--card2); color:#fff; padding:.8rem 1.2rem;
       border-radius:10px; font-size:.85rem; font-weight:600;
-      box-shadow:0 8px 24px rgba(0,0,0,0.25); z-index:9999;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.7); z-index:9999;
       border-left:4px solid var(--gold);
     }
+
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #444; }
 
     @media(max-width:700px){
       .sidebar { display:none; }
       .main { padding:1rem; }
       .stats-row { grid-template-columns:1fr 1fr; }
       .ads-grid { grid-template-columns:1fr; }
+    }
+
+    /* ── AD VIEWER MODAL ── */
+    .ad-viewer-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.93);
+      z-index: 9999;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      gap: .8rem;
+    }
+    .ad-viewer-overlay.open { display: flex; }
+    .av-close {
+      position: absolute; top: 1rem; right: 1.2rem;
+      background: rgba(255,255,255,.1); border: none;
+      color: #fff; font-size: 1.3rem; cursor: pointer;
+      border-radius: 50%; width: 38px; height: 38px;
+      display: flex; align-items: center; justify-content: center;
+      transition: background .2s;
+    }
+    .av-close:hover { background: rgba(255,255,255,.2); }
+    .av-img {
+      max-width: 90vw; max-height: 52vh;
+      border-radius: 12px; object-fit: contain;
+      box-shadow: 0 8px 48px rgba(0,0,0,.6);
+    }
+    .av-title {
+      color: #fff; font-size: 1.05rem;
+      font-weight: 700; text-align: center;
+      max-width: 88vw;
+    }
+    .av-timer-wrap {
+      position: relative; width: 80px; height: 80px;
+    }
+    .av-timer-svg { transform: rotate(-90deg); }
+    #av-timer-circle { transition: stroke-dashoffset .9s linear; }
+    .av-timer-num {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--gold); font-size: 1.5rem; font-weight: 900;
+    }
+    .av-status {
+      color: #aaa; font-size: .85rem;
+      text-align: center; max-width: 85vw;
+    }
+    .av-success {
+      color: #4caf50; font-size: 1rem;
+      font-weight: 700; text-align: center;
+    }
+    .av-wa-btn {
+      align-items: center; justify-content: center; gap: 8px;
+      background: #25D366; color: #fff;
+      border-radius: 10px; padding: .7rem 1.6rem;
+      font-weight: 700; font-size: .95rem;
+      text-decoration: none; margin-top: .4rem;
+      transition: opacity .2s;
+    }
+    .av-wa-btn:hover { opacity: .85; }
+
+    /* ── SOCIAL MEDIA VIEWER ── */
+    .sm-desc {
+      color: #aaa; font-size: .82rem;
+      text-align: center; max-width: 85vw;
+      margin-top: -.2rem; margin-bottom: .3rem;
+      line-height: 1.4;
+      display: -webkit-box; -webkit-line-clamp: 3; line-clamp: 3;
+      -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .sm-like-btn {
+      width: 100%; padding: .75rem;
+      background: linear-gradient(135deg, #1877F2, #0a5ab5);
+      color: #fff; border: none; border-radius: 10px;
+      font-size: 1rem; font-weight: 700; cursor: pointer;
+      transition: opacity .2s;
+    }
+    .sm-like-btn:disabled { opacity: .6; cursor: default; }
+    .sm-like-btn:not(:disabled):hover { opacity: .85; }
+    .sm-share-btn {
+      width: 100%; padding: .75rem;
+      background: rgba(255,255,255,.1); color: #fff;
+      border: 1px solid rgba(255,255,255,.2); border-radius: 10px;
+      font-size: 1rem; font-weight: 700; cursor: pointer;
+      transition: background .2s;
+    }
+    .sm-share-btn:hover { background: rgba(255,255,255,.18); }
+    .sm-claim-btn {
+      width: 100%; max-width: 300px;
+      padding: .8rem 1rem; margin-top: .5rem;
+      background: linear-gradient(135deg, #1a4a2e, #27ae60);
+      color: #fff; border: none; border-radius: 10px;
+      font-size: .95rem; font-weight: 700; cursor: pointer;
+      transition: opacity .2s; animation: pulse-green .8s ease infinite alternate;
+    }
+    .sm-claim-btn:disabled { opacity: .6; cursor: default; animation: none; }
+    @keyframes pulse-green {
+      from { box-shadow: 0 0 0 0 rgba(39,174,96,.5); }
+      to   { box-shadow: 0 0 0 10px rgba(39,174,96,0); }
     }
   </style>
 </head>
@@ -163,6 +385,11 @@
   </a>
   <div class="nav-right">
     <div class="coin-chip">🪙 <span id="nav-coins">0</span> coins</div>
+    <div class="user-chip" id="nav-user-chip" style="display:none">
+      <div class="user-av" id="nav-user-av">U</div>
+      <span id="nav-user-name">User</span>
+      <span class="online-dot"></span>
+    </div>
     <button class="btn-logout" onclick="logout()">Sign Out</button>
   </div>
 </nav>
@@ -182,6 +409,10 @@
     </div>
     <div class="sidebar-item" onclick="switchView('upgrade', this)">
       <span class="sidebar-icon">⬆️</span> Upgrade Role
+    </div>
+    <div class="sidebar-item" id="sb-chat" onclick="switchView('chat', this)" style="display:flex;align-items:center;gap:6px;">
+      <span class="sidebar-icon">💬</span> Chat Support
+      <span class="chat-badge" id="chat-badge" style="display:none">!</span>
     </div>
     <div class="sidebar-divider"></div>
     <a class="sidebar-item" id="view-admin-link" href="admin.html" style="display:none;">
@@ -249,10 +480,10 @@
           <table class="hist-table">
             <thead><tr><th>Ad Type</th><th>Coins per View</th><th>Cash Value</th></tr></thead>
             <tbody>
-              <tr><td>🖼️ Image Slide</td><td>300 coins</td><td>0.15 paisa</td></tr>
-              <tr><td>🎬 Video Ad</td><td>400 coins</td><td>0.20 paisa</td></tr>
-              <tr><td>📲 Social Media</td><td>600 coins</td><td>0.30 paisa</td></tr>
-              <tr><td>📱 App &amp; Website</td><td>1000 coins</td><td>0.50 paisa</td></tr>
+              <tr><td>🖼️ Image Slide</td><td>300 coins / click</td><td>₹0.15 per click (CPC)</td></tr>
+              <tr><td>🎬 Video Ad</td><td>500 coins / click</td><td>₹0.25 per click (CPC)</td></tr>
+              <tr><td>📲 Social Media</td><td>800 coins / like</td><td>₹0.40 per like (CPL)</td></tr>
+              <tr><td>📱 App &amp; Website</td><td>1500 coins / click</td><td>₹0.75 per click (CPI)</td></tr>
             </tbody>
           </table>
         </div>
@@ -281,19 +512,37 @@
       <p style="color:#888;margin-bottom:1.5rem;font-size:.9rem;">Switch from Viewer to Advertiser or get both roles.</p>
       <div id="upgrade-alert" style="display:none;padding:.8rem 1rem;border-radius:10px;margin-bottom:1rem;font-weight:600;font-size:.88rem;"></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;max-width:600px;">
-
-        <div onclick="upgradeRole('advertiser')" style="border:2px solid #e0e0e0;border-radius:16px;padding:1.5rem;text-align:center;cursor:pointer;transition:all .2s;" onmouseover="this.style.borderColor='var(--red)'" onmouseout="this.style.borderColor='#e0e0e0'">
+        <div class="upgrade-card" onclick="upgradeRole('advertiser')">
           <div style="font-size:2.5rem;margin-bottom:.5rem;">📢</div>
-          <div style="font-weight:800;font-size:1rem;margin-bottom:.3rem;">Advertiser</div>
-          <div style="font-size:.8rem;color:#888;">Run ads &amp; grow your business</div>
+          <div style="font-weight:800;font-size:1rem;margin-bottom:.3rem;color:#fff;">Advertiser</div>
+          <div style="font-size:.8rem;color:var(--muted);">Run ads &amp; grow your business</div>
         </div>
-
-        <div onclick="upgradeRole('both')" style="border:2px solid #e0e0e0;border-radius:16px;padding:1.5rem;text-align:center;cursor:pointer;transition:all .2s;" onmouseover="this.style.borderColor='var(--red)'" onmouseout="this.style.borderColor='#e0e0e0'">
+        <div class="upgrade-card" onclick="upgradeRole('both')">
           <div style="font-size:2.5rem;margin-bottom:.5rem;">⭐</div>
-          <div style="font-weight:800;font-size:1rem;margin-bottom:.3rem;">Both</div>
-          <div style="font-size:.8rem;color:#888;">Watch ads &amp; also run your own</div>
+          <div style="font-weight:800;font-size:1rem;margin-bottom:.3rem;color:#fff;">Both</div>
+          <div style="font-size:.8rem;color:var(--muted);">Watch ads &amp; also run your own</div>
         </div>
+      </div>
+    </div>
 
+    <!-- CHAT VIEW -->
+    <div class="view" id="view-chat">
+      <div class="page-title">💬 Chat with Admin</div>
+      <div class="panel" style="padding:0;overflow:hidden;">
+        <div class="panel-head">
+          <h3>Support Chat</h3>
+          <span style="font-size:.82rem;opacity:.7">Admin typically replies within a few hours</span>
+        </div>
+        <div class="chat-wrap">
+          <div class="chat-messages" id="chat-messages">
+            <div class="chat-empty"><div class="ce-icon">💬</div><p>Loading…</p></div>
+          </div>
+          <div class="chat-input-row">
+            <textarea id="chat-input" class="chat-input" placeholder="Type your message… (Enter to send)" rows="2"
+              onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChatMsg();}"></textarea>
+            <button id="chat-send-btn" class="chat-send-btn" onclick="sendChatMsg()">Send</button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -306,17 +555,25 @@
 <script>
   let currentUser = null;
   let watchedAds  = new Set();
+  let clickedAds  = new Set();
+  let _adCache    = {};
 
   // ── Auth guard ────────────────────────────────────────
   async function init() {
     const { data: { user } } = await db.auth.getUser();
     if (!user) { window.location.href = 'login.html'; return; }
     currentUser = user;
+    const uname = user.user_metadata?.name || user.email || user.phone || 'User';
+    document.getElementById('nav-user-av').textContent   = uname.charAt(0).toUpperCase();
+    document.getElementById('nav-user-name').textContent = uname.split(' ')[0];
+    document.getElementById('nav-user-chip').style.display = 'flex';
     if (user.user_metadata?.role === 'admin') {
       document.getElementById('view-admin-link').style.display = 'flex';
     }
     loadWallet();
     loadAds();
+    checkUnreadChat();
+    setInterval(checkUnreadChat, 30000);
   }
 
   // ── View switching ────────────────────────────────────
@@ -326,6 +583,7 @@
     document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
     if (el) el.classList.add('active');
     if (name === 'history') loadHistory();
+    if (name === 'chat')    loadChat();
   }
 
   // ── Load wallet via RPC ──────────────────────────────
@@ -344,14 +602,22 @@
 
   // ── Load active ads ───────────────────────────────────
   async function loadAds() {
-    const { data: viewed } = await db.from('ad_views').select('ad_id').eq('viewer_id', currentUser.id);
+    const [{ data: viewed }, { data: clicked }] = await Promise.all([
+      db.from('ad_views').select('ad_id').eq('viewer_id', currentUser.id),
+      db.from('ad_clicks').select('ad_id').eq('viewer_id', currentUser.id),
+    ]);
     watchedAds = new Set((viewed||[]).map(v => v.ad_id));
+    clickedAds = new Set((clicked||[]).map(c => c.ad_id));
 
     const { data: ads } = await db.from('ads').select('*').eq('status', 'active');
     const list = ads || [];
+    list.forEach(ad => { _adCache[ad.id] = ad; });
 
-    document.getElementById('stat-avail').textContent  = list.filter(a => !watchedAds.has(a.id)).length;
-    document.getElementById('stat-watched').textContent = watchedAds.size;
+    const avail = list.filter(a =>
+      a.ad_type === 'image' ? !clickedAds.has(a.id) : !watchedAds.has(a.id)
+    ).length;
+    document.getElementById('stat-avail').textContent   = avail;
+    document.getElementById('stat-watched').textContent = watchedAds.size + clickedAds.size;
 
     const grid = document.getElementById('ads-grid');
     if (list.length === 0) {
@@ -359,16 +625,18 @@
       return;
     }
 
-    const coinMap = { image: 300, video: 400, social_link: 600, app_website: 1000 };
-    const emojiMap = { image: '🖼️', video: '🎬', social_link: '📲', app_website: '📱' };
+    const cpcReward = { image: { cash: '₹0.15', coins: 300 }, video: { cash: '₹0.25', coins: 500 }, social_link: { cash: '₹0.40', coins: 800 }, app_website: { cash: '₹0.75', coins: 1500 } };
+    const coinMap   = { image: 300, video: 500, social_link: 800, app_website: 1500 };
+    const emojiMap  = { image: '🖼️', video: '🎬', social_link: '📲', app_website: '📱' };
 
     grid.innerHTML = list.map(ad => {
-      const watched  = watchedAds.has(ad.id);
-      const coins    = coinMap[ad.ad_type] || 300;
-      const emoji    = emojiMap[ad.ad_type] || '📢';
-      const showWA   = ad.whatsapp_number && (ad.ad_type === 'image' || ad.ad_type === 'video');
-      const waNum    = showWA ? ad.whatsapp_number.replace(/\D/g,'') : '';
-      const waBtn    = showWA
+      const isCPC  = ad.ad_type === 'image' || ad.ad_type === 'video' || ad.ad_type === 'social_link' || ad.ad_type === 'app_website';
+      const done   = isCPC ? clickedAds.has(ad.id) : watchedAds.has(ad.id);
+      const coins  = coinMap[ad.ad_type] || 300;
+      const emoji  = emojiMap[ad.ad_type] || '📢';
+      const showWA = ad.whatsapp_number && ad.ad_type === 'video';
+      const waNum  = showWA ? ad.whatsapp_number.replace(/\D/g,'') : '';
+      const waBtn  = showWA
         ? `<a href="https://wa.me/${waNum}" target="_blank" rel="noopener"
               style="display:flex;align-items:center;justify-content:center;gap:6px;
                      background:#25D366;color:#fff;border-radius:8px;padding:.55rem;
@@ -376,21 +644,48 @@
                      transition:opacity .2s" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
              💬 WhatsApp Business
            </a>` : '';
+
+      const cpc       = cpcReward[ad.ad_type];
+      const isSoc     = ad.ad_type === 'social_link';
+      const isImg     = ad.ad_type === 'image';
+      const btnVerb   = isSoc ? '👍 Like' : '👆 Click';
+      const doneLabel = isSoc ? '✅ Liked' : '✅ Clicked';
+
+      const btnOnclick = done ? ''
+        : isImg ? `openAdViewer('${ad.id}', this)`
+        : isSoc  ? `openSocialViewer('${ad.id}', this)`
+        : `clickAd('${ad.id}', this, 'click')`;
+
+      const rewardHtml = isCPC
+        ? `<div class="ad-reward">
+             <span>${isSoc ? '👍' : '👆'} 1 ${isSoc ? 'Like' : 'Click'} = ${cpc.cash}</span>
+             <span style="color:var(--muted);font-weight:400">+ ${cpc.coins} coins · one time</span>
+           </div>`
+        : `<div class="ad-reward">
+             <span>🪙 Earn ${coins} coins</span>
+             <span style="color:var(--muted);font-weight:400">≈ ₹${(coins*0.0005).toFixed(4)}</span>
+           </div>`;
+
+      const btnHtml = isCPC
+        ? `<button class="btn-watch ${done ? 'watched' : 'btn-click'}"
+             onclick="${btnOnclick}"
+             ${done ? 'disabled' : ''}>
+             ${done ? doneLabel : `${btnVerb} & Earn ${cpc.cash}`}
+           </button>`
+        : `<button class="btn-watch ${done ? 'watched' : ''}"
+             onclick="${done ? '' : `watchAd('${ad.id}', ${coins}, this)`}"
+             ${done ? 'disabled' : ''}>
+             ${done ? '✅ Watched' : '▶ Watch & Earn'}
+           </button>`;
+
       return `
         <div class="ad-card">
           <div class="ad-img-placeholder">${emoji}</div>
           <div class="ad-body">
             <div class="ad-title">${ad.title}</div>
             <div class="ad-meta">${ad.ad_type.replace('_',' ')} · ${ad.target_area}</div>
-            <div class="ad-reward">
-              <span>🪙 Earn ${coins} coins</span>
-              <span style="color:#888;font-weight:400">≈ ${(coins*0.0005).toFixed(4)} ₹</span>
-            </div>
-            <button class="btn-watch ${watched ? 'watched' : ''}"
-              onclick="${watched ? '' : `watchAd('${ad.id}', ${coins}, this)`}"
-              ${watched ? 'disabled' : ''}>
-              ${watched ? '✅ Watched' : '▶ Watch & Earn'}
-            </button>
+            ${rewardHtml}
+            ${btnHtml}
             ${waBtn}
           </div>
         </div>`;
@@ -415,6 +710,225 @@
     watchedAds.add(adId);
     showToast('🪙 +' + coins + ' coins earned!');
     loadWallet();
+  }
+
+  // ── Click photo ad & earn ₹0.15 ──────────────────────
+  async function clickAd(adId, btn, action) {
+    const isLike = action === 'like';
+    btn.disabled = true; btn.textContent = 'Processing…';
+    const { data, error } = await db.rpc('record_ad_click', {
+      p_viewer_id: currentUser.id, p_ad_id: adId
+    });
+    if (error) {
+      btn.disabled = false; btn.textContent = isLike ? '👍 Like & Earn' : '👆 Click & Earn';
+      showToast('Error: ' + error.message); return;
+    }
+    if (data && !data.success) {
+      btn.disabled = false; btn.textContent = isLike ? '👍 Like & Earn' : '👆 Click & Earn';
+      showToast(data.message || 'Could not earn.'); return;
+    }
+    btn.className = 'btn-watch watched';
+    btn.textContent = isLike ? '✅ Liked' : '✅ Clicked';
+    clickedAds.add(adId);
+    const cash  = data?.cash  || 0;
+    const coins = data?.coins || 0;
+    const emoji = isLike ? '👍' : '💰';
+    showToast(emoji + ' +₹' + cash.toFixed(2) + ' earned! (' + coins + ' coins)');
+    loadWallet();
+  }
+
+  // ── Photo Ad Viewer – 30-sec watch flow ──────────────
+  let _adViewerTimer = null;
+  let _adViewerBtn   = null;
+
+  function openAdViewer(adId, btn) {
+    const ad = _adCache[adId];
+    if (!ad) return;
+    _adViewerBtn = btn;
+
+    const imgEl  = document.getElementById('av-img');
+    const holdEl = document.getElementById('av-placeholder');
+    if (ad.content_url) {
+      imgEl.src = ad.content_url;
+      imgEl.style.display = 'block';
+      holdEl.style.display = 'none';
+    } else {
+      imgEl.style.display = 'none';
+      holdEl.style.display = 'flex';
+    }
+    document.getElementById('av-title').textContent     = ad.title || 'Advertisement';
+    document.getElementById('av-wa-btn').style.display  = 'none';
+    document.getElementById('av-success').style.display = 'none';
+    document.getElementById('av-timer-wrap').style.display = 'flex';
+    document.getElementById('av-status').textContent    = 'View for 30 seconds to earn ₹0.15 + 300 coins';
+    document.getElementById('ad-viewer-overlay').classList.add('open');
+    _startAdCountdown(ad);
+  }
+
+  function _startAdCountdown(ad) {
+    const TOTAL = 30;
+    const CIRC  = 2 * Math.PI * 35;
+    const circle = document.getElementById('av-timer-circle');
+    const numEl  = document.getElementById('av-timer-num');
+    const status = document.getElementById('av-status');
+
+    circle.style.strokeDasharray  = CIRC;
+    circle.style.strokeDashoffset = 0;
+    numEl.textContent = TOTAL;
+
+    let rem = TOTAL;
+    _adViewerTimer = setInterval(async () => {
+      rem--;
+      numEl.textContent = rem;
+      circle.style.strokeDashoffset = CIRC * (1 - rem / TOTAL);
+      if (rem > 0) { status.textContent = `Viewing… ${rem}s remaining`; return; }
+
+      clearInterval(_adViewerTimer);
+      _adViewerTimer = null;
+      status.textContent = 'Processing…';
+      document.getElementById('av-timer-wrap').style.display = 'none';
+
+      const { data, error } = await db.rpc('record_ad_click', {
+        p_viewer_id: currentUser.id, p_ad_id: ad.id
+      });
+      if (error || (data && !data.success)) {
+        status.textContent = data?.message || error?.message || 'Error processing reward';
+        return;
+      }
+
+      const cash  = data?.cash  || 0.15;
+      const coins = data?.coins || 300;
+      const succ  = document.getElementById('av-success');
+      succ.textContent = `✅ +₹${cash.toFixed(2)} earned! (${coins} coins)`;
+      succ.style.display = 'block';
+      status.textContent = '';
+      clickedAds.add(ad.id);
+
+      if (_adViewerBtn) {
+        _adViewerBtn.className   = 'btn-watch watched';
+        _adViewerBtn.textContent = '✅ Clicked';
+        _adViewerBtn.disabled    = true;
+        _adViewerBtn.onclick     = null;
+      }
+
+      if (ad.whatsapp_number) {
+        const waNum = ad.whatsapp_number.replace(/\D/g, '');
+        const waBtn = document.getElementById('av-wa-btn');
+        waBtn.href = `https://wa.me/${waNum}`;
+        waBtn.style.display = 'flex';
+      }
+      loadWallet();
+    }, 1000);
+  }
+
+  function closeAdViewer() {
+    if (_adViewerTimer) { clearInterval(_adViewerTimer); _adViewerTimer = null; }
+    document.getElementById('ad-viewer-overlay').classList.remove('open');
+    _adViewerBtn = null;
+  }
+
+  // ── Social Media Ad Viewer ────────────────────────────
+  let _smAd  = null;
+  let _smBtn = null;
+
+  async function openSocialViewer(adId, btn) {
+    const ad = _adCache[adId];
+    if (!ad) return;
+    _smAd = ad; _smBtn = btn;
+
+    // Reset modal
+    document.getElementById('sm-loading').style.display    = 'block';
+    document.getElementById('sm-thumb-img').style.display  = 'none';
+    document.getElementById('sm-thumb-ph').style.display   = 'none';
+    document.getElementById('sm-title').textContent        = ad.title || 'Social Media Page';
+    document.getElementById('sm-desc').textContent         = '';
+    document.getElementById('sm-claim-btn').style.display  = 'none';
+    document.getElementById('sm-success').style.display    = 'none';
+    document.getElementById('sm-actions').style.display    = 'flex';
+    const likeBtn = document.getElementById('sm-like-btn');
+    likeBtn.disabled = false; likeBtn.textContent = '👍 Like / Follow Page';
+    document.getElementById('sm-viewer-overlay').classList.add('open');
+
+    // Fetch OG preview thumbnail via microlink
+    if (ad.content_url) {
+      try {
+        const res  = await fetch('https://api.microlink.io/?url=' + encodeURIComponent(ad.content_url));
+        const json = await res.json();
+        document.getElementById('sm-loading').style.display = 'none';
+        if (json.status === 'success') {
+          const imgUrl = json.data?.image?.url || json.data?.logo?.url;
+          const titleT = json.data?.title || ad.title;
+          const descT  = json.data?.description || '';
+          if (titleT) document.getElementById('sm-title').textContent = titleT;
+          if (descT)  document.getElementById('sm-desc').textContent  = descT;
+          if (imgUrl) {
+            const img = document.getElementById('sm-thumb-img');
+            img.src = imgUrl; img.style.display = 'block';
+          } else {
+            document.getElementById('sm-thumb-ph').style.display = 'flex';
+          }
+        } else {
+          document.getElementById('sm-thumb-ph').style.display = 'flex';
+        }
+      } catch(e) {
+        document.getElementById('sm-loading').style.display = 'none';
+        document.getElementById('sm-thumb-ph').style.display = 'flex';
+      }
+    } else {
+      document.getElementById('sm-loading').style.display = 'none';
+      document.getElementById('sm-thumb-ph').style.display = 'flex';
+    }
+  }
+
+  function smLikePage() {
+    if (!_smAd?.content_url) return;
+    window.open(_smAd.content_url, '_blank', 'noopener,noreferrer');
+    const likeBtn = document.getElementById('sm-like-btn');
+    likeBtn.textContent = '✅ Page Opened';
+    likeBtn.disabled = true;
+    document.getElementById('sm-claim-btn').style.display = 'block';
+  }
+
+  function smSharePage() {
+    if (!_smAd?.content_url) return;
+    if (navigator.share) {
+      navigator.share({ title: _smAd.title || 'Check this page', url: _smAd.content_url }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(_smAd.content_url).then(() => showToast('🔗 Link copied!'));
+    }
+    document.getElementById('sm-claim-btn').style.display = 'block';
+  }
+
+  async function smClaimCoins() {
+    const claimBtn = document.getElementById('sm-claim-btn');
+    claimBtn.disabled = true; claimBtn.textContent = 'Processing…';
+
+    const { data, error } = await db.rpc('record_ad_click', {
+      p_viewer_id: currentUser.id, p_ad_id: _smAd.id
+    });
+    if (error || (data && !data.success)) {
+      claimBtn.disabled = false; claimBtn.textContent = '✅ Claim my Coins';
+      showToast(data?.message || error?.message || 'Error'); return;
+    }
+    const cash  = data?.cash  || 0.40;
+    const coins = data?.coins || 800;
+    claimBtn.style.display = 'none';
+    document.getElementById('sm-actions').style.display = 'none';
+    const succ = document.getElementById('sm-success');
+    succ.textContent = `✅ +₹${cash.toFixed(2)} earned! (${coins} coins)`;
+    succ.style.display = 'block';
+    clickedAds.add(_smAd.id);
+    if (_smBtn) {
+      _smBtn.className = 'btn-watch watched';
+      _smBtn.textContent = '✅ Liked';
+      _smBtn.disabled = true; _smBtn.onclick = null;
+    }
+    loadWallet();
+  }
+
+  function closeSocialViewer() {
+    document.getElementById('sm-viewer-overlay').classList.remove('open');
+    _smAd = null; _smBtn = null;
   }
 
   // ── Load history ──────────────────────────────────────
@@ -477,7 +991,115 @@
     window.location.href = 'login.html';
   }
 
+  // ── Chat helpers ──────────────────────────────────────
+  function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  function fmtTime(ts) {
+    const d = new Date(ts);
+    return d.toLocaleDateString('en-IN',{day:'numeric',month:'short'}) + ' ' +
+           d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+  }
+
+  async function loadChat() {
+    const box = document.getElementById('chat-messages');
+    const { data } = await db.from('support_messages')
+      .select('*').eq('user_id', currentUser.id)
+      .order('created_at', { ascending: true });
+
+    if (!data || data.length === 0) {
+      box.innerHTML = '<div class="chat-empty"><div class="ce-icon">💬</div><p>No messages yet.<br><span style="font-size:.82rem">Send a message to get help from our support team.</span></p></div>';
+      return;
+    }
+
+    box.innerHTML = data.map(m => {
+      const isUser = m.sender === 'user';
+      return `<div>
+        <div class="chat-bubble ${isUser ? 'bubble-user' : 'bubble-admin'}">${esc(m.message)}</div>
+        <div class="bubble-meta" style="text-align:${isUser?'right':'left'}">${isUser?'You':'👤 Admin'} · ${fmtTime(m.created_at)}</div>
+      </div>`;
+    }).join('');
+    box.scrollTop = box.scrollHeight;
+
+    // Mark admin replies as read
+    await db.from('support_messages').update({ is_read: true })
+      .eq('user_id', currentUser.id).eq('sender', 'admin').eq('is_read', false);
+    document.getElementById('chat-badge').style.display = 'none';
+  }
+
+  async function sendChatMsg() {
+    const input = document.getElementById('chat-input');
+    const msg = input.value.trim();
+    if (!msg) return;
+    const btn = document.getElementById('chat-send-btn');
+    btn.disabled = true;
+    const { error } = await db.from('support_messages').insert({
+      user_id: currentUser.id, message: msg, sender: 'user'
+    });
+    if (!error) { input.value = ''; await loadChat(); }
+    btn.disabled = false;
+    input.focus();
+  }
+
+  async function checkUnreadChat() {
+    const { count } = await db.from('support_messages')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', currentUser.id).eq('sender', 'admin').eq('is_read', false);
+    const badge = document.getElementById('chat-badge');
+    if (count > 0) {
+      badge.textContent = count > 9 ? '9+' : count;
+      badge.style.display = 'inline-flex';
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+
   init();
 </script>
+<script>if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js').catch(() => {}); }</script>
+
+<!-- ── Social Media Ad Viewer Modal ──────────────────── -->
+<div class="ad-viewer-overlay" id="sm-viewer-overlay">
+  <button class="av-close" onclick="closeSocialViewer()">✕</button>
+
+  <div id="sm-loading" style="color:#aaa;font-size:.9rem;margin-bottom:.5rem">Loading preview…</div>
+  <div id="sm-thumb-ph" style="display:none;align-items:center;justify-content:center;font-size:4.5rem;margin-bottom:.5rem">📲</div>
+  <img id="sm-thumb-img" class="av-img" src="" alt="Page preview" style="display:none" />
+
+  <div class="av-title" id="sm-title"></div>
+  <div class="sm-desc" id="sm-desc"></div>
+
+  <div id="sm-actions" style="display:flex;flex-direction:column;gap:.7rem;width:100%;max-width:300px;margin-top:.5rem">
+    <button class="sm-like-btn" id="sm-like-btn" onclick="smLikePage()">👍 Like / Follow Page</button>
+    <button class="sm-share-btn" onclick="smSharePage()">🔗 Share This Page</button>
+  </div>
+
+  <button class="sm-claim-btn" id="sm-claim-btn" style="display:none" onclick="smClaimCoins()">
+    ✅ I Liked / Followed — Claim 800 Coins
+  </button>
+
+  <div class="av-success" id="sm-success" style="display:none"></div>
+</div>
+
+<!-- ── Photo Ad Viewer Modal ─────────────────────────── -->
+<div class="ad-viewer-overlay" id="ad-viewer-overlay">
+  <button class="av-close" onclick="closeAdViewer()">✕</button>
+  <div id="av-placeholder" style="display:none;align-items:center;justify-content:center;font-size:5rem;margin-bottom:.5rem">🖼️</div>
+  <img id="av-img" class="av-img" src="" alt="Ad Image" />
+  <div class="av-title" id="av-title"></div>
+  <div class="av-timer-wrap" id="av-timer-wrap">
+    <svg class="av-timer-svg" width="80" height="80" viewBox="0 0 80 80">
+      <circle cx="40" cy="40" r="35" fill="none" stroke="rgba(255,255,255,.15)" stroke-width="6"/>
+      <circle id="av-timer-circle" cx="40" cy="40" r="35" fill="none"
+              stroke="var(--gold)" stroke-width="6" stroke-linecap="round"
+              stroke-dasharray="219.9" stroke-dashoffset="0"/>
+    </svg>
+    <div class="av-timer-num" id="av-timer-num">30</div>
+  </div>
+  <div class="av-status" id="av-status">View for 30 seconds to earn ₹0.15 + 300 coins</div>
+  <div class="av-success" id="av-success" style="display:none"></div>
+  <a id="av-wa-btn" class="av-wa-btn" href="#" target="_blank" rel="noopener" style="display:none">
+    💬 WhatsApp Advertiser
+  </a>
+</div>
 </body>
 </html>

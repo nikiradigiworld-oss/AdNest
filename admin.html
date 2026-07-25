@@ -4,6 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Admin Panel – Anaar</title>
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#1a1a1a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Anaar" />
+  <link rel="apple-touch-icon" href="icon.svg" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     const SUPABASE_URL  = 'https://qkbpdmeghjuucplbnnsz.supabase.co';
@@ -14,139 +19,334 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --red:   #8B1A1A; --red2: #B22222; --gold: #FFD700;
-      --dark:  #1a1a1a; --gray: #f4f4f4; --white: #ffffff;
-      --green: #27ae60; --orange: #e67e22; --blue: #2980b9;
+      --red:    #8B1A1A; --red2:  #B22222; --gold:  #FFD700; --gold2: #F5C518;
+      --dark:   #1a1a1a; --gray:  #f4f4f4; --white: #ffffff;
+      --green:  #27ae60; --orange:#e67e22; --blue:  #2980b9; --purple:#8e44ad;
       --shadow: 0 4px 20px rgba(0,0,0,0.10);
     }
-    body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--gray); color: var(--dark); display: flex; min-height: 100vh; }
+    body { font-family:'Segoe UI',Arial,sans-serif; background:var(--gray); color:var(--dark); display:flex; min-height:100vh; }
 
     /* ── SIDEBAR ── */
     .sidebar {
-      width: 220px; background: var(--red); min-height: 100vh;
-      display: flex; flex-direction: column;
-      position: fixed; top: 0; left: 0; z-index: 100;
+      width:230px; background:var(--dark); min-height:100vh;
+      display:flex; flex-direction:column;
+      position:fixed; top:0; left:0; z-index:100;
+      box-shadow:4px 0 20px rgba(0,0,0,0.2);
     }
     .sb-brand {
-      display: flex; align-items: center; gap: 10px;
-      padding: 1.4rem 1.2rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.15);
+      display:flex; align-items:center; gap:10px;
+      padding:1.4rem 1.2rem 1rem; border-bottom:1px solid rgba(255,255,255,0.08);
     }
     .sb-logo {
-      width: 38px; height: 38px; border-radius: 50%;
-      background: var(--gold); display: flex; align-items: center; justify-content: center;
-      font-weight: 900; font-size: 1.1rem; color: var(--red); flex-shrink: 0;
+      width:38px; height:38px; border-radius:50%;
+      background:var(--gold); display:flex; align-items:center; justify-content:center;
+      font-weight:900; font-size:1.1rem; color:var(--dark); flex-shrink:0;
     }
-    .sb-title { color: #fff; font-weight: 800; font-size: 1rem; line-height: 1.2; }
-    .sb-subtitle { color: rgba(255,255,255,0.6); font-size: 0.72rem; }
-    .sb-menu { flex: 1; padding: 1rem 0; }
+    .sb-title   { color:#fff; font-weight:800; font-size:1rem; line-height:1.2; }
+    .sb-subtitle{ color:rgba(255,255,255,0.4); font-size:0.72rem; }
+    .sb-menu    { flex:1; padding:1rem 0; overflow-y:auto; }
+    .sb-section { font-size:.65rem; font-weight:700; color:rgba(255,255,255,0.3);
+                  text-transform:uppercase; letter-spacing:1px; padding:.5rem 1.2rem .3rem; }
     .sb-item {
-      display: flex; align-items: center; gap: 10px;
-      padding: .75rem 1.2rem; color: rgba(255,255,255,0.75);
-      cursor: pointer; font-size: 0.9rem; font-weight: 600;
-      transition: all .2s; border-left: 3px solid transparent;
+      display:flex; align-items:center; gap:10px;
+      padding:.72rem 1.2rem; color:rgba(255,255,255,0.6);
+      cursor:pointer; font-size:.875rem; font-weight:600;
+      transition:all .2s; border-left:3px solid transparent;
     }
-    .sb-item:hover  { background: rgba(255,255,255,0.1); color: #fff; }
-    .sb-item.active { background: rgba(255,255,255,0.15); color: #fff; border-left-color: var(--gold); }
-    .sb-item .icon  { font-size: 1.1rem; width: 22px; text-align: center; }
-    .sb-footer { padding: 1rem 1.2rem; border-top: 1px solid rgba(255,255,255,0.15); }
+    .sb-item:hover  { background:rgba(255,255,255,0.07); color:#fff; }
+    .sb-item.active { background:rgba(255,215,0,0.1); color:var(--gold); border-left-color:var(--gold); }
+    .sb-item .icon  { font-size:1.05rem; width:22px; text-align:center; flex-shrink:0; }
+    .sb-badge {
+      margin-left:auto; background:var(--red2); color:#fff;
+      border-radius:10px; font-size:.68rem; font-weight:700; padding:1px 8px;
+    }
+    .sb-footer { padding:1rem 1.2rem; border-top:1px solid rgba(255,255,255,0.08); }
+    .admin-user-card {
+      display: flex; align-items: center; gap: 9px;
+      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px; padding: .55rem .75rem; margin-bottom: .75rem;
+    }
+    .admin-user-av {
+      width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
+      background: #F5C518; color: #8B1A1A;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 900; font-size: 1.1rem;
+    }
+    .admin-user-info { min-width: 0; }
+    .admin-user-name { font-size: .82rem; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 130px; }
+    .sb-admin-info { font-size:.72rem; color:rgba(255,255,255,0.38); margin-top:1px;
+                     word-break:break-all; line-height:1.3; }
+    .online-pill { display:inline-flex; align-items:center; gap:4px; font-size:.65rem; color:#2ecc71; font-weight:700; }
+    .online-pill::before { content:''; display:inline-block; width:6px; height:6px; border-radius:50%; background:#2ecc71; box-shadow:0 0 5px #2ecc71; }
     .btn-logout {
-      width: 100%; background: rgba(255,255,255,0.15); color: #fff;
-      border: 1px solid rgba(255,255,255,0.3); border-radius: 8px;
-      padding: .55rem; font-size: 0.85rem; font-weight: 600; cursor: pointer;
+      width:100%; background:rgba(255,255,255,0.08); color:rgba(255,255,255,0.7);
+      border:1px solid rgba(255,255,255,0.15); border-radius:8px;
+      padding:.55rem; font-size:.85rem; font-weight:600; cursor:pointer; transition:.2s;
     }
-    .btn-logout:hover { background: rgba(255,255,255,0.25); }
+    .btn-logout:hover { background:rgba(255,255,255,0.15); color:#fff; }
 
     /* ── MAIN ── */
-    .main { margin-left: 220px; flex: 1; padding: 2rem; }
+    .main { margin-left:230px; flex:1; padding:2rem; min-width:0; }
 
-    .page-title { font-size: 1.5rem; font-weight: 800; color: var(--dark); margin-bottom: .3rem; }
-    .page-sub   { font-size: 0.85rem; color: #888; margin-bottom: 1.8rem; }
+    /* ── TOP BAR ── */
+    .top-bar {
+      display:flex; align-items:center; justify-content:space-between;
+      margin-bottom:1.8rem; flex-wrap:wrap; gap:1rem;
+    }
+    .page-title { font-size:1.45rem; font-weight:800; color:var(--dark); }
+    .page-sub   { font-size:.83rem; color:#999; margin-top:.2rem; }
+    .top-bar-right { display:flex; align-items:center; gap:.75rem; }
+    .refresh-btn {
+      background:#fff; border:1.5px solid #e0e0e0; border-radius:8px;
+      padding:.45rem .9rem; font-size:.82rem; font-weight:600; cursor:pointer;
+      color:#555; transition:.2s;
+    }
+    .refresh-btn:hover { border-color:var(--red); color:var(--red); }
 
     /* ── VIEWS ── */
-    .view { display: none; }
-    .view.active { display: block; }
+    .view { display:none; animation:fadeIn .2s ease; }
+    .view.active { display:block; }
+    @keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:none} }
 
     /* ── STAT CARDS ── */
-    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+    .stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:1rem; margin-bottom:2rem; }
     .stat-card {
-      background: var(--white); border-radius: 14px; padding: 1.2rem 1.4rem;
-      box-shadow: var(--shadow); display: flex; flex-direction: column; gap: .3rem;
+      background:var(--white); border-radius:14px; padding:1.2rem 1.4rem;
+      box-shadow:var(--shadow); display:flex; flex-direction:column; gap:.25rem;
+      position:relative; overflow:hidden;
     }
-    .stat-card .label { font-size: 0.78rem; color: #999; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
-    .stat-card .value { font-size: 1.7rem; font-weight: 900; color: var(--dark); }
-    .stat-card .icon  { font-size: 1.4rem; margin-bottom: .2rem; }
+    .stat-card::before {
+      content:''; position:absolute; top:0; left:0; right:0; height:3px;
+    }
+    .stat-card.c-red::before    { background:var(--red); }
+    .stat-card.c-gold::before   { background:var(--gold); }
+    .stat-card.c-green::before  { background:var(--green); }
+    .stat-card.c-blue::before   { background:var(--blue); }
+    .stat-card.c-orange::before { background:var(--orange); }
+    .stat-card.c-purple::before { background:var(--purple); }
+    .stat-card .s-icon  { font-size:1.6rem; margin-bottom:.2rem; }
+    .stat-card .s-label { font-size:.75rem; color:#999; font-weight:600; text-transform:uppercase; letter-spacing:.5px; }
+    .stat-card .s-value { font-size:1.8rem; font-weight:900; color:var(--dark); line-height:1.1; }
+    .stat-card .s-sub   { font-size:.72rem; color:#bbb; margin-top:.2rem; }
 
-    /* ── TABLE ── */
+    /* ── CARD ── */
     .card {
-      background: var(--white); border-radius: 14px;
-      box-shadow: var(--shadow); overflow: hidden; margin-bottom: 1.5rem;
+      background:var(--white); border-radius:14px;
+      box-shadow:var(--shadow); overflow:hidden; margin-bottom:1.5rem;
     }
     .card-head {
-      padding: 1rem 1.4rem; border-bottom: 1px solid #f0f0f0;
-      display: flex; align-items: center; justify-content: space-between;
+      padding:1rem 1.4rem; border-bottom:1px solid #f0f0f0;
+      display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:.5rem;
     }
-    .card-head h3 { font-size: 1rem; font-weight: 800; }
+    .card-head h3 { font-size:1rem; font-weight:800; }
+    .card-head-actions { display:flex; gap:.5rem; align-items:center; }
+
+    /* ── BADGE ── */
     .badge {
-      display: inline-block; font-size: 0.72rem; font-weight: 700;
-      padding: 2px 10px; border-radius: 20px; text-transform: uppercase;
+      display:inline-block; font-size:.7rem; font-weight:700;
+      padding:2px 10px; border-radius:20px; text-transform:uppercase;
     }
-    .badge-pending   { background: #fff3cd; color: #856404; }
-    .badge-active    { background: #d4edda; color: #155724; }
-    .badge-completed { background: #d1ecf1; color: #0c5460; }
-    .badge-rejected  { background: #f8d7da; color: #721c24; }
-    .badge-paused    { background: #e2e3e5; color: #383d41; }
-    .badge-viewer    { background: #cce5ff; color: #004085; }
-    .badge-advertiser{ background: #fff3cd; color: #856404; }
-    .badge-both      { background: #d4edda; color: #155724; }
-    .badge-admin     { background: #f8d7da; color: #721c24; }
+    .badge-pending   { background:#fff3cd; color:#856404; }
+    .badge-active    { background:#d4edda; color:#155724; }
+    .badge-completed { background:#d1ecf1; color:#0c5460; }
+    .badge-rejected  { background:#f8d7da; color:#721c24; }
+    .badge-paused    { background:#e2e3e5; color:#383d41; }
+    .badge-viewer    { background:#cce5ff; color:#004085; }
+    .badge-advertiser{ background:#fff3cd; color:#856404; }
+    .badge-both      { background:#d4edda; color:#155724; }
+    .badge-admin     { background:#f8d7da; color:#721c24; }
+    .badge-success   { background:#d4edda; color:#155724; }
+    .badge-failed    { background:#f8d7da; color:#721c24; }
 
-    table { width: 100%; border-collapse: collapse; }
-    th, td { padding: .75rem 1.2rem; text-align: left; font-size: 0.86rem; }
-    th { background: #fafafa; font-weight: 700; color: #666; font-size: 0.78rem; text-transform: uppercase; letter-spacing: .4px; }
-    tr:not(:last-child) td { border-bottom: 1px solid #f5f5f5; }
-    tr:hover td { background: #fafafa; }
+    /* ── TABLE ── */
+    .table-wrap { overflow-x:auto; }
+    table { width:100%; border-collapse:collapse; min-width:600px; }
+    th, td { padding:.75rem 1.2rem; text-align:left; font-size:.85rem; }
+    th { background:#fafafa; font-weight:700; color:#888; font-size:.75rem; text-transform:uppercase; letter-spacing:.4px; border-bottom:1px solid #f0f0f0; }
+    tr:not(:last-child) td { border-bottom:1px solid #f8f8f8; }
+    tr:hover td { background:#fafafa; }
 
-    /* Action buttons */
-    .btn-approve, .btn-reject, .btn-view {
-      border: none; border-radius: 6px; padding: 4px 12px;
-      font-size: 0.78rem; font-weight: 700; cursor: pointer; transition: opacity .2s;
+    /* ── ACTION BUTTONS ── */
+    .btn-approve,.btn-reject,.btn-view,.btn-role,.btn-admin {
+      border:none; border-radius:6px; padding:4px 10px;
+      font-size:.76rem; font-weight:700; cursor:pointer; transition:opacity .2s; white-space:nowrap;
     }
-    .btn-approve { background: #d4edda; color: #155724; }
-    .btn-reject  { background: #f8d7da; color: #721c24; margin-left: 4px; }
-    .btn-approve:hover, .btn-reject:hover { opacity: .75; }
-
-    /* ── EMPTY STATE ── */
-    .empty { text-align: center; padding: 3rem; color: #bbb; }
-    .empty .e-icon { font-size: 3rem; margin-bottom: .8rem; }
-
-    /* ── TOAST ── */
-    .toast {
-      position: fixed; bottom: 24px; right: 24px; z-index: 9999;
-      background: var(--dark); color: #fff; border-radius: 10px;
-      padding: .75rem 1.4rem; font-size: 0.88rem; font-weight: 600;
-      opacity: 0; transform: translateY(10px); transition: all .3s;
-      pointer-events: none;
-    }
-    .toast.show { opacity: 1; transform: translateY(0); }
+    .btn-approve { background:#d4edda; color:#155724; }
+    .btn-reject  { background:#f8d7da; color:#721c24; margin-left:4px; }
+    .btn-view    { background:#e8f4f8; color:var(--blue); margin-left:4px; }
+    .btn-role    { background:#fff3cd; color:#856404; margin-left:4px; }
+    .btn-admin   { background:#f8d7da; color:#721c24; margin-left:4px; }
+    .btn-approve:hover,.btn-reject:hover,.btn-view:hover,.btn-role:hover,.btn-admin:hover { opacity:.72; }
 
     /* ── SEARCH ── */
     .search-bar {
-      width: 220px; padding: .5rem .9rem; border: 1.5px solid #e0e0e0;
-      border-radius: 8px; font-size: 0.85rem; outline: none;
+      padding:.48rem .9rem; border:1.5px solid #e0e0e0;
+      border-radius:8px; font-size:.84rem; outline:none; width:220px;
     }
-    .search-bar:focus { border-color: var(--red); }
+    .search-bar:focus { border-color:var(--red); }
+
+    /* ── FILTER TABS ── */
+    .filter-tabs { display:flex; gap:.4rem; flex-wrap:wrap; }
+    .ftab {
+      padding:4px 12px; border-radius:20px; font-size:.75rem; font-weight:700;
+      border:1.5px solid #e0e0e0; background:#fff; color:#888; cursor:pointer; transition:.15s;
+    }
+    .ftab.active { background:var(--red); border-color:var(--red); color:#fff; }
+
+    /* ── EMPTY ── */
+    .empty { text-align:center; padding:3rem 1rem; color:#ccc; }
+    .empty .e-icon { font-size:2.5rem; margin-bottom:.5rem; }
+    .empty p { font-size:.85rem; }
+
+    /* ── TOAST ── */
+    .toast {
+      position:fixed; bottom:24px; right:24px; z-index:9999;
+      background:var(--dark); color:#fff; border-radius:10px;
+      padding:.75rem 1.4rem; font-size:.88rem; font-weight:600;
+      opacity:0; transform:translateY(10px); transition:all .3s;
+      pointer-events:none; max-width:90vw;
+    }
+    .toast.show { opacity:1; transform:translateY(0); }
+    .toast.success { background:var(--green); }
+    .toast.error   { background:var(--red2); }
+
+    /* ── MODAL ── */
+    .modal-overlay {
+      display:none; position:fixed; inset:0;
+      background:rgba(0,0,0,0.6); z-index:3000;
+      align-items:center; justify-content:center; padding:1rem;
+    }
+    .modal-overlay.open { display:flex; }
+    .modal {
+      background:#fff; border-radius:20px; padding:2rem;
+      max-width:520px; width:100%; max-height:90vh; overflow-y:auto;
+      box-shadow:0 20px 60px rgba(0,0,0,0.3);
+    }
+    .modal h3 { font-size:1.1rem; font-weight:800; margin-bottom:1.2rem; }
+    .modal-row { margin-bottom:.9rem; }
+    .modal-label { font-size:.75rem; font-weight:700; color:#888; text-transform:uppercase; letter-spacing:.4px; margin-bottom:.25rem; }
+    .modal-val   { font-size:.92rem; color:var(--dark); font-weight:600; word-break:break-all; }
+    .modal-img   { max-width:100%; border-radius:10px; margin-top:.5rem; }
+    .modal-close {
+      float:right; background:none; border:none; font-size:1.3rem;
+      cursor:pointer; color:#aaa; line-height:1; margin-top:-4px;
+    }
+    .modal-close:hover { color:var(--dark); }
+    .modal-actions { display:flex; gap:.75rem; margin-top:1.5rem; }
+    .modal-btn {
+      flex:1; padding:.75rem; border:none; border-radius:10px;
+      font-size:.9rem; font-weight:700; cursor:pointer; transition:.2s;
+    }
+    .modal-btn.approve { background:var(--green); color:#fff; }
+    .modal-btn.reject  { background:var(--red2);  color:#fff; }
+    .modal-btn.cancel  { background:#f0f0f0; color:#555; }
+    .modal-btn:hover   { opacity:.85; }
+
+    /* ── ANALYTICS BARS ── */
+    .analytics-section { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:1.5rem; margin-bottom:1.5rem; }
+    .chart-card { background:#fff; border-radius:14px; padding:1.4rem; box-shadow:var(--shadow); }
+    .chart-title { font-size:.9rem; font-weight:800; margin-bottom:1.2rem; color:var(--dark); }
+    .bar-row { display:flex; align-items:center; gap:.75rem; margin-bottom:.8rem; }
+    .bar-label { font-size:.78rem; color:#666; font-weight:600; width:90px; flex-shrink:0; }
+    .bar-track { flex:1; background:#f0f0f0; border-radius:4px; height:10px; overflow:hidden; }
+    .bar-fill  { height:100%; border-radius:4px; transition:width .6s ease; }
+    .bar-val   { font-size:.78rem; font-weight:800; color:var(--dark); width:50px; text-align:right; }
+
+    /* ── SETTINGS ── */
+    .settings-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:1.5rem; }
+    .settings-card { background:#fff; border-radius:14px; padding:1.5rem; box-shadow:var(--shadow); }
+    .settings-card h4 { font-size:.95rem; font-weight:800; margin-bottom:1.2rem; color:var(--dark);
+                         border-bottom:2px solid var(--gold); padding-bottom:.5rem; display:inline-block; }
+    .setting-row { display:flex; align-items:center; justify-content:space-between; padding:.6rem 0; border-bottom:1px solid #f5f5f5; }
+    .setting-row:last-child { border:none; }
+    .setting-label { font-size:.85rem; font-weight:600; color:#444; }
+    .setting-sub   { font-size:.73rem; color:#aaa; margin-top:2px; }
+    .toggle {
+      width:44px; height:24px; border-radius:12px; background:#ddd;
+      position:relative; cursor:pointer; transition:.2s; flex-shrink:0;
+    }
+    .toggle.on { background:var(--green); }
+    .toggle::after {
+      content:''; position:absolute; top:2px; left:2px;
+      width:20px; height:20px; border-radius:50%;
+      background:#fff; transition:.2s; box-shadow:0 1px 4px rgba(0,0,0,0.2);
+    }
+    .toggle.on::after { left:22px; }
+    .setting-input {
+      padding:.4rem .7rem; border:1.5px solid #e0e0e0; border-radius:8px;
+      font-size:.83rem; width:120px; outline:none;
+    }
+    .setting-input:focus { border-color:var(--red); }
+    .settings-save-btn {
+      background:var(--red); color:#fff; border:none; border-radius:10px;
+      padding:.6rem 1.4rem; font-size:.88rem; font-weight:700; cursor:pointer;
+      margin-top:1rem; transition:.2s;
+    }
+    .settings-save-btn:hover { background:var(--red2); }
+
+    /* ── ROLE CHANGE SELECT ── */
+    .role-select {
+      padding:.35rem .6rem; border:1.5px solid #e0e0e0; border-radius:6px;
+      font-size:.8rem; outline:none; background:#fff;
+    }
+    .role-select:focus { border-color:var(--red); }
 
     /* ── SECTION TAG ── */
     .section-tag {
-      display: inline-block; background: var(--gold); color: var(--red);
-      font-size: 0.7rem; font-weight: 800; padding: 3px 10px; border-radius: 20px;
-      text-transform: uppercase; letter-spacing: 1px; margin-bottom: .5rem;
+      display:inline-block; background:var(--gold); color:var(--dark);
+      font-size:.68rem; font-weight:800; padding:3px 10px; border-radius:20px;
+      text-transform:uppercase; letter-spacing:1px; margin-bottom:.4rem;
     }
 
-    @media (max-width: 768px) {
-      .sidebar { width: 60px; }
-      .sb-title, .sb-subtitle, .sb-item span { display: none; }
-      .main { margin-left: 60px; padding: 1rem; }
+    /* ── QUICK ACTION ── */
+    .quick-actions { display:flex; gap:1rem; flex-wrap:wrap; margin-bottom:1.5rem; }
+    .quick-btn {
+      display:flex; align-items:center; gap:.5rem;
+      background:#fff; border:1.5px solid #e8e8e8; border-radius:12px;
+      padding:.6rem 1rem; font-size:.83rem; font-weight:700; cursor:pointer;
+      transition:.2s; color:var(--dark); text-decoration:none;
+    }
+    .quick-btn:hover { border-color:var(--red); color:var(--red); box-shadow:0 4px 12px rgba(0,0,0,0.08); }
+
+    /* ── SUPPORT CHAT ── */
+    .support-layout { display:flex; gap:0; height:calc(100vh - 160px); min-height:480px; background:#fff; border-radius:14px; overflow:hidden; border:1.5px solid #eee; }
+    .support-user-list { width:280px; flex-shrink:0; border-right:1.5px solid #eee; overflow-y:auto; }
+    .support-list-head { padding:1rem 1.2rem; font-weight:800; font-size:.9rem; color:var(--dark); border-bottom:1.5px solid #eee; background:#fafafa; }
+    .support-user-item { display:flex; align-items:center; gap:.8rem; padding:.85rem 1rem; cursor:pointer; border-bottom:1px solid #f0f0f0; transition:.15s; }
+    .support-user-item:hover, .support-user-item.active { background:#fff8f0; }
+    .support-av { width:36px; height:36px; border-radius:50%; background:var(--gold); color:var(--dark); display:flex; align-items:center; justify-content:center; font-weight:900; font-size:1rem; flex-shrink:0; }
+    .support-user-info { flex:1; min-width:0; }
+    .support-user-name { font-weight:700; font-size:.85rem; color:var(--dark); }
+    .support-user-last { font-size:.75rem; color:#999; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:160px; margin-top:1px; }
+    .support-unread-dot { width:10px; height:10px; border-radius:50%; background:var(--red); flex-shrink:0; }
+    .support-chat-area { flex:1; display:flex; flex-direction:column; }
+    .support-chat-header { padding:.9rem 1.2rem; border-bottom:1.5px solid #eee; background:#fafafa; display:flex; align-items:center; gap:.8rem; }
+    .support-chat-title { font-weight:800; font-size:.9rem; color:var(--dark); }
+    .support-chat-sub   { font-size:.75rem; color:#aaa; }
+    .support-messages   { flex:1; overflow-y:auto; padding:1.2rem; display:flex; flex-direction:column; gap:.8rem; }
+    .sbubble-user  { align-self:flex-start; background:#f4f4f4; color:var(--dark); border-radius:14px; border-bottom-left-radius:4px; padding:.65rem 1rem; max-width:72%; font-size:.88rem; word-break:break-word; }
+    .sbubble-admin { align-self:flex-end; background:var(--red); color:#fff; border-radius:14px; border-bottom-right-radius:4px; padding:.65rem 1rem; max-width:72%; font-size:.88rem; word-break:break-word; }
+    .support-meta { font-size:.7rem; color:#bbb; margin-top:3px; }
+    .support-reply-row { display:flex; gap:.6rem; padding:1rem; border-top:1.5px solid #eee; background:#fafafa; }
+    .support-reply-input { flex:1; border:1.5px solid #ddd; border-radius:10px; padding:.65rem 1rem; font-size:.88rem; resize:none; font-family:inherit; outline:none; }
+    .support-reply-input:focus { border-color:var(--red); }
+    .support-reply-btn { background:var(--red); color:#fff; border:none; border-radius:10px; padding:.65rem 1.3rem; font-weight:700; cursor:pointer; }
+    .support-reply-btn:disabled { opacity:.5; cursor:not-allowed; }
+    .support-empty { text-align:center; padding:3rem 1rem; color:#aaa; }
+    .support-placeholder { flex:1; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:.8rem; color:#ccc; }
+
+    @media (max-width:768px) {
+      .sidebar { width:60px; }
+      .sb-title,.sb-subtitle,.sb-item span,.sb-section,.sb-admin-info,.sb-badge,.btn-logout span,.admin-user-info,.online-pill { display:none; }
+      .admin-user-card { justify-content:center; padding:.4rem; }
+      .admin-user-av { width:28px; height:28px; font-size:.9rem; }
+      .btn-logout { font-size:0; padding:.55rem; }
+      .btn-logout::before { content:'🚪'; font-size:1rem; }
+      .main { margin-left:60px; padding:1rem; }
+      .stats-grid { grid-template-columns:1fr 1fr; }
+    }
+    @media (max-width:480px) {
+      .stats-grid { grid-template-columns:1fr; }
     }
   </style>
 </head>
@@ -162,80 +362,130 @@
     </div>
   </div>
   <nav class="sb-menu">
+    <div class="sb-section">Main</div>
     <div class="sb-item active" onclick="switchView('overview',this)">
       <span class="icon">📊</span><span>Overview</span>
     </div>
+    <div class="sb-item" onclick="switchView('analytics',this)">
+      <span class="icon">📈</span><span>Analytics</span>
+    </div>
+
+    <div class="sb-section">Moderation</div>
     <div class="sb-item" onclick="switchView('ads',this)">
       <span class="icon">📋</span><span>Manage Ads</span>
+      <span class="sb-badge" id="sb-pending-badge" style="display:none">0</span>
     </div>
     <div class="sb-item" onclick="switchView('users',this)">
       <span class="icon">👥</span><span>Users</span>
     </div>
+
+    <div class="sb-section">Finance</div>
     <div class="sb-item" onclick="switchView('transactions',this)">
-      <span class="icon">💰</span><span>Transactions</span>
+      <span class="icon">🪙</span><span>Coin Logs</span>
     </div>
     <div class="sb-item" onclick="switchView('payments',this)">
       <span class="icon">💳</span><span>Payments</span>
     </div>
+
+    <div class="sb-section">Support</div>
+    <div class="sb-item" onclick="switchView('support',this)" id="sb-support">
+      <span class="icon">💬</span><span>User Chats</span>
+      <span class="sb-badge" id="sb-chat-badge" style="display:none">0</span>
+    </div>
+
+    <div class="sb-section">Config</div>
+    <div class="sb-item" onclick="switchView('settings',this)">
+      <span class="icon">⚙️</span><span>Settings</span>
+    </div>
     <div class="sb-item" onclick="window.location.href='index.html'">
-      <span class="icon">🏠</span><span>Home</span>
+      <span class="icon">🏠</span><span>Back to Site</span>
     </div>
   </nav>
   <div class="sb-footer">
-    <button class="btn-logout" onclick="logout()">🚪 Logout</button>
+    <div class="admin-user-card">
+      <div class="admin-user-av" id="admin-user-av">A</div>
+      <div class="admin-user-info">
+        <div class="admin-user-name" id="admin-user-name">Admin</div>
+        <div class="sb-admin-info" id="sb-admin-info">Loading…</div>
+        <span class="online-pill">Online</span>
+      </div>
+    </div>
+    <button class="btn-logout" onclick="logout()"><span>🚪 Logout</span></button>
   </div>
 </aside>
 
 <!-- ── MAIN ── -->
 <main class="main">
 
-  <!-- OVERVIEW -->
+  <!-- ══ OVERVIEW ══ -->
   <div class="view active" id="view-overview">
-    <div class="section-tag">Admin</div>
-    <div class="page-title">Platform Overview</div>
-    <div class="page-sub" id="admin-email">Loading...</div>
+    <div class="top-bar">
+      <div>
+        <div class="section-tag">Admin</div>
+        <div class="page-title">Platform Overview</div>
+        <div class="page-sub">Real-time snapshot of Anaar platform</div>
+      </div>
+      <div class="top-bar-right">
+        <button class="refresh-btn" onclick="loadOverview()">🔄 Refresh</button>
+      </div>
+    </div>
 
     <div class="stats-grid">
-      <div class="stat-card">
-        <div class="icon">👥</div>
-        <div class="label">Total Users</div>
-        <div class="value" id="s-users">—</div>
+      <div class="stat-card c-blue">
+        <div class="s-icon">👥</div>
+        <div class="s-label">Total Users</div>
+        <div class="s-value" id="s-users">—</div>
+        <div class="s-sub">registered accounts</div>
       </div>
-      <div class="stat-card">
-        <div class="icon">📢</div>
-        <div class="label">Total Ads</div>
-        <div class="value" id="s-ads">—</div>
+      <div class="stat-card c-red">
+        <div class="s-icon">📢</div>
+        <div class="s-label">Total Ads</div>
+        <div class="s-value" id="s-ads">—</div>
+        <div class="s-sub">all time</div>
       </div>
-      <div class="stat-card">
-        <div class="icon">⏳</div>
-        <div class="label">Pending Ads</div>
-        <div class="value" id="s-pending">—</div>
+      <div class="stat-card c-orange">
+        <div class="s-icon">⏳</div>
+        <div class="s-label">Pending Review</div>
+        <div class="s-value" id="s-pending">—</div>
+        <div class="s-sub">needs action</div>
       </div>
-      <div class="stat-card">
-        <div class="icon">✅</div>
-        <div class="label">Active Ads</div>
-        <div class="value" id="s-active">—</div>
+      <div class="stat-card c-green">
+        <div class="s-icon">✅</div>
+        <div class="s-label">Active Ads</div>
+        <div class="s-value" id="s-active">—</div>
+        <div class="s-sub">running now</div>
       </div>
-      <div class="stat-card">
-        <div class="icon">👁️</div>
-        <div class="label">Total Views</div>
-        <div class="value" id="s-views">—</div>
+      <div class="stat-card c-purple">
+        <div class="s-icon">👁️</div>
+        <div class="s-label">Total Views</div>
+        <div class="s-value" id="s-views">—</div>
+        <div class="s-sub">ad views delivered</div>
       </div>
-      <div class="stat-card">
-        <div class="icon">🪙</div>
-        <div class="label">Coins Issued</div>
-        <div class="value" id="s-coins">—</div>
+      <div class="stat-card c-gold">
+        <div class="s-icon">🪙</div>
+        <div class="s-label">Coins Issued</div>
+        <div class="s-value" id="s-coins">—</div>
+        <div class="s-sub">to all wallets</div>
       </div>
-      <div class="stat-card">
-        <div class="icon">💰</div>
-        <div class="label">Revenue (₹)</div>
-        <div class="value" id="s-revenue">—</div>
+      <div class="stat-card c-green">
+        <div class="s-icon">💰</div>
+        <div class="s-label">Revenue</div>
+        <div class="s-value" id="s-revenue">—</div>
+        <div class="s-sub">from advertisers</div>
       </div>
-      <div class="stat-card">
-        <div class="icon">🏪</div>
-        <div class="label">Advertisers</div>
-        <div class="value" id="s-advertisers">—</div>
+      <div class="stat-card c-red">
+        <div class="s-icon">🏪</div>
+        <div class="s-label">Advertisers</div>
+        <div class="s-value" id="s-advertisers">—</div>
+        <div class="s-sub">business accounts</div>
       </div>
+    </div>
+
+    <!-- Quick actions -->
+    <div class="quick-actions">
+      <button class="quick-btn" onclick="switchView('ads', document.querySelector('.sb-item:nth-child(6)'))">📋 Review Pending Ads</button>
+      <button class="quick-btn" onclick="switchView('users', document.querySelector('.sb-item:nth-child(7)'))">👥 Manage Users</button>
+      <button class="quick-btn" onclick="loadOverview()">🔄 Reload Stats</button>
     </div>
 
     <!-- Pending ads quick panel -->
@@ -244,172 +494,496 @@
         <h3>⏳ Pending Ads — Needs Approval</h3>
         <span id="pending-count" class="badge badge-pending">0 pending</span>
       </div>
-      <table>
-        <thead>
-          <tr>
-            <th>Title</th>
-            <th>Type</th>
-            <th>Target</th>
-            <th>Budget</th>
-            <th>Views</th>
-            <th>Submitted</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody id="pending-tbody">
-          <tr><td colspan="7" class="empty">Loading...</td></tr>
-        </tbody>
-      </table>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Title</th><th>Type</th><th>Target</th>
+              <th>Budget</th><th>Views</th><th>Submitted</th><th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="pending-tbody">
+            <tr><td colspan="7"><div class="empty"><div class="e-icon">⏳</div><p>Loading…</p></div></td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 
-  <!-- MANAGE ADS -->
+  <!-- ══ ANALYTICS ══ -->
+  <div class="view" id="view-analytics">
+    <div class="top-bar">
+      <div>
+        <div class="section-tag">Analytics</div>
+        <div class="page-title">Platform Analytics</div>
+        <div class="page-sub">Ad performance and user breakdown</div>
+      </div>
+      <button class="refresh-btn" onclick="loadAnalytics()">🔄 Refresh</button>
+    </div>
+
+    <div class="analytics-section">
+      <div class="chart-card">
+        <div class="chart-title">📊 Ads by Status</div>
+        <div id="chart-status"></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">📣 Ads by Type</div>
+        <div id="chart-type"></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">👥 Users by Role</div>
+        <div id="chart-role"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>🏆 Top Performing Ads</h3></div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Title</th><th>Type</th><th>Views Delivered</th><th>Views Ordered</th><th>Completion %</th><th>Status</th></tr>
+          </thead>
+          <tbody id="top-ads-tbody">
+            <tr><td colspan="6"><div class="empty"><div class="e-icon">📊</div><p>Loading…</p></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ MANAGE ADS ══ -->
   <div class="view" id="view-ads">
-    <div class="section-tag">Ads</div>
-    <div class="page-title">Manage Ads</div>
-    <div class="page-sub">View, approve and reject advertiser campaigns</div>
+    <div class="top-bar">
+      <div>
+        <div class="section-tag">Ads</div>
+        <div class="page-title">Manage Ads</div>
+        <div class="page-sub">Approve, reject and monitor all ad campaigns</div>
+      </div>
+      <button class="refresh-btn" onclick="loadAllAds()">🔄 Refresh</button>
+    </div>
 
     <div class="card">
       <div class="card-head">
         <h3>All Ads</h3>
-        <input class="search-bar" id="ads-search" placeholder="🔍 Search ads..." oninput="filterAds()" />
+        <div class="card-head-actions">
+          <div class="filter-tabs" id="ads-filter-tabs">
+            <div class="ftab active" onclick="filterAdsByStatus('all',this)">All</div>
+            <div class="ftab" onclick="filterAdsByStatus('pending',this)">Pending</div>
+            <div class="ftab" onclick="filterAdsByStatus('active',this)">Active</div>
+            <div class="ftab" onclick="filterAdsByStatus('completed',this)">Completed</div>
+            <div class="ftab" onclick="filterAdsByStatus('rejected',this)">Rejected</div>
+          </div>
+          <input class="search-bar" id="ads-search" placeholder="🔍 Search ads…" oninput="renderAllAdsFiltered()" />
+        </div>
       </div>
-      <table>
-        <thead>
-          <tr>
-            <th>Title</th>
-            <th>Type</th>
-            <th>Status</th>
-            <th>Target</th>
-            <th>Budget</th>
-            <th>Views</th>
-            <th>Date</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody id="all-ads-tbody">
-          <tr><td colspan="8" class="empty">Loading...</td></tr>
-        </tbody>
-      </table>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Title</th><th>Type</th><th>Status</th><th>Target</th>
+              <th>Budget</th><th>Views</th><th>Date</th><th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="all-ads-tbody">
+            <tr><td colspan="8"><div class="empty"><div class="e-icon">📋</div><p>Loading…</p></div></td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 
-  <!-- USERS -->
+  <!-- ══ USERS ══ -->
   <div class="view" id="view-users">
-    <div class="section-tag">Users</div>
-    <div class="page-title">All Users</div>
-    <div class="page-sub">Registered viewers and advertisers</div>
+    <div class="top-bar">
+      <div>
+        <div class="section-tag">Users</div>
+        <div class="page-title">All Users</div>
+        <div class="page-sub">Manage viewers, advertisers and admins</div>
+      </div>
+      <button class="refresh-btn" onclick="loadUsers()">🔄 Refresh</button>
+    </div>
 
     <div class="card">
       <div class="card-head">
-        <h3>Users</h3>
-        <input class="search-bar" id="users-search" placeholder="🔍 Search users..." oninput="filterUsers()" />
+        <h3>Users <span id="users-count" style="color:#bbb;font-weight:500;font-size:.85rem;"></span></h3>
+        <div class="card-head-actions">
+          <div class="filter-tabs">
+            <div class="ftab active" onclick="filterUsersByRole('all',this)">All</div>
+            <div class="ftab" onclick="filterUsersByRole('viewer',this)">Viewer</div>
+            <div class="ftab" onclick="filterUsersByRole('advertiser',this)">Advertiser</div>
+            <div class="ftab" onclick="filterUsersByRole('both',this)">Both</div>
+            <div class="ftab" onclick="filterUsersByRole('admin',this)">Admin</div>
+          </div>
+          <input class="search-bar" id="users-search" placeholder="🔍 Search users…" oninput="renderUsersFiltered()" />
+        </div>
       </div>
-      <table>
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Role</th>
-            <th>Coins</th>
-            <th>Joined</th>
-          </tr>
-        </thead>
-        <tbody id="users-tbody">
-          <tr><td colspan="5" class="empty">Loading...</td></tr>
-        </tbody>
-      </table>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Name</th><th>Email / Phone</th><th>Role</th><th>Coins</th><th>Joined</th><th>Actions</th></tr>
+          </thead>
+          <tbody id="users-tbody">
+            <tr><td colspan="6"><div class="empty"><div class="e-icon">👥</div><p>Loading…</p></div></td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 
-  <!-- TRANSACTIONS -->
+  <!-- ══ TRANSACTIONS ══ -->
   <div class="view" id="view-transactions">
-    <div class="section-tag">Transactions</div>
-    <div class="page-title">Coin Transactions</div>
-    <div class="page-sub">All earn and redeem events</div>
-
+    <div class="top-bar">
+      <div>
+        <div class="section-tag">Finance</div>
+        <div class="page-title">Coin Transactions</div>
+        <div class="page-sub">All earn and redeem events</div>
+      </div>
+      <button class="refresh-btn" onclick="loadTransactions()">🔄 Refresh</button>
+    </div>
     <div class="card">
       <div class="card-head"><h3>Recent Transactions</h3></div>
-      <table>
-        <thead>
-          <tr>
-            <th>User</th>
-            <th>Type</th>
-            <th>Coins</th>
-            <th>Description</th>
-            <th>Date</th>
-          </tr>
-        </thead>
-        <tbody id="tx-tbody">
-          <tr><td colspan="5" class="empty">Loading...</td></tr>
-        </tbody>
-      </table>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>User</th><th>Type</th><th>Coins</th><th>Description</th><th>Date</th></tr>
+          </thead>
+          <tbody id="tx-tbody">
+            <tr><td colspan="5"><div class="empty"><div class="e-icon">🪙</div><p>Loading…</p></div></td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 
-  <!-- PAYMENTS -->
+  <!-- ══ PAYMENTS ══ -->
   <div class="view" id="view-payments">
-    <div class="section-tag">Payments</div>
-    <div class="page-title">Payment Records</div>
-    <div class="page-sub">Advertiser wallet deductions and top-ups</div>
-
+    <div class="top-bar">
+      <div>
+        <div class="section-tag">Finance</div>
+        <div class="page-title">Payment Records</div>
+        <div class="page-sub">Advertiser wallet top-ups and deductions</div>
+      </div>
+      <button class="refresh-btn" onclick="loadPayments()">🔄 Refresh</button>
+    </div>
     <div class="card">
       <div class="card-head"><h3>All Payments</h3></div>
-      <table>
-        <thead>
-          <tr>
-            <th>Advertiser</th>
-            <th>Amount</th>
-            <th>Method</th>
-            <th>Status</th>
-            <th>Date</th>
-          </tr>
-        </thead>
-        <tbody id="pay-tbody">
-          <tr><td colspan="5" class="empty">Loading...</td></tr>
-        </tbody>
-      </table>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Advertiser</th><th>Ad Title</th><th>Amount</th><th>GST</th><th>Total</th><th>Method</th><th>Status</th><th>Date</th></tr>
+          </thead>
+          <tbody id="pay-tbody">
+            <tr><td colspan="8"><div class="empty"><div class="e-icon">💳</div><p>Loading…</p></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SETTINGS ══ -->
+  <div class="view" id="view-settings">
+    <div class="top-bar">
+      <div>
+        <div class="section-tag">Config</div>
+        <div class="page-title">Platform Settings</div>
+        <div class="page-sub">Configure ad rates, coin values, and platform toggles</div>
+      </div>
+    </div>
+
+    <div class="settings-grid">
+      <div class="settings-card">
+        <h4>💰 Ad Rates (per 1K)</h4>
+        <div class="setting-row">
+          <div><div class="setting-label">Image / Slide Ads</div><div class="setting-sub">Rate per click (CPC)</div></div>
+          <input class="setting-input" type="number" id="cfg-rate-image" value="0.30" step="0.01" min="0" />
+        </div>
+        <div class="setting-row">
+          <div><div class="setting-label">Video Ads</div><div class="setting-sub">Rate per click (CPC)</div></div>
+          <input class="setting-input" type="number" id="cfg-rate-video" value="0.50" step="0.01" min="0" />
+        </div>
+        <div class="setting-row">
+          <div><div class="setting-label">Social Media Ads</div><div class="setting-sub">Rate per like (CPL)</div></div>
+          <input class="setting-input" type="number" id="cfg-rate-social" value="0.80" step="0.01" min="0" />
+        </div>
+        <div class="setting-row">
+          <div><div class="setting-label">App / Web Ads</div><div class="setting-sub">Rate per click (CPI)</div></div>
+          <input class="setting-input" type="number" id="cfg-rate-app" value="2.00" step="0.01" min="0" />
+        </div>
+        <button class="settings-save-btn" onclick="showToast('Rates saved (UI only — connect to Supabase config table to persist)', 'success')">Save Rates</button>
+      </div>
+
+      <div class="settings-card">
+        <h4>🪙 Coin Values</h4>
+        <div class="setting-row">
+          <div><div class="setting-label">Image Ad Coins</div><div class="setting-sub">Coins per click (CPC)</div></div>
+          <input class="setting-input" type="number" id="cfg-coin-image" value="300" min="1" />
+        </div>
+        <div class="setting-row">
+          <div><div class="setting-label">Video Ad Coins</div><div class="setting-sub">Coins per click (CPC)</div></div>
+          <input class="setting-input" type="number" id="cfg-coin-video" value="500" min="1" />
+        </div>
+        <div class="setting-row">
+          <div><div class="setting-label">Social Ad Coins</div><div class="setting-sub">Coins per like (CPL)</div></div>
+          <input class="setting-input" type="number" id="cfg-coin-social" value="800" min="1" />
+        </div>
+        <div class="setting-row">
+          <div><div class="setting-label">App Ad Coins</div><div class="setting-sub">Coins per click (CPI)</div></div>
+          <input class="setting-input" type="number" id="cfg-coin-app" value="1500" min="1" />
+        </div>
+        <button class="settings-save-btn" onclick="showToast('Coin values saved (UI only — connect to Supabase config table to persist)', 'success')">Save Coin Values</button>
+      </div>
+
+      <div class="settings-card">
+        <h4>🔧 Platform Toggles</h4>
+        <div class="setting-row">
+          <div><div class="setting-label">New User Signups</div><div class="setting-sub">Allow new registrations</div></div>
+          <div class="toggle on" id="toggle-signups" onclick="toggleSwitch(this)"></div>
+        </div>
+        <div class="setting-row">
+          <div><div class="setting-label">Ad Submissions</div><div class="setting-sub">Allow advertisers to submit</div></div>
+          <div class="toggle on" id="toggle-ads" onclick="toggleSwitch(this)"></div>
+        </div>
+        <div class="setting-row">
+          <div><div class="setting-label">Coin Redemption</div><div class="setting-sub">Allow viewers to redeem coins</div></div>
+          <div class="toggle on" id="toggle-redeem" onclick="toggleSwitch(this)"></div>
+        </div>
+        <div class="setting-row">
+          <div><div class="setting-label">Maintenance Mode</div><div class="setting-sub">Show maintenance page to users</div></div>
+          <div class="toggle" id="toggle-maintenance" onclick="toggleSwitch(this)"></div>
+        </div>
+        <button class="settings-save-btn" onclick="showToast('Toggle settings saved (connect to Supabase for persistence)', 'success')">Save Toggles</button>
+      </div>
+
+      <div class="settings-card">
+        <h4>🛡️ Admin Access</h4>
+        <p style="font-size:.82rem;color:#888;margin-bottom:1rem;">Grant or revoke admin role. Admins have full panel access.</p>
+        <div class="setting-row" style="flex-direction:column;align-items:flex-start;gap:.5rem;">
+          <div class="setting-label">User Email / Phone</div>
+          <input class="setting-input" id="admin-grant-email" placeholder="email or phone" style="width:100%;" />
+        </div>
+        <div style="display:flex;gap:.5rem;margin-top:.5rem;">
+          <button class="settings-save-btn" style="flex:1;" onclick="grantAdmin()">Grant Admin</button>
+          <button class="settings-save-btn" style="flex:1;background:#e74c3c;" onclick="revokeAdmin()">Revoke Admin</button>
+        </div>
+      </div>
+
+      <div class="settings-card" style="grid-column:1/-1;">
+        <h4>🌐 Brand Social Media Links</h4>
+        <p style="font-size:.82rem;color:#888;margin-bottom:1rem;">Links appear as icons in the home page header and footer. Leave blank to hide.</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;" id="social-link-grid">
+          <div class="setting-row">
+            <div style="display:flex;align-items:center;gap:.5rem;">
+              <span style="width:28px;height:28px;border-radius:50%;background:#1877F2;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:.8rem;flex-shrink:0;">f</span>
+              <div><div class="setting-label">Facebook</div></div>
+            </div>
+            <input class="setting-input" id="sl-facebook" type="url" placeholder="https://facebook.com/yourpage" style="width:220px;" />
+          </div>
+          <div class="setting-row">
+            <div style="display:flex;align-items:center;gap:.5rem;">
+              <span style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#f09433,#dc2743,#bc1888);display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:.75rem;flex-shrink:0;">Ig</span>
+              <div><div class="setting-label">Instagram</div></div>
+            </div>
+            <input class="setting-input" id="sl-instagram" type="url" placeholder="https://instagram.com/yourpage" style="width:220px;" />
+          </div>
+          <div class="setting-row">
+            <div style="display:flex;align-items:center;gap:.5rem;">
+              <span style="width:28px;height:28px;border-radius:50%;background:#FF0000;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:.85rem;flex-shrink:0;">▶</span>
+              <div><div class="setting-label">YouTube</div></div>
+            </div>
+            <input class="setting-input" id="sl-youtube" type="url" placeholder="https://youtube.com/@yourchannel" style="width:220px;" />
+          </div>
+          <div class="setting-row">
+            <div style="display:flex;align-items:center;gap:.5rem;">
+              <span style="width:28px;height:28px;border-radius:50%;background:#000;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:.85rem;flex-shrink:0;">𝕏</span>
+              <div><div class="setting-label">X (Twitter)</div></div>
+            </div>
+            <input class="setting-input" id="sl-twitter" type="url" placeholder="https://x.com/yourhandle" style="width:220px;" />
+          </div>
+          <div class="setting-row">
+            <div style="display:flex;align-items:center;gap:.5rem;">
+              <span style="width:28px;height:28px;border-radius:50%;background:#25D366;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:.75rem;flex-shrink:0;">W</span>
+              <div><div class="setting-label">WhatsApp</div></div>
+            </div>
+            <input class="setting-input" id="sl-whatsapp" type="url" placeholder="https://wa.me/91XXXXXXXXXX" style="width:220px;" />
+          </div>
+          <div class="setting-row">
+            <div style="display:flex;align-items:center;gap:.5rem;">
+              <span style="width:28px;height:28px;border-radius:50%;background:#0A66C2;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:.7rem;flex-shrink:0;">in</span>
+              <div><div class="setting-label">LinkedIn</div></div>
+            </div>
+            <input class="setting-input" id="sl-linkedin" type="url" placeholder="https://linkedin.com/company/yourco" style="width:220px;" />
+          </div>
+          <div class="setting-row">
+            <div style="display:flex;align-items:center;gap:.5rem;">
+              <span style="width:28px;height:28px;border-radius:50%;background:#229ED9;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:.8rem;flex-shrink:0;">✈</span>
+              <div><div class="setting-label">Telegram</div></div>
+            </div>
+            <input class="setting-input" id="sl-telegram" type="url" placeholder="https://t.me/yourchannel" style="width:220px;" />
+          </div>
+        </div>
+        <button class="settings-save-btn" style="margin-top:1.2rem;" onclick="saveSocialLinks()">Save Social Links</button>
+      </div>
+
+      <div class="settings-card">
+        <h4>📊 GST Config</h4>
+        <div class="setting-row">
+          <div><div class="setting-label">GST Rate</div><div class="setting-sub">Applied on all ad payments</div></div>
+          <input class="setting-input" type="number" id="cfg-gst" value="5" min="0" max="100" />
+        </div>
+        <div class="setting-row">
+          <div><div class="setting-label">GST Registration No.</div><div class="setting-sub">Show on invoices</div></div>
+          <input class="setting-input" type="text" id="cfg-gstin" placeholder="GSTIN" style="width:160px;" />
+        </div>
+        <button class="settings-save-btn" onclick="showToast('GST config saved', 'success')">Save GST Config</button>
+      </div>
+
+      <div class="settings-card">
+        <h4>📬 Platform Info</h4>
+        <div class="setting-row">
+          <div><div class="setting-label">Min. Views per Ad</div><div class="setting-sub">Minimum order quantity</div></div>
+          <input class="setting-input" type="number" id="cfg-min-views" value="1000" min="100" step="100" />
+        </div>
+        <div class="setting-row">
+          <div><div class="setting-label">Max. Image Size (MB)</div><div class="setting-sub">Upload limit for ad images</div></div>
+          <input class="setting-input" type="number" id="cfg-max-img" value="5" min="1" max="50" />
+        </div>
+        <div class="setting-row">
+          <div><div class="setting-label">Support WhatsApp</div><div class="setting-sub">Shown on contact page</div></div>
+          <input class="setting-input" type="text" id="cfg-wa" placeholder="+91 XXXXXXXXXX" style="width:160px;" />
+        </div>
+        <button class="settings-save-btn" onclick="showToast('Platform info saved', 'success')">Save Info</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SUPPORT CHATS ══ -->
+  <div class="view" id="view-support">
+    <div class="top-bar">
+      <div>
+        <div class="section-tag">Support</div>
+        <div class="page-title">User Chats</div>
+        <div class="page-sub">Reply to user support messages</div>
+      </div>
+      <div class="top-bar-right">
+        <button class="refresh-btn" onclick="loadSupport()">🔄 Refresh</button>
+      </div>
+    </div>
+
+    <div class="support-layout">
+      <!-- User list -->
+      <div class="support-user-list">
+        <div class="support-list-head">💬 Conversations</div>
+        <div id="support-user-list">
+          <div class="support-empty">Loading…</div>
+        </div>
+      </div>
+
+      <!-- Chat area -->
+      <div class="support-chat-area" id="support-chat-area">
+        <div class="support-placeholder" id="support-placeholder">
+          <div style="font-size:3rem">💬</div>
+          <div style="font-size:.9rem">Select a conversation to reply</div>
+        </div>
+        <div id="support-chat-panel" style="display:none;flex-direction:column;flex:1;height:100%;">
+          <div class="support-chat-header">
+            <div class="support-av" id="support-chat-av">U</div>
+            <div>
+              <div class="support-chat-title" id="support-chat-title">User</div>
+              <div class="support-chat-sub" id="support-chat-sub"></div>
+            </div>
+          </div>
+          <div class="support-messages" id="support-messages"></div>
+          <div class="support-reply-row">
+            <textarea id="support-reply-input" class="support-reply-input" rows="2"
+              placeholder="Type reply… (Enter to send)"
+              onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendSupportReply();}"></textarea>
+            <button id="support-reply-btn" class="support-reply-btn" onclick="sendSupportReply()">Reply</button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
 </main>
 
+<!-- ── AD DETAIL MODAL ── -->
+<div class="modal-overlay" id="ad-modal">
+  <div class="modal" onclick="event.stopPropagation()">
+    <button class="modal-close" onclick="closeAdModal()">✕</button>
+    <h3>📋 Ad Details</h3>
+    <div id="ad-modal-body"></div>
+    <div class="modal-actions" id="ad-modal-actions"></div>
+  </div>
+</div>
+
+<!-- ── USER DETAIL MODAL ── -->
+<div class="modal-overlay" id="user-modal">
+  <div class="modal" onclick="event.stopPropagation()">
+    <button class="modal-close" onclick="closeUserModal()">✕</button>
+    <h3>👤 User Details</h3>
+    <div id="user-modal-body"></div>
+    <div style="margin-top:1.2rem;display:flex;gap:.6rem;flex-wrap:wrap;" id="user-modal-actions"></div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
-  let allAds   = [];
-  let allUsers = [];
+  let allAds = [], allUsers = [], adsStatusFilter = 'all', usersRoleFilter = 'all';
 
-  // ── Auth guard ────────────────────────────────────
+  // ── Auth guard (admin only) ───────────────────────────────
   async function init() {
     const { data: { user } } = await db.auth.getUser();
     if (!user) { window.location.href = 'login.html'; return; }
 
-    document.getElementById('admin-email').textContent = 'Logged in as: ' + user.email;
+    const role = user.user_metadata?.role || 'viewer';
+    if (role !== 'admin') {
+      document.body.innerHTML = `
+        <div style="display:flex;align-items:center;justify-content:center;min-height:100vh;background:#f4f4f4;flex-direction:column;gap:1rem;text-align:center;padding:2rem;">
+          <div style="font-size:3rem;">🚫</div>
+          <h2 style="color:#8B1A1A;">Access Denied</h2>
+          <p style="color:#666;max-width:360px;">You don't have admin permissions. Only users with the admin role can access this panel.</p>
+          <a href="index.html" style="background:#8B1A1A;color:#fff;border-radius:10px;padding:.75rem 1.8rem;text-decoration:none;font-weight:700;">Back to Home</a>
+        </div>`;
+      return;
+    }
+
+    const email = user.email || user.phone || user.id.slice(0,8)+'…';
+    const adminName = user.user_metadata?.name || email.split('@')[0] || 'Admin';
+    document.getElementById('admin-user-av').textContent   = adminName.charAt(0).toUpperCase();
+    document.getElementById('admin-user-name').textContent = adminName.split(' ')[0];
+    document.getElementById('sb-admin-info').textContent   = email;
 
     loadOverview();
     loadAllAds();
     loadUsers();
     loadTransactions();
     loadPayments();
+    loadAnalytics();
+    loadSocialConfig();
+    checkSupportUnread();
+    setInterval(checkSupportUnread, 20000);
   }
 
-  // ── View switching ────────────────────────────────
+  // ── View switching ────────────────────────────────────────
   function switchView(name, el) {
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     document.getElementById('view-' + name).classList.add('active');
     document.querySelectorAll('.sb-item').forEach(i => i.classList.remove('active'));
     if (el) el.classList.add('active');
+    if (name === 'support') loadSupport();
   }
 
-  // ── Toast ─────────────────────────────────────────
-  function showToast(msg) {
+  // ── Toast ─────────────────────────────────────────────────
+  function showToast(msg, type) {
     const t = document.getElementById('toast');
-    t.textContent = msg; t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 3000);
+    t.textContent = msg;
+    t.className = 'toast' + (type ? ' ' + type : '');
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3500);
   }
 
-  // ── Overview stats ────────────────────────────────
+  // ── Overview ──────────────────────────────────────────────
   async function loadOverview() {
     const [
       { count: totalUsers },
@@ -421,19 +995,19 @@
       { data: revenueData },
       { count: totalAdv }
     ] = await Promise.all([
-      db.from('users').select('*', { count: 'exact', head: true }),
-      db.from('ads').select('*', { count: 'exact', head: true }),
-      db.from('ads').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
-      db.from('ads').select('*', { count: 'exact', head: true }).eq('status', 'active'),
+      db.from('users').select('*', { count:'exact', head:true }),
+      db.from('ads').select('*', { count:'exact', head:true }),
+      db.from('ads').select('*', { count:'exact', head:true }).eq('status','pending'),
+      db.from('ads').select('*', { count:'exact', head:true }).eq('status','active'),
       db.from('ads').select('views_delivered'),
       db.from('coin_wallets').select('coins'),
-      db.from('payments').select('total_amount').eq('status', 'success'),
-      db.from('advertisers').select('*', { count: 'exact', head: true })
+      db.from('payments').select('total_amount').eq('status','success'),
+      db.from('advertisers').select('*', { count:'exact', head:true })
     ]);
 
-    const totalViews   = (viewsData  || []).reduce((s,r) => s + (r.views_delivered||0), 0);
-    const totalCoins   = (coinsData  || []).reduce((s,r) => s + (r.coins||0), 0);
-    const totalRevenue = (revenueData|| []).reduce((s,r) => s + parseFloat(r.total_amount||0), 0);
+    const totalViews   = (viewsData  ||[]).reduce((s,r) => s+(r.views_delivered||0), 0);
+    const totalCoins   = (coinsData  ||[]).reduce((s,r) => s+(r.coins||0), 0);
+    const totalRevenue = (revenueData||[]).reduce((s,r) => s+parseFloat(r.total_amount||0), 0);
 
     document.getElementById('s-users').textContent      = totalUsers  || 0;
     document.getElementById('s-ads').textContent        = totalAds    || 0;
@@ -442,181 +1016,570 @@
     document.getElementById('s-views').textContent      = totalViews.toLocaleString();
     document.getElementById('s-coins').textContent      = totalCoins.toLocaleString();
     document.getElementById('s-revenue').textContent    = '₹' + totalRevenue.toFixed(2);
-    document.getElementById('s-advertisers').textContent = totalAdv   || 0;
-    document.getElementById('pending-count').textContent = (pendingAds||0) + ' pending';
+    document.getElementById('s-advertisers').textContent= totalAdv   || 0;
+    document.getElementById('pending-count').textContent= (pendingAds||0) + ' pending';
+
+    const badge = document.getElementById('sb-pending-badge');
+    if (pendingAds > 0) { badge.textContent = pendingAds; badge.style.display = 'inline-block'; }
+    else { badge.style.display = 'none'; }
 
     loadPendingAds();
   }
 
-  // ── Pending ads ───────────────────────────────────
+  // ── Pending ads ───────────────────────────────────────────
   async function loadPendingAds() {
-    const { data } = await db.from('ads').select('*').eq('status', 'pending').order('created_at', { ascending: false });
+    const { data } = await db.from('ads').select('*').eq('status','pending').order('created_at',{ascending:false});
     const tbody = document.getElementById('pending-tbody');
-    if (!data || data.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#aaa;padding:2rem">No pending ads 🎉</td></tr>';
+    if (!data || !data.length) {
+      tbody.innerHTML = '<tr><td colspan="7"><div class="empty"><div class="e-icon">🎉</div><p>No pending ads — all clear!</p></div></td></tr>';
       return;
     }
     tbody.innerHTML = data.map(ad => `
       <tr id="row-${ad.id}">
-        <td><strong>${ad.title}</strong></td>
-        <td>${ad.ad_type.replace('_',' ')}</td>
-        <td>${ad.target_area}${ad.target_value ? ': '+ad.target_value : ''}</td>
+        <td><strong>${esc(ad.title)}</strong></td>
+        <td>${fmtType(ad.ad_type)}</td>
+        <td>${esc(ad.target_area)}${ad.target_value ? ': '+esc(ad.target_value) : ''}</td>
         <td>₹${parseFloat(ad.budget_total||0).toFixed(2)}</td>
         <td>${(ad.views_ordered||0).toLocaleString()}</td>
-        <td>${new Date(ad.created_at).toLocaleDateString()}</td>
+        <td>${fmtDate(ad.created_at)}</td>
         <td>
           <button class="btn-approve" onclick="approveAd('${ad.id}')">✅ Approve</button>
           <button class="btn-reject"  onclick="rejectAd('${ad.id}')">❌ Reject</button>
+          <button class="btn-view"    onclick="openAdModal('${ad.id}')">👁 View</button>
         </td>
       </tr>`).join('');
   }
 
-  // ── All ads ───────────────────────────────────────
+  // ── All ads ───────────────────────────────────────────────
   async function loadAllAds() {
-    const { data } = await db.from('ads').select('*').order('created_at', { ascending: false });
+    const { data } = await db.from('ads').select('*').order('created_at',{ascending:false});
     allAds = data || [];
-    renderAllAds(allAds);
+    renderAllAdsFiltered();
+  }
+
+  function renderAllAdsFiltered() {
+    const q = (document.getElementById('ads-search')?.value || '').toLowerCase();
+    let list = allAds;
+    if (adsStatusFilter !== 'all') list = list.filter(a => a.status === adsStatusFilter);
+    if (q) list = list.filter(a => esc(a.title).toLowerCase().includes(q) || a.ad_type.includes(q) || a.status.includes(q));
+    renderAllAds(list);
+  }
+
+  function filterAdsByStatus(status, el) {
+    adsStatusFilter = status;
+    document.querySelectorAll('#ads-filter-tabs .ftab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    renderAllAdsFiltered();
   }
 
   function renderAllAds(list) {
     const tbody = document.getElementById('all-ads-tbody');
     if (!list.length) {
-      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#aaa;padding:2rem">No ads found</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="8"><div class="empty"><div class="e-icon">📋</div><p>No ads found</p></div></td></tr>';
       return;
     }
     tbody.innerHTML = list.map(ad => `
       <tr id="adrow-${ad.id}">
-        <td><strong>${ad.title}</strong></td>
-        <td>${ad.ad_type.replace('_',' ')}</td>
+        <td><strong>${esc(ad.title)}</strong></td>
+        <td>${fmtType(ad.ad_type)}</td>
         <td><span class="badge badge-${ad.status}">${ad.status}</span></td>
-        <td>${ad.target_area}</td>
+        <td>${esc(ad.target_area)}</td>
         <td>₹${parseFloat(ad.budget_total||0).toFixed(2)}</td>
         <td>${(ad.views_delivered||0)}/${(ad.views_ordered||0)}</td>
-        <td>${new Date(ad.created_at).toLocaleDateString()}</td>
+        <td>${fmtDate(ad.created_at)}</td>
         <td>
-          ${ad.status === 'pending' ? `
+          <button class="btn-view" onclick="openAdModal('${ad.id}')">👁 View</button>
+          ${ad.status==='pending' ? `
             <button class="btn-approve" onclick="approveAd('${ad.id}')">✅</button>
-            <button class="btn-reject"  onclick="rejectAd('${ad.id}')">❌</button>` : '—'}
+            <button class="btn-reject"  onclick="rejectAd('${ad.id}')">❌</button>` : ''}
         </td>
       </tr>`).join('');
   }
 
-  function filterAds() {
-    const q = document.getElementById('ads-search').value.toLowerCase();
-    renderAllAds(allAds.filter(a =>
-      a.title.toLowerCase().includes(q) || a.ad_type.includes(q) || a.status.includes(q)
-    ));
-  }
-
-  // ── Approve / Reject ──────────────────────────────
+  // ── Approve / Reject ──────────────────────────────────────
   async function approveAd(id) {
-    const { data, error } = await db.rpc('admin_approve_ad', { p_ad_id: id });
-    if (error) { showToast('Error: ' + error.message); return; }
-    showToast('✅ Ad approved and now active!');
+    const { error } = await db.rpc('admin_approve_ad', { p_ad_id: id });
+    if (error) { showToast('Error: ' + error.message, 'error'); return; }
+    showToast('✅ Ad approved and now active!', 'success');
     document.getElementById('row-' + id)?.remove();
-    loadOverview();
-    loadAllAds();
+    document.getElementById('adrow-' + id)?.remove();
+    loadOverview(); loadAllAds();
+    closeAdModal();
   }
 
   async function rejectAd(id) {
-    if (!confirm('Reject this ad?')) return;
+    if (!confirm('Reject this ad? The advertiser will be notified.')) return;
     const { error } = await db.rpc('admin_reject_ad', { p_ad_id: id });
-    if (error) { showToast('Error: ' + error.message); return; }
-    showToast('❌ Ad rejected.');
+    if (error) { showToast('Error: ' + error.message, 'error'); return; }
+    showToast('❌ Ad rejected.', 'error');
     document.getElementById('row-' + id)?.remove();
-    loadOverview();
-    loadAllAds();
+    document.getElementById('adrow-' + id)?.remove();
+    loadOverview(); loadAllAds();
+    closeAdModal();
   }
 
-  // ── Users ─────────────────────────────────────────
+  // ── Ad Detail Modal ───────────────────────────────────────
+  function openAdModal(id) {
+    const ad = allAds.find(a => a.id === id);
+    if (!ad) return;
+    const body = document.getElementById('ad-modal-body');
+    const isImg = ad.content_url && /\.(jpg|jpeg|png|webp)$/i.test(ad.content_url);
+    const isVid = ad.content_url && /\.(mp4|webm|ogg)$/i.test(ad.content_url);
+
+    body.innerHTML = `
+      <div class="modal-row"><div class="modal-label">Title</div><div class="modal-val">${esc(ad.title)}</div></div>
+      <div class="modal-row"><div class="modal-label">Type</div><div class="modal-val">${fmtType(ad.ad_type)}</div></div>
+      <div class="modal-row"><div class="modal-label">Status</div><div class="modal-val"><span class="badge badge-${ad.status}">${ad.status}</span></div></div>
+      <div class="modal-row"><div class="modal-label">Target</div><div class="modal-val">${esc(ad.target_area)}${ad.target_value ? ': '+esc(ad.target_value) : ''}</div></div>
+      <div class="modal-row"><div class="modal-label">Budget</div><div class="modal-val">Base: ₹${parseFloat(ad.budget_base||0).toFixed(2)} + GST ₹${parseFloat(ad.budget_gst||0).toFixed(2)} = ₹${parseFloat(ad.budget_total||0).toFixed(2)}</div></div>
+      <div class="modal-row"><div class="modal-label">Views</div><div class="modal-val">${(ad.views_delivered||0).toLocaleString()} delivered / ${(ad.views_ordered||0).toLocaleString()} ordered</div></div>
+      <div class="modal-row"><div class="modal-label">Submitted</div><div class="modal-val">${new Date(ad.created_at).toLocaleString()}</div></div>
+      ${ad.content_url ? `<div class="modal-row">
+        <div class="modal-label">Content</div>
+        <div class="modal-val">
+          <a href="${esc(ad.content_url)}" target="_blank" style="color:var(--blue);font-size:.8rem;">${esc(ad.content_url)}</a>
+          ${isImg ? `<br/><img src="${esc(ad.content_url)}" class="modal-img" onerror="this.style.display='none'" />` : ''}
+          ${isVid ? `<br/><video src="${esc(ad.content_url)}" controls style="max-width:100%;border-radius:10px;margin-top:.5rem;"></video>` : ''}
+        </div>
+      </div>` : ''}`;
+
+    const actions = document.getElementById('ad-modal-actions');
+    if (ad.status === 'pending') {
+      actions.innerHTML = `
+        <button class="modal-btn approve" onclick="approveAd('${id}')">✅ Approve</button>
+        <button class="modal-btn reject"  onclick="rejectAd('${id}')">❌ Reject</button>
+        <button class="modal-btn cancel"  onclick="closeAdModal()">Cancel</button>`;
+    } else {
+      actions.innerHTML = `<button class="modal-btn cancel" onclick="closeAdModal()" style="flex:none;padding:.6rem 1.5rem;">Close</button>`;
+    }
+
+    document.getElementById('ad-modal').classList.add('open');
+  }
+  function closeAdModal() { document.getElementById('ad-modal').classList.remove('open'); }
+  document.getElementById('ad-modal').addEventListener('click', function(e) { if(e.target===this) closeAdModal(); });
+
+  // ── Users ─────────────────────────────────────────────────
   async function loadUsers() {
-    const { data: users } = await db.from('users').select('*').order('created_at', { ascending: false });
+    const { data: users } = await db.from('users').select('*').order('created_at',{ascending:false});
     const { data: wallets } = await db.from('coin_wallets').select('user_id,coins');
     const coinMap = {};
     (wallets||[]).forEach(w => coinMap[w.user_id] = w.coins);
     allUsers = (users||[]).map(u => ({ ...u, coins: coinMap[u.id] || 0 }));
-    renderUsers(allUsers);
+    renderUsersFiltered();
+  }
+
+  function filterUsersByRole(role, el) {
+    usersRoleFilter = role;
+    document.querySelectorAll('#view-users .filter-tabs .ftab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    renderUsersFiltered();
+  }
+
+  function renderUsersFiltered() {
+    const q = (document.getElementById('users-search')?.value || '').toLowerCase();
+    let list = allUsers;
+    if (usersRoleFilter !== 'all') list = list.filter(u => u.role === usersRoleFilter);
+    if (q) list = list.filter(u =>
+      (u.name||'').toLowerCase().includes(q) ||
+      (u.email||'').toLowerCase().includes(q) ||
+      (u.phone||'').includes(q) || u.role.includes(q)
+    );
+    document.getElementById('users-count').textContent = '(' + list.length + ')';
+    renderUsers(list);
   }
 
   function renderUsers(list) {
     const tbody = document.getElementById('users-tbody');
     if (!list.length) {
-      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#aaa;padding:2rem">No users yet</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="6"><div class="empty"><div class="e-icon">👥</div><p>No users found</p></div></td></tr>';
       return;
     }
     tbody.innerHTML = list.map(u => `
       <tr>
-        <td><strong>${u.name || '—'}</strong></td>
-        <td>${u.email || '—'}</td>
+        <td><strong>${esc(u.name||'—')}</strong></td>
+        <td style="font-size:.8rem;color:#666;">${esc(u.email||u.phone||'—')}</td>
         <td><span class="badge badge-${u.role}">${u.role}</span></td>
         <td>🪙 ${Number(u.coins).toLocaleString()}</td>
-        <td>${new Date(u.created_at).toLocaleDateString()}</td>
+        <td>${fmtDate(u.created_at)}</td>
+        <td>
+          <button class="btn-view" onclick="openUserModal('${u.id}')">👁 View</button>
+          <select class="role-select" onchange="changeUserRole('${u.id}', this.value, this)" title="Change role">
+            <option value="">Role…</option>
+            <option value="viewer"     ${u.role==='viewer'?'selected':''}>Viewer</option>
+            <option value="advertiser" ${u.role==='advertiser'?'selected':''}>Advertiser</option>
+            <option value="both"       ${u.role==='both'?'selected':''}>Both</option>
+            <option value="admin"      ${u.role==='admin'?'selected':''}>Admin</option>
+          </select>
+        </td>
       </tr>`).join('');
   }
 
-  function filterUsers() {
-    const q = document.getElementById('users-search').value.toLowerCase();
-    renderUsers(allUsers.filter(u =>
-      (u.name||'').toLowerCase().includes(q) ||
-      (u.email||'').toLowerCase().includes(q) ||
-      u.role.includes(q)
-    ));
+  async function changeUserRole(userId, newRole, selectEl) {
+    if (!newRole) return;
+    if (!confirm(`Change this user's role to "${newRole}"?`)) { selectEl.value=''; return; }
+    const { error } = await db.from('users').update({ role: newRole }).eq('id', userId);
+    if (error) { showToast('Error: ' + error.message, 'error'); selectEl.value=''; return; }
+    showToast('✅ Role updated to ' + newRole, 'success');
+    allUsers = allUsers.map(u => u.id===userId ? {...u, role:newRole} : u);
+    renderUsersFiltered();
   }
 
-  // ── Transactions ──────────────────────────────────
+  // ── User Detail Modal ─────────────────────────────────────
+  function openUserModal(id) {
+    const u = allUsers.find(x => x.id === id);
+    if (!u) return;
+    document.getElementById('user-modal-body').innerHTML = `
+      <div class="modal-row"><div class="modal-label">Name</div><div class="modal-val">${esc(u.name||'—')}</div></div>
+      <div class="modal-row"><div class="modal-label">Email</div><div class="modal-val">${esc(u.email||'—')}</div></div>
+      <div class="modal-row"><div class="modal-label">Phone</div><div class="modal-val">${esc(u.phone||'—')}</div></div>
+      <div class="modal-row"><div class="modal-label">Role</div><div class="modal-val"><span class="badge badge-${u.role}">${u.role}</span></div></div>
+      <div class="modal-row"><div class="modal-label">Coins</div><div class="modal-val">🪙 ${Number(u.coins).toLocaleString()}</div></div>
+      <div class="modal-row"><div class="modal-label">Gender</div><div class="modal-val">${esc(u.gender||'—')}</div></div>
+      <div class="modal-row"><div class="modal-label">State</div><div class="modal-val">${esc(u.state||'—')}</div></div>
+      <div class="modal-row"><div class="modal-label">District</div><div class="modal-val">${esc(u.district||'—')}</div></div>
+      <div class="modal-row"><div class="modal-label">Joined</div><div class="modal-val">${new Date(u.created_at).toLocaleString()}</div></div>
+    `;
+    document.getElementById('user-modal-actions').innerHTML = `
+      <button class="modal-btn approve" onclick="changeUserRoleModal('${u.id}','admin')">⚙️ Make Admin</button>
+      <button class="modal-btn cancel"  onclick="changeUserRoleModal('${u.id}','viewer')">👁 Set Viewer</button>
+      <button class="modal-btn cancel"  onclick="closeUserModal()">Close</button>
+    `;
+    document.getElementById('user-modal').classList.add('open');
+  }
+  function closeUserModal() { document.getElementById('user-modal').classList.remove('open'); }
+  document.getElementById('user-modal').addEventListener('click', function(e) { if(e.target===this) closeUserModal(); });
+
+  async function changeUserRoleModal(userId, newRole) {
+    if (!confirm(`Set role to "${newRole}"?`)) return;
+    const { error } = await db.from('users').update({ role: newRole }).eq('id', userId);
+    if (error) { showToast('Error: ' + error.message, 'error'); return; }
+    showToast('✅ Role updated to ' + newRole, 'success');
+    allUsers = allUsers.map(u => u.id===userId ? {...u, role:newRole} : u);
+    renderUsersFiltered();
+    closeUserModal();
+  }
+
+  // ── Transactions ──────────────────────────────────────────
   async function loadTransactions() {
     const { data } = await db.from('coin_transactions')
       .select('*, users(name,email)')
-      .order('created_at', { ascending: false })
-      .limit(100);
+      .order('created_at',{ascending:false})
+      .limit(200);
     const tbody = document.getElementById('tx-tbody');
-    if (!data || !data.length) {
-      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#aaa;padding:2rem">No transactions yet</td></tr>';
+    if (!data||!data.length) {
+      tbody.innerHTML = '<tr><td colspan="5"><div class="empty"><div class="e-icon">🪙</div><p>No transactions yet</p></div></td></tr>';
       return;
     }
     tbody.innerHTML = data.map(t => `
       <tr>
-        <td>${t.users?.name || t.users?.email || '—'}</td>
-        <td><span class="badge badge-${t.type === 'earn' ? 'active' : t.type === 'redeem' ? 'pending' : 'completed'}">${t.type}</span></td>
-        <td style="font-weight:700;color:${t.coins > 0 ? 'var(--green)' : 'var(--red)'}">
-          ${t.coins > 0 ? '+' : ''}${t.coins} 🪙
-        </td>
-        <td style="color:#666;font-size:0.82rem">${t.description || '—'}</td>
-        <td>${new Date(t.created_at).toLocaleDateString()}</td>
+        <td>${esc(t.users?.name||t.users?.email||'—')}</td>
+        <td><span class="badge badge-${t.type==='earn'?'active':t.type==='redeem'?'pending':'completed'}">${t.type}</span></td>
+        <td style="font-weight:700;color:${t.coins>0?'var(--green)':'var(--red2)'}">
+          ${t.coins>0?'+':''}${t.coins} 🪙</td>
+        <td style="color:#666;font-size:.82rem;">${esc(t.description||'—')}</td>
+        <td>${fmtDate(t.created_at)}</td>
       </tr>`).join('');
   }
 
-  // ── Payments ──────────────────────────────────────
+  // ── Payments ──────────────────────────────────────────────
   async function loadPayments() {
     const { data } = await db.from('payments')
-      .select('*, advertisers(user_id, users(name,email))')
-      .order('paid_at', { ascending: false })
-      .limit(100);
+      .select('*, advertisers(user_id, users(name,email)), ads(title)')
+      .order('paid_at',{ascending:false})
+      .limit(200);
     const tbody = document.getElementById('pay-tbody');
-    if (!data || !data.length) {
-      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#aaa;padding:2rem">No payments yet</td></tr>';
+    if (!data||!data.length) {
+      tbody.innerHTML = '<tr><td colspan="8"><div class="empty"><div class="e-icon">💳</div><p>No payments yet</p></div></td></tr>';
       return;
     }
     tbody.innerHTML = data.map(p => {
       const name = p.advertisers?.users?.name || p.advertisers?.users?.email || '—';
-      return `
-        <tr>
-          <td><strong>${name}</strong></td>
-          <td>₹${parseFloat(p.total_amount||0).toFixed(2)}</td>
-          <td>${p.payment_method || '—'}</td>
-          <td><span class="badge badge-${p.status === 'success' ? 'active' : 'pending'}">${p.status}</span></td>
-          <td>${new Date(p.paid_at).toLocaleDateString()}</td>
-        </tr>`;
+      return `<tr>
+        <td><strong>${esc(name)}</strong></td>
+        <td style="font-size:.8rem;">${esc(p.ads?.title||'—')}</td>
+        <td>₹${parseFloat(p.base_amount||0).toFixed(2)}</td>
+        <td>₹${parseFloat(p.gst_amount||0).toFixed(2)}</td>
+        <td><strong>₹${parseFloat(p.total_amount||0).toFixed(2)}</strong></td>
+        <td>${esc(p.payment_method||'—')}</td>
+        <td><span class="badge badge-${p.status==='success'?'active':'pending'}">${p.status}</span></td>
+        <td>${fmtDate(p.paid_at)}</td>
+      </tr>`;
     }).join('');
   }
 
-  // ── Logout ────────────────────────────────────────
+  // ── Analytics ─────────────────────────────────────────────
+  async function loadAnalytics() {
+    const [
+      { data: ads },
+      { data: users }
+    ] = await Promise.all([
+      db.from('ads').select('status,ad_type,views_ordered,views_delivered'),
+      db.from('users').select('role')
+    ]);
+
+    // Status breakdown
+    const statusCounts = {};
+    (ads||[]).forEach(a => { statusCounts[a.status] = (statusCounts[a.status]||0)+1; });
+    renderBarChart('chart-status', statusCounts, {
+      pending:'#e67e22', active:'#27ae60', completed:'#2980b9', rejected:'#e74c3c', paused:'#95a5a6'
+    });
+
+    // Type breakdown
+    const typeCounts = {};
+    (ads||[]).forEach(a => { typeCounts[fmtType(a.ad_type)] = (typeCounts[fmtType(a.ad_type)]||0)+1; });
+    renderBarChart('chart-type', typeCounts, {});
+
+    // Role breakdown
+    const roleCounts = {};
+    (users||[]).forEach(u => { roleCounts[u.role] = (roleCounts[u.role]||0)+1; });
+    renderBarChart('chart-role', roleCounts, {
+      viewer:'#2980b9', advertiser:'#e67e22', both:'#27ae60', admin:'#e74c3c'
+    });
+
+    // Top ads
+    const sorted = (ads||[])
+      .filter(a => a.views_ordered > 0)
+      .sort((a,b) => (b.views_delivered||0)-(a.views_delivered||0))
+      .slice(0,10);
+    const tbody = document.getElementById('top-ads-tbody');
+    if (!sorted.length) {
+      tbody.innerHTML = '<tr><td colspan="6"><div class="empty"><p>No ad data yet</p></div></td></tr>';
+      return;
+    }
+    tbody.innerHTML = sorted.map(a => {
+      const pct = a.views_ordered ? Math.round((a.views_delivered||0)/a.views_ordered*100) : 0;
+      return `<tr>
+        <td><strong>${esc(a.title||'—')}</strong></td>
+        <td>${fmtType(a.ad_type)}</td>
+        <td>${(a.views_delivered||0).toLocaleString()}</td>
+        <td>${(a.views_ordered||0).toLocaleString()}</td>
+        <td>
+          <div style="display:flex;align-items:center;gap:.5rem;">
+            <div class="bar-track" style="flex:1;"><div class="bar-fill" style="width:${pct}%;background:var(--green);"></div></div>
+            <span style="font-size:.8rem;font-weight:700;">${pct}%</span>
+          </div>
+        </td>
+        <td><span class="badge badge-${a.status}">${a.status}</span></td>
+      </tr>`;
+    }).join('');
+  }
+
+  function renderBarChart(containerId, counts, colorMap) {
+    const el = document.getElementById(containerId);
+    const entries = Object.entries(counts);
+    if (!entries.length) { el.innerHTML = '<div class="empty"><p>No data</p></div>'; return; }
+    const max = Math.max(...entries.map(e=>e[1]));
+    const colors = ['#8B1A1A','#27ae60','#2980b9','#e67e22','#8e44ad','#95a5a6'];
+    el.innerHTML = entries.map(([label,val],i) => {
+      const color = colorMap[label] || colors[i % colors.length];
+      const pct   = max ? Math.round(val/max*100) : 0;
+      return `<div class="bar-row">
+        <div class="bar-label">${label}</div>
+        <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${color};"></div></div>
+        <div class="bar-val">${val}</div>
+      </div>`;
+    }).join('');
+  }
+
+  // ── Settings helpers ──────────────────────────────────────
+  function toggleSwitch(el) { el.classList.toggle('on'); }
+
+  // ── Social Media Links ────────────────────────────────
+  const _SOCIAL_KEYS = ['facebook','instagram','youtube','twitter','whatsapp','linkedin','telegram'];
+
+  async function loadSocialConfig() {
+    const { data } = await db.from('site_config').select('value').eq('key','social_links').single();
+    if (!data?.value) return;
+    try {
+      const links = JSON.parse(data.value);
+      _SOCIAL_KEYS.forEach(k => {
+        const el = document.getElementById('sl-' + k);
+        if (el && links[k]) el.value = links[k];
+      });
+    } catch(e) {}
+  }
+
+  async function saveSocialLinks() {
+    const links = {};
+    _SOCIAL_KEYS.forEach(k => {
+      links[k] = (document.getElementById('sl-' + k)?.value || '').trim();
+    });
+    const { error } = await db.from('site_config').upsert({ key: 'social_links', value: JSON.stringify(links), updated_at: new Date().toISOString() });
+    if (error) { showToast('Error saving: ' + error.message, 'error'); return; }
+    showToast('✅ Social links saved — icons will appear on home page', 'success');
+  }
+
+  async function grantAdmin() {
+    const val = document.getElementById('admin-grant-email').value.trim();
+    if (!val) { showToast('Enter email or phone', 'error'); return; }
+    const col = val.includes('@') ? 'email' : 'phone';
+    const { data, error } = await db.from('users').update({ role:'admin' }).eq(col, val).select();
+    if (error) { showToast('Error: ' + error.message, 'error'); return; }
+    if (!data||!data.length) { showToast('User not found', 'error'); return; }
+    showToast('✅ Admin access granted to ' + val, 'success');
+    document.getElementById('admin-grant-email').value = '';
+    loadUsers();
+  }
+
+  async function revokeAdmin() {
+    const val = document.getElementById('admin-grant-email').value.trim();
+    if (!val) { showToast('Enter email or phone', 'error'); return; }
+    if (!confirm('Revoke admin access for ' + val + '?')) return;
+    const col = val.includes('@') ? 'email' : 'phone';
+    const { data, error } = await db.from('users').update({ role:'viewer' }).eq(col, val).eq('role','admin').select();
+    if (error) { showToast('Error: ' + error.message, 'error'); return; }
+    if (!data||!data.length) { showToast('Admin user not found', 'error'); return; }
+    showToast('Admin access revoked for ' + val, 'success');
+    document.getElementById('admin-grant-email').value = '';
+    loadUsers();
+  }
+
+  // ── Logout ────────────────────────────────────────────────
   async function logout() {
     await db.auth.signOut();
     window.location.href = 'login.html';
   }
 
+  // ── Helpers ───────────────────────────────────────────────
+  function esc(s) {
+    if (!s) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  function fmtDate(d) {
+    if (!d) return '—';
+    return new Date(d).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' });
+  }
+  function fmtType(t) {
+    const map = { image_slide:'🖼️ Image', video:'🎬 Video', social_media:'📲 Social', app_web:'📱 App/Web' };
+    return map[t] || (t||'').replace(/_/g,' ');
+  }
+
+  // ── Support Chat ──────────────────────────────────────────
+  let _supportActiveUid = null;
+
+  async function checkSupportUnread() {
+    const { count } = await db.from('support_messages')
+      .select('id', { count: 'exact', head: true })
+      .eq('sender', 'user').eq('is_read', false);
+    const badge = document.getElementById('sb-chat-badge');
+    if (count > 0) {
+      badge.textContent = count > 99 ? '99+' : count;
+      badge.style.display = 'inline-flex';
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+
+  async function loadSupport() {
+    const { data } = await db.from('support_messages')
+      .select('user_id, message, sender, created_at, is_read')
+      .order('created_at', { ascending: false });
+
+    if (!data || data.length === 0) {
+      document.getElementById('support-user-list').innerHTML =
+        '<div class="support-empty" style="padding:2rem;text-align:center;color:#aaa">No support messages yet</div>';
+      return;
+    }
+
+    // Group by user_id, keep latest message per user
+    const map = {};
+    data.forEach(m => {
+      if (!map[m.user_id]) map[m.user_id] = { last: m, unread: 0 };
+      if (m.sender === 'user' && !m.is_read) map[m.user_id].unread++;
+    });
+
+    const userIds = Object.keys(map);
+    const { data: profiles } = await db.from('users')
+      .select('id, name, email, phone').in('id', userIds);
+
+    const profileMap = {};
+    (profiles || []).forEach(p => profileMap[p.id] = p);
+
+    const list = document.getElementById('support-user-list');
+    list.innerHTML = '';
+    userIds.forEach(uid => {
+      const u = map[uid];
+      const p = profileMap[uid] || {};
+      const name = p.name || p.email || p.phone || uid.slice(0,8)+'…';
+      const div = document.createElement('div');
+      div.className = 'support-user-item' + (uid === _supportActiveUid ? ' active' : '');
+      div.dataset.uid = uid;
+      div.onclick = () => openSupportChat(uid, name, p.email || p.phone || '');
+      div.innerHTML = `
+        <div class="support-av">${esc(name.charAt(0).toUpperCase())}</div>
+        <div class="support-user-info">
+          <div class="support-user-name">${esc(name)}</div>
+          <div class="support-user-last">${esc(u.last.message)}</div>
+        </div>
+        ${u.unread > 0 ? `<span class="support-unread-dot" title="${u.unread} unread"></span>` : ''}`;
+      list.appendChild(div);
+    });
+  }
+
+  async function openSupportChat(uid, name, sub) {
+    _supportActiveUid = uid;
+    document.getElementById('support-placeholder').style.display = 'none';
+    const panel = document.getElementById('support-chat-panel');
+    panel.style.display = 'flex';
+    document.getElementById('support-chat-av').textContent    = name.charAt(0).toUpperCase();
+    document.getElementById('support-chat-title').textContent = name;
+    document.getElementById('support-chat-sub').textContent   = sub;
+
+    // Highlight active user
+    document.querySelectorAll('.support-user-item').forEach(el => {
+      el.classList.toggle('active', el.dataset.uid === uid);
+    });
+
+    await db.from('support_messages').update({ is_read: true })
+      .eq('user_id', uid).eq('sender', 'user').eq('is_read', false);
+    checkSupportUnread();
+
+    await loadSupportThread(uid);
+  }
+
+  async function loadSupportThread(uid) {
+    const { data } = await db.from('support_messages')
+      .select('*').eq('user_id', uid)
+      .order('created_at', { ascending: true });
+
+    const box = document.getElementById('support-messages');
+    if (!data || data.length === 0) {
+      box.innerHTML = '<div class="support-empty">No messages yet</div>';
+      return;
+    }
+    box.innerHTML = data.map(m => {
+      const isAdmin = m.sender === 'admin';
+      const time = new Date(m.created_at).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+      const date = new Date(m.created_at).toLocaleDateString('en-IN',{day:'numeric',month:'short'});
+      return `<div>
+        <div class="${isAdmin ? 'sbubble-admin' : 'sbubble-user'}">${esc(m.message)}</div>
+        <div class="support-meta" style="text-align:${isAdmin?'right':'left'}">${isAdmin?'You (Admin)':'User'} · ${date} ${time}</div>
+      </div>`;
+    }).join('');
+    box.scrollTop = box.scrollHeight;
+  }
+
+  async function sendSupportReply() {
+    if (!_supportActiveUid) return;
+    const input = document.getElementById('support-reply-input');
+    const msg = input.value.trim();
+    if (!msg) return;
+    const btn = document.getElementById('support-reply-btn');
+    btn.disabled = true;
+    const { error } = await db.from('support_messages').insert({
+      user_id: _supportActiveUid, message: msg, sender: 'admin'
+    });
+    if (!error) {
+      input.value = '';
+      await loadSupportThread(_supportActiveUid);
+      await loadSupport();
+    }
+    btn.disabled = false;
+    input.focus();
+  }
+
   init();
 </script>
+<script>if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js').catch(() => {}); }</script>
 </body>
 </html>
