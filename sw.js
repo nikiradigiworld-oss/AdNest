@@ -1,4 +1,4 @@
-const CACHE_NAME = 'anaar-v2';
+const CACHE_NAME = 'anaar-v3';
 const BASE = '/AdNest';
 const PRECACHE_URLS = [
   BASE + '/',

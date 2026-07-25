@@ -268,6 +268,11 @@
     .ue-btn-set  { background:#e8f0fe; color:#1a56db; }
     .ue-btn-save { background:var(--red); color:#fff; width:100%; padding:.75rem; border:none; border-radius:10px; font-size:.95rem; font-weight:700; cursor:pointer; margin-top:.5rem; }
     .ue-btn-save:hover { opacity:.88; }
+    .ue-tabs { display:flex; gap:4px; background:#f0f0f0; border-radius:10px; padding:4px; margin-bottom:1rem; }
+    .ue-tab { flex:1; padding:.45rem; border:none; border-radius:7px; font-size:.82rem; font-weight:700; cursor:pointer; background:transparent; color:#888; transition:.15s; }
+    .ue-tab.active { background:#fff; color:var(--red); box-shadow:0 1px 6px rgba(0,0,0,.1); }
+    .ue-tab-panel { display:none; }
+    .ue-tab-panel.active { display:block; }
 
     /* ── ANALYTICS BARS ── */
     .analytics-section { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:1.5rem; margin-bottom:1.5rem; }
@@ -1014,74 +1019,98 @@
 <div class="modal-overlay" id="user-modal">
   <div class="modal" onclick="event.stopPropagation()" style="max-width:480px;">
     <button class="modal-close" onclick="closeUserModal()">✕</button>
-    <h3>✏️ Edit User</h3>
 
     <!-- Header -->
     <div class="ue-header">
       <div class="ue-av" id="ue-av">?</div>
       <div class="ue-info">
         <h4 id="ue-hdr-name">—</h4>
-        <p id="ue-hdr-email">—</p>
+        <p id="ue-hdr-email" style="font-size:.78rem;color:#888;margin-top:2px;">—</p>
+        <span id="ue-hdr-badge" class="badge" style="font-size:.7rem;margin-top:4px;display:inline-block;"></span>
       </div>
     </div>
 
-    <!-- Profile Section -->
-    <div class="ue-section">
-      <div class="ue-section-title">👤 Profile</div>
-      <div class="ue-field">
-        <label>Full Name</label>
-        <input type="text" id="ue-name" placeholder="Full name" />
-      </div>
-      <div class="ue-field">
-        <label>Email</label>
-        <input type="text" id="ue-email" readonly />
-      </div>
-      <div class="ue-field">
-        <label>Role</label>
-        <select id="ue-role">
-          <option value="viewer">👁 Viewer</option>
-          <option value="advertiser">📢 Advertiser</option>
-          <option value="both">⭐ Both</option>
-          <option value="admin">🛡 Admin</option>
-        </select>
-      </div>
-      <div class="ue-field" style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;">
-        <div>
-          <label>State</label>
-          <input type="text" id="ue-state" placeholder="State" />
+    <!-- Tabs -->
+    <div class="ue-tabs">
+      <button class="ue-tab active" id="ue-tab-profile" onclick="switchUeTab('profile')">👤 Edit Profile</button>
+      <button class="ue-tab" id="ue-tab-wallet" onclick="switchUeTab('wallet')">🪙 Coins & Cash</button>
+    </div>
+
+    <!-- Profile Tab -->
+    <div class="ue-tab-panel active" id="ue-panel-profile">
+      <div class="ue-section">
+        <div class="ue-field">
+          <label>Full Name</label>
+          <input type="text" id="ue-name" placeholder="Full name" />
         </div>
-        <div>
-          <label>District</label>
-          <input type="text" id="ue-district" placeholder="District" />
+        <div class="ue-field">
+          <label>Email</label>
+          <input type="text" id="ue-email" readonly />
+        </div>
+        <div class="ue-field">
+          <label>Role</label>
+          <select id="ue-role">
+            <option value="viewer">👁 Viewer</option>
+            <option value="advertiser">📢 Advertiser</option>
+            <option value="both">⭐ Both</option>
+            <option value="admin">🛡 Admin</option>
+          </select>
+        </div>
+        <div class="ue-field" style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;">
+          <div>
+            <label>State</label>
+            <input type="text" id="ue-state" placeholder="State" />
+          </div>
+          <div>
+            <label>District</label>
+            <input type="text" id="ue-district" placeholder="District" />
+          </div>
+        </div>
+        <div class="ue-field">
+          <label>Gender</label>
+          <select id="ue-gender">
+            <option value="">Select…</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="ue-field">
+          <label>Mobile</label>
+          <input type="text" id="ue-phone" placeholder="Phone number" />
+        </div>
+        <button class="ue-btn-save" onclick="saveUserProfile()">💾 Save Profile</button>
+      </div>
+    </div>
+
+    <!-- Wallet Tab -->
+    <div class="ue-tab-panel" id="ue-panel-wallet">
+      <div class="ue-section">
+        <div class="ue-section-title">🪙 Coins</div>
+        <div class="ue-coin-row">
+          <div class="ue-coin-val" style="font-size:1.1rem;">🪙 <span id="ue-coins-display">0</span> coins</div>
+        </div>
+        <div style="font-size:.75rem;color:#888;margin-bottom:.6rem;">Enter amount then click Add, Deduct, or Set exact value</div>
+        <div class="ue-adj">
+          <input type="number" id="ue-coins-adj" placeholder="Coins" min="0" style="flex:1;" />
+          <button class="ue-btn ue-btn-add" onclick="adjustCoins(1)">+ Add</button>
+          <button class="ue-btn ue-btn-sub" onclick="adjustCoins(-1)">− Deduct</button>
+          <button class="ue-btn ue-btn-set" onclick="setCoinsExact()">= Set</button>
         </div>
       </div>
-      <button class="ue-btn-save" onclick="saveUserProfile()">💾 Save Profile</button>
-    </div>
 
-    <!-- Wallet Section -->
-    <div class="ue-section">
-      <div class="ue-section-title">🪙 Wallet — Coins</div>
-      <div class="ue-coin-row">
-        <div class="ue-coin-val">🪙 <span id="ue-coins-display">0</span> coins</div>
-      </div>
-      <div class="ue-adj">
-        <input type="number" id="ue-coins-adj" placeholder="Amount" min="0" />
-        <button class="ue-btn ue-btn-add" onclick="adjustCoins(1)">+ Add</button>
-        <button class="ue-btn ue-btn-sub" onclick="adjustCoins(-1)">− Deduct</button>
-        <button class="ue-btn ue-btn-set" onclick="setCoinsExact()">= Set</button>
-      </div>
-    </div>
-
-    <div class="ue-section">
-      <div class="ue-section-title">₹ Wallet — Cash Value</div>
-      <div class="ue-coin-row">
-        <div class="ue-coin-val">₹ <span id="ue-cash-display">0.00</span></div>
-      </div>
-      <div class="ue-adj">
-        <input type="number" id="ue-cash-adj" placeholder="₹ Amount" min="0" step="0.01" />
-        <button class="ue-btn ue-btn-add" onclick="adjustCash(1)">+ Add</button>
-        <button class="ue-btn ue-btn-sub" onclick="adjustCash(-1)">− Deduct</button>
-        <button class="ue-btn ue-btn-set" onclick="setCashExact()">= Set</button>
+      <div class="ue-section">
+        <div class="ue-section-title">₹ Cash Value</div>
+        <div class="ue-coin-row">
+          <div class="ue-coin-val" style="font-size:1.1rem;color:#27ae60;">₹ <span id="ue-cash-display">0.00</span></div>
+        </div>
+        <div style="font-size:.75rem;color:#888;margin-bottom:.6rem;">Enter ₹ amount then click Add, Deduct, or Set exact value</div>
+        <div class="ue-adj">
+          <input type="number" id="ue-cash-adj" placeholder="₹" min="0" step="0.01" style="flex:1;" />
+          <button class="ue-btn ue-btn-add" onclick="adjustCash(1)">+ Add</button>
+          <button class="ue-btn ue-btn-sub" onclick="adjustCash(-1)">− Deduct</button>
+          <button class="ue-btn ue-btn-set" onclick="setCashExact()">= Set</button>
+        </div>
       </div>
     </div>
 
@@ -1389,8 +1418,9 @@
           <div style="font-size:.75rem;color:#27ae60;">₹${Number(u.cash_value||0).toFixed(2)}</div>
         </td>
         <td>${fmtDate(u.created_at)}</td>
-        <td>
-          <button class="btn-view" onclick="openUserModal('${u.id}')" style="background:#e8f0fe;color:#1a56db;">✏️ Edit</button>
+        <td style="white-space:nowrap;">
+          <button onclick="openUserModal('${u.id}','profile')" style="border:none;border-radius:7px;padding:5px 10px;font-size:.78rem;font-weight:700;cursor:pointer;background:#fff3cd;color:#856404;margin-right:4px;">✏️ Edit</button>
+          <button onclick="openUserModal('${u.id}','wallet')" style="border:none;border-radius:7px;padding:5px 10px;font-size:.78rem;font-weight:700;cursor:pointer;background:#d4edda;color:#155724;">🪙 Coins</button>
         </td>
       </tr>`).join('');
   }
@@ -1408,22 +1438,34 @@
   // ── User Edit Modal ───────────────────────────────────────
   let _editUserId = null;
 
-  function openUserModal(id) {
+  function switchUeTab(tab) {
+    ['profile','wallet'].forEach(t => {
+      document.getElementById('ue-tab-' + t).classList.toggle('active', t === tab);
+      document.getElementById('ue-panel-' + t).classList.toggle('active', t === tab);
+    });
+  }
+
+  function openUserModal(id, tab = 'profile') {
     const u = allUsers.find(x => x.id === id);
     if (!u) return;
     _editUserId = id;
 
     // Header
-    document.getElementById('ue-av').textContent        = (u.name||'?').charAt(0).toUpperCase();
+    const av = document.getElementById('ue-av');
+    av.textContent = (u.name||'?').charAt(0).toUpperCase();
     document.getElementById('ue-hdr-name').textContent  = u.name || '—';
     document.getElementById('ue-hdr-email').textContent = u.email || u.phone || '—';
+    const badge = document.getElementById('ue-hdr-badge');
+    badge.textContent = u.role; badge.className = 'badge badge-' + u.role;
 
     // Profile fields
-    document.getElementById('ue-name').value    = u.name    || '';
-    document.getElementById('ue-email').value   = u.email   || u.phone || '';
-    document.getElementById('ue-role').value    = u.role    || 'viewer';
-    document.getElementById('ue-state').value   = u.state   || '';
-    document.getElementById('ue-district').value= u.district|| '';
+    document.getElementById('ue-name').value     = u.name     || '';
+    document.getElementById('ue-email').value    = u.email    || u.phone || '';
+    document.getElementById('ue-role').value     = u.role     || 'viewer';
+    document.getElementById('ue-state').value    = u.state    || '';
+    document.getElementById('ue-district').value = u.district || '';
+    document.getElementById('ue-gender').value   = u.gender   || '';
+    document.getElementById('ue-phone').value    = u.phone    || '';
 
     // Wallet fields
     document.getElementById('ue-coins-display').textContent = Number(u.coins||0).toLocaleString();
@@ -1431,6 +1473,7 @@
     document.getElementById('ue-coins-adj').value = '';
     document.getElementById('ue-cash-adj').value  = '';
 
+    switchUeTab(tab);
     document.getElementById('user-modal').classList.add('open');
   }
 
@@ -1443,15 +1486,19 @@
     const role     = document.getElementById('ue-role').value;
     const state    = document.getElementById('ue-state').value.trim();
     const district = document.getElementById('ue-district').value.trim();
+    const gender   = document.getElementById('ue-gender').value;
+    const phone    = document.getElementById('ue-phone').value.trim();
     if (!name) { showToast('Name cannot be empty', 'error'); return; }
 
-    const { error } = await db.from('users').update({ name, role, state, district }).eq('id', _editUserId);
+    const { error } = await db.from('users').update({ name, role, state, district, gender, phone }).eq('id', _editUserId);
     if (error) { showToast('Error: ' + error.message, 'error'); return; }
 
     showToast('✅ Profile saved', 'success');
-    allUsers = allUsers.map(u => u.id===_editUserId ? {...u, name, role, state, district} : u);
+    allUsers = allUsers.map(u => u.id===_editUserId ? {...u, name, role, state, district, gender, phone} : u);
     document.getElementById('ue-hdr-name').textContent = name;
     document.getElementById('ue-av').textContent = name.charAt(0).toUpperCase();
+    const badge = document.getElementById('ue-hdr-badge');
+    badge.textContent = role; badge.className = 'badge badge-' + role;
     renderUsersFiltered();
   }
 
