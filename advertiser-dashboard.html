@@ -474,18 +474,11 @@
             </div>
           </div>
 
-          <!-- ── Cascading Country / State / District / Pincode ── -->
+          <!-- ── Cascading State / District / Pincode (India only) ── -->
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;margin-bottom:1rem;">
 
-            <div class="form-group" id="tgt-country-wrap">
-              <label>Country</label>
-              <select id="tgt-country" onchange="onTgtCountryChange()">
-                <option value="">Loading countries…</option>
-              </select>
-            </div>
-
             <div class="form-group" id="tgt-state-wrap" style="display:none">
-              <label>State / Province</label>
+              <label>State</label>
               <select id="tgt-state" onchange="onTgtStateChange()">
                 <option value="">Select state…</option>
               </select>
@@ -493,9 +486,8 @@
 
             <div class="form-group" id="tgt-district-wrap" style="display:none">
               <label>District / City</label>
-              <select id="tgt-district">
-                <option value="">Select district…</option>
-              </select>
+              <input type="text" id="tgt-district" placeholder="e.g. Chennai, Coimbatore"
+                     style="padding:.55rem .8rem;border:1.5px solid #ddd;border-radius:8px;font-size:.88rem;width:100%;outline:none;" />
             </div>
 
             <div class="form-group" id="tgt-pincode-wrap" style="display:none">
@@ -984,26 +976,23 @@
     const target  = document.getElementById('ad-target').value;
     const wa      = document.getElementById('ad-whatsapp').value.trim();
 
-    // Build target_value from cascading location fields
-    const country  = document.getElementById('tgt-country');
+    // Build target_value from location fields
     const stateEl  = document.getElementById('tgt-state');
-    const distEl   = document.getElementById('tgt-district');
-    const countryName = country.options[country.selectedIndex]?.dataset.name || country.value || '';
-    const stateName   = stateEl.options[stateEl.selectedIndex]?.dataset.name || stateEl.value || '';
-    const distName    = distEl.value || '';
-    const pincode     = (document.getElementById('tgt-pincode')?.value || '').trim();
+    const stateName = stateEl.value || '';
+    const distName  = (document.getElementById('tgt-district')?.value || '').trim();
+    const pincode   = (document.getElementById('tgt-pincode')?.value  || '').trim();
 
-    let targetValue = countryName;
-    if (stateName)  targetValue += ', ' + stateName;
+    let targetValue = 'India';
+    if (stateName) targetValue += ', ' + stateName;
     if (distName && target !== 'state')   targetValue += ', ' + distName;
     if (pincode  && target === 'pincode') targetValue += ' – ' + pincode;
+    if (target === 'nationwide') targetValue = 'All India';
 
     if (!title) { showAlert('post','Enter an ad title.','error'); return; }
-    if (!countryName) { showAlert('post','Please select a country.','error'); return; }
     if ((target==='state'||target==='district'||target==='pincode') && !stateName)
-      { showAlert('post','Please select a state / province.','error'); return; }
+      { showAlert('post','Please select a state.','error'); return; }
     if ((target==='district'||target==='pincode') && !distName)
-      { showAlert('post','Please select a district / city.','error'); return; }
+      { showAlert('post','Please enter a district / city.','error'); return; }
     if (target==='pincode' && !pincode)
       { showAlert('post','Please enter a pincode.','error'); return; }
 
@@ -1069,81 +1058,44 @@
   init();
 
   // ── Country / State / City API ────────────────────────
-  const _CSC_KEY  = 'a85b9043d62eea3506b72b62d99ccfa8a0a2d92de9dfd3d780f79c12c12a64cb';
-  const _CSC_BASE = 'https://api.countrystatecity.in/v1';
+  // ── Hardcoded Indian States (no API dependency) ──
+  const _INDIA_STATES = [
+    'Andaman and Nicobar Islands','Andhra Pradesh','Arunachal Pradesh','Assam',
+    'Bihar','Chandigarh','Chhattisgarh','Dadra and Nagar Haveli and Daman and Diu',
+    'Delhi','Goa','Gujarat','Haryana','Himachal Pradesh','Jammu and Kashmir',
+    'Jharkhand','Karnataka','Kerala','Ladakh','Lakshadweep','Madhya Pradesh',
+    'Maharashtra','Manipur','Meghalaya','Mizoram','Nagaland','Odisha',
+    'Puducherry','Punjab','Rajasthan','Sikkim','Tamil Nadu','Telangana',
+    'Tripura','Uttar Pradesh','Uttarakhand','West Bengal'
+  ];
 
-  async function _csc(path) {
-    try {
-      const r = await fetch(_CSC_BASE + path, { headers: { 'X-CSCAPI-KEY': _CSC_KEY } });
-      return r.ok ? r.json() : [];
-    } catch { return []; }
+  function _loadStates() {
+    const el = document.getElementById('tgt-state');
+    el.innerHTML = '<option value="">Select state…</option>' +
+      _INDIA_STATES.map(s => `<option value="${s}">${s}</option>`).join('');
   }
 
-  function _setOpts(id, items, valFn, lblFn, placeholder, disabled) {
-    const el = document.getElementById(id);
-    el.disabled = !!disabled;
-    el.innerHTML = `<option value="">${placeholder}</option>` +
-      items.map(i => `<option value="${valFn(i)}" data-name="${lblFn(i)}">${lblFn(i)}</option>`).join('');
-  }
-
-  // Show/hide dropdowns based on selected target type
   function onTargetTypeChange() {
     const t = document.getElementById('ad-target').value;
-    document.getElementById('tgt-country-wrap').style.display  = 'block';
-    document.getElementById('tgt-state-wrap').style.display    = (t==='pincode'||t==='district'||t==='state') ? 'block' : 'none';
-    document.getElementById('tgt-district-wrap').style.display = (t==='pincode'||t==='district') ? 'block' : 'none';
-    document.getElementById('tgt-pincode-wrap').style.display  = t==='pincode' ? 'block' : 'none';
-    // reset downstream
-    document.getElementById('tgt-state').innerHTML    = '<option value="">Select state…</option>';
-    document.getElementById('tgt-district').innerHTML = '<option value="">Select district…</option>';
-    if (document.getElementById('tgt-pincode')) document.getElementById('tgt-pincode').value = '';
+    const needState    = t === 'pincode' || t === 'district' || t === 'state';
+    const needDistrict = t === 'pincode' || t === 'district';
+    document.getElementById('tgt-state-wrap').style.display    = needState    ? 'block' : 'none';
+    document.getElementById('tgt-district-wrap').style.display = needDistrict ? 'block' : 'none';
+    document.getElementById('tgt-pincode-wrap').style.display  = t === 'pincode' ? 'block' : 'none';
+    // Reset district/pincode on type change
+    const distEl = document.getElementById('tgt-district');
+    if (distEl) distEl.value = '';
+    const pinEl = document.getElementById('tgt-pincode');
+    if (pinEl) pinEl.value = '';
+    // Load states if needed (hardcoded — always instant)
+    if (needState) _loadStates();
   }
 
-  async function onTgtCountryChange() {
-    const iso2 = document.getElementById('tgt-country').value;
-    document.getElementById('tgt-state').innerHTML    = '<option value="">Select state…</option>';
-    document.getElementById('tgt-district').innerHTML = '<option value="">Select district…</option>';
-    if (!iso2) return;
-    const t = document.getElementById('ad-target').value;
-    if (t==='pincode'||t==='district'||t==='state') {
-      _setOpts('tgt-state', [], i=>i.iso2, i=>i.name, 'Loading states…', true);
-      const states = await _csc(`/countries/${iso2}/states`);
-      states.sort((a,b)=>a.name.localeCompare(b.name));
-      _setOpts('tgt-state', states, i=>i.iso2, i=>i.name, 'Select state / province');
-    }
+  function onTgtStateChange() {
+    // District is now a free-text input — nothing to cascade
   }
 
-  async function onTgtStateChange() {
-    const stateEl   = document.getElementById('tgt-state');
-    const iso2      = stateEl.value;
-    const countryEl = document.getElementById('tgt-country');
-    const cIso2     = countryEl.value;
-    document.getElementById('tgt-district').innerHTML = '<option value="">Select district…</option>';
-    if (!iso2 || !cIso2) return;
-    const t = document.getElementById('ad-target').value;
-    if (t==='pincode'||t==='district') {
-      _setOpts('tgt-district', [], i=>i.name, i=>i.name, 'Loading cities…', true);
-      const cities = await _csc(`/countries/${cIso2}/states/${iso2}/cities`);
-      cities.sort((a,b)=>a.name.localeCompare(b.name));
-      _setOpts('tgt-district', cities, i=>i.name, i=>i.name, 'Select city / district');
-    }
-  }
-
-  // Load countries on page load
-  (async () => {
-    _setOpts('tgt-country', [], i=>i.iso2, i=>i.name, 'Loading countries…', true);
-    const countries = await _csc('/countries');
-    countries.sort((a,b)=>a.name.localeCompare(b.name));
-    const el = document.getElementById('tgt-country');
-    el.disabled = false;
-    el.innerHTML = '<option value="">Select country</option>' +
-      countries.map(c => `<option value="${c.iso2}" data-name="${c.name}">${c.name}</option>`).join('');
-    // Default to India
-    el.value = 'IN';
-    onTgtCountryChange();
-  })();
-
-  // Trigger initial show/hide for default "pincode" selection
+  // Trigger initial show/hide
   onTargetTypeChange();
 
   // ── Profile ───────────────────────────────────────────
