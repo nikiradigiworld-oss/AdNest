@@ -158,9 +158,9 @@
     .btn-submit:hover { opacity: .88; }
 
     /* ── ADS TABLE ── */
-    .ads-table { width: 100%; border-collapse: collapse; font-size: .85rem; }
-    .ads-table th { background: #f9f9f9; padding: .7rem 1rem; text-align: left; font-weight: 700; color: #555; font-size: .78rem; text-transform: uppercase; }
-    .ads-table td { padding: .7rem 1rem; border-bottom: 1px solid #f0f0f0; }
+    .ads-table { width: 100%; border-collapse: collapse; font-size: .85rem; min-width: 500px; }
+    .ads-table th { background: #f9f9f9; padding: .7rem 1rem; text-align: left; font-weight: 700; color: #555; font-size: .78rem; text-transform: uppercase; white-space: nowrap; }
+    .ads-table td { padding: .7rem 1rem; border-bottom: 1px solid #f0f0f0; white-space: nowrap; }
     .ads-table tr:last-child td { border: none; }
     .status-badge {
       display: inline-block; border-radius: 20px;
@@ -297,6 +297,27 @@
       .main { padding: 1rem; }
       .stats-row { grid-template-columns: 1fr 1fr; }
       .analytics-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 480px) {
+      .topnav { padding: 0 .75rem; height: 56px; }
+      .brand-name { font-size: .85rem; }
+      .balance-chip { font-size: .8rem; padding: 5px 10px; }
+      .btn-logout { font-size: .78rem; padding: 5px 10px; }
+      .stats-row { gap: .6rem; }
+      .stat-card { padding: .9rem; }
+      .stat-val { font-size: 1.6rem; }
+      .stat-lbl { font-size: .68rem; }
+      .page-title { font-size: 1.1rem; }
+      .panel { border-radius: 12px; }
+      .panel-head { padding: .85rem 1rem; }
+      .panel-body { padding: .85rem 1rem; }
+      /* Post ad form improvements */
+      .form-row { flex-direction: column; gap: .5rem; }
+      .form-row .form-group { flex: unset; width: 100%; }
+      .budget-row { flex-direction: column; gap: .5rem; }
+      .ad-type-tabs { flex-wrap: wrap; gap: .4rem; }
+      /* Profile grid */
+      .prof-grid { grid-template-columns: 1fr !important; }
     }
   </style>
 </head>

@@ -617,12 +617,23 @@
     }
 
     @media (max-width: 480px) {
-      nav { padding: 0 1rem; }
+      nav { padding: 0 .75rem; }
       section { padding: 3rem 1rem; }
       .hero h1 { font-size: 1.6rem; }
       .analytics-grid { grid-template-columns: 1fr 1fr; }
       .metric-num { font-size: 1.1rem; }
       .dash-tabs { font-size: 0.78rem; }
+      /* Portal cards: single column on mobile */
+      #portal-grid { grid-template-columns: 1fr !important; max-width: 100% !important; gap: 1rem !important; padding: 0 .5rem; }
+      .portal-card { padding: 1.4rem 1.2rem; }
+      .portal-icon { font-size: 2.5rem; }
+      .portal-card h3 { font-size: 1.05rem; }
+      .portal-card p { font-size: .82rem; margin-bottom: .8rem; }
+      .portal-perks { margin-bottom: 1rem; }
+      /* Nav shrink on mobile */
+      .nav-coin { font-size: .8rem; padding: 4px 10px; }
+      #nav-social-icons { gap: .3rem; }
+      .social-icon-nav { width: 24px !important; height: 24px !important; font-size: .6rem !important; }
     }
   </style>
 </head>

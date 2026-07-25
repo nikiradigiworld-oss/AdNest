@@ -159,7 +159,7 @@
     .badge-failed    { background:#f8d7da; color:#721c24; }
 
     /* ── TABLE ── */
-    .table-wrap { overflow-x:auto; }
+    .table-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; }
     table { width:100%; border-collapse:collapse; min-width:600px; }
     th, td { padding:.75rem 1.2rem; text-align:left; font-size:.85rem; }
     th { background:#fafafa; font-weight:700; color:#888; font-size:.75rem; text-transform:uppercase; letter-spacing:.4px; border-bottom:1px solid #f0f0f0; }
@@ -345,14 +345,81 @@
       .main { margin-left:60px; padding:1rem; }
       .stats-grid { grid-template-columns:1fr 1fr; }
     }
+    /* ── MOBILE (≤480px): hide sidebar, use bottom tab bar ── */
     @media (max-width:480px) {
-      .stats-grid { grid-template-columns:1fr; }
+      .sidebar { display:none; }
+      .main { margin-left:0; padding:.75rem; padding-bottom:72px; }
+      .stats-grid { grid-template-columns:1fr 1fr; gap:.6rem; }
+      .stat-card { padding:.85rem; }
+      .stat-val { font-size:1.4rem; }
+      .page-title { font-size:1.1rem; }
+      .page-sub { font-size:.75rem; }
+      .top-bar { margin-bottom:1rem; }
+      .panel { border-radius:12px; }
+      .panel-head { padding:.85rem 1rem; }
+      .panel-body { padding:.5rem 0; }
+      /* Admin mobile top bar */
+      .mobile-topbar { display:flex; }
+      /* Pending table scroll */
+      .table-scroll { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+      /* Bottom tab bar */
+      .mobile-tabs { display:flex; }
     }
+    /* Mobile top bar (hidden on desktop) */
+    .mobile-topbar {
+      display:none; align-items:center; justify-content:space-between;
+      background:var(--dark); color:#fff;
+      padding:.75rem 1rem; position:sticky; top:0; z-index:200;
+    }
+    .mobile-topbar-brand { font-weight:800; font-size:1rem; display:flex; align-items:center; gap:8px; }
+    .mobile-topbar-logo { width:30px; height:30px; border-radius:50%; background:var(--gold); color:var(--dark); font-weight:900; font-size:.95rem; display:flex; align-items:center; justify-content:center; }
+    /* Bottom tab bar (hidden on desktop) */
+    .mobile-tabs {
+      display:none; position:fixed; bottom:0; left:0; right:0; z-index:300;
+      background:var(--dark); border-top:1px solid rgba(255,255,255,.1);
+      height:60px;
+    }
+    .mobile-tab {
+      flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
+      color:rgba(255,255,255,.4); font-size:.55rem; font-weight:700; gap:2px;
+      cursor:pointer; transition:color .2s; background:none; border:none; padding:0;
+    }
+    .mobile-tab .tab-icon { font-size:1.25rem; line-height:1; }
+    .mobile-tab.active { color:var(--gold); }
+    .mobile-tab:hover { color:rgba(255,255,255,.8); }
   </style>
 </head>
 <body>
 
 <!-- ── SIDEBAR ── -->
+<!-- ── MOBILE TOP BAR ── -->
+<div class="mobile-topbar">
+  <div class="mobile-topbar-brand">
+    <div class="mobile-topbar-logo">A</div>
+    <span>Admin Panel</span>
+  </div>
+  <div id="mob-admin-info" style="font-size:.72rem;color:rgba(255,255,255,.5)">adnest2026@gmail.com</div>
+</div>
+
+<!-- ── MOBILE BOTTOM TABS ── -->
+<nav class="mobile-tabs" id="mobile-tabs">
+  <button class="mobile-tab active" id="mtab-overview" onclick="mobileSwitchView('overview',this)">
+    <span class="tab-icon">📊</span>Overview
+  </button>
+  <button class="mobile-tab" id="mtab-ads" onclick="mobileSwitchView('ads',this)">
+    <span class="tab-icon">📋</span>Ads
+  </button>
+  <button class="mobile-tab" id="mtab-users" onclick="mobileSwitchView('users',this)">
+    <span class="tab-icon">👥</span>Users
+  </button>
+  <button class="mobile-tab" id="mtab-settings" onclick="mobileSwitchView('settings',this)">
+    <span class="tab-icon">⚙️</span>Settings
+  </button>
+  <button class="mobile-tab" id="mtab-support" onclick="mobileSwitchView('support',this)">
+    <span class="tab-icon">💬</span>Support
+  </button>
+</nav>
+
 <aside class="sidebar">
   <div class="sb-brand">
     <div class="sb-logo">A</div>
@@ -970,6 +1037,14 @@
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     document.getElementById('view-' + name).classList.add('active');
     document.querySelectorAll('.sb-item').forEach(i => i.classList.remove('active'));
+    if (el) el.classList.add('active');
+    if (name === 'support') loadSupport();
+  }
+
+  function mobileSwitchView(name, el) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById('view-' + name).classList.add('active');
+    document.querySelectorAll('.mobile-tab').forEach(t => t.classList.remove('active'));
     if (el) el.classList.add('active');
     if (name === 'support') loadSupport();
   }

@@ -273,6 +273,25 @@
       .stats-row { grid-template-columns:1fr 1fr; }
       .ads-grid { grid-template-columns:1fr; }
     }
+    @media(max-width:480px){
+      .topnav { padding: 0 .75rem; height: 56px; }
+      .topnav .brand-name { font-size: .9rem; }
+      .topnav .coin-chip { font-size: .8rem; padding: 5px 10px; gap: 5px; }
+      .topnav .btn-logout { font-size: .78rem; padding: 5px 10px; }
+      .stats-row { grid-template-columns: 1fr 1fr; gap: .6rem; }
+      .stat-card { padding: .9rem; }
+      .stat-val { font-size: 1.5rem; }
+      .stat-lbl { font-size: .68rem; }
+      .hist-table { font-size: .78rem; }
+      .hist-table th, .hist-table td { padding: .55rem .6rem; }
+      .panel-body { padding: .75rem; }
+      .ad-card .ad-body { padding: .75rem; }
+      .ad-card .ad-title { font-size: .92rem; }
+      .ad-card .ad-reward { flex-wrap: wrap; gap: .3rem; font-size: .8rem; }
+      .btn-watch { font-size: .88rem; padding: .65rem; }
+      /* upgrade cards single col */
+      #view-upgrade > div[style] { grid-template-columns: 1fr !important; max-width: 100% !important; }
+    }
 
     /* ── AD VIEWER MODAL ── */
     .ad-viewer-overlay {
@@ -476,14 +495,14 @@
       </div>
       <div class="panel">
         <div class="panel-head"><h3>Coin Rates</h3></div>
-        <div class="panel-body">
-          <table class="hist-table">
-            <thead><tr><th>Ad Type</th><th>Coins per View</th><th>Cash Value</th></tr></thead>
+        <div class="panel-body" style="padding:0;overflow-x:auto;-webkit-overflow-scrolling:touch">
+          <table class="hist-table" style="min-width:340px">
+            <thead><tr><th>Ad Type</th><th>Coins</th><th>Cash Value</th></tr></thead>
             <tbody>
-              <tr><td>🖼️ Image Slide</td><td>300 coins / click</td><td>₹0.15 per click (CPC)</td></tr>
-              <tr><td>🎬 Video Ad</td><td>500 coins / click</td><td>₹0.25 per click (CPC)</td></tr>
-              <tr><td>📲 Social Media</td><td>800 coins / like</td><td>₹0.40 per like (CPL)</td></tr>
-              <tr><td>📱 App &amp; Website</td><td>1500 coins / click</td><td>₹0.75 per click (CPI)</td></tr>
+              <tr><td>🖼️ Image Slide</td><td>300 / click</td><td>₹0.15 (CPC)</td></tr>
+              <tr><td>🎬 Video Ad</td><td>500 / click</td><td>₹0.25 (CPC)</td></tr>
+              <tr><td>📲 Social Media</td><td>800 / like</td><td>₹0.40 (CPL)</td></tr>
+              <tr><td>📱 App &amp; Web</td><td>1500 / click</td><td>₹0.75 (CPI)</td></tr>
             </tbody>
           </table>
         </div>
