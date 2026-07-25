@@ -10,6 +10,7 @@
   <meta name="apple-mobile-web-app-title" content="Anaar" />
   <link rel="apple-touch-icon" href="icon.svg" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script>
     const SUPABASE_URL  = 'https://qkbpdmeghjuucplbnnsz.supabase.co';
     const SUPABASE_ANON = 'sb_publishable_fCjXonXrWcaS9nmTW5B8Tw_CCNw5ybn';
@@ -699,7 +700,10 @@
         <div class="page-title">All Users</div>
         <div class="page-sub">Manage viewers, advertisers and admins</div>
       </div>
-      <button class="refresh-btn" onclick="loadUsers()">🔄 Refresh</button>
+      <div style="display:flex;gap:.5rem;">
+        <button class="refresh-btn" onclick="loadUsers()">🔄 Refresh</button>
+        <button class="refresh-btn" onclick="exportUsersExcel()" style="background:#1a7a4a;color:#fff;border-color:#1a7a4a;">📥 Export Excel</button>
+      </div>
     </div>
 
     <div class="card">
@@ -1081,6 +1085,19 @@
         </div>
         <button class="ue-btn-save" onclick="saveUserProfile()">💾 Save Profile</button>
       </div>
+
+      <!-- Bank Account Details (read-only view for admin) -->
+      <div class="ue-section" style="margin-top:.8rem;background:#f0f9f4;">
+        <div class="ue-section-title" style="color:#1a7a4a;">🏦 Bank Account Details</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem;font-size:.83rem;">
+          <div><span style="color:#888;font-size:.72rem;font-weight:700;">HOLDER NAME</span><br/><strong id="ue-bank-holder">—</strong></div>
+          <div><span style="color:#888;font-size:.72rem;font-weight:700;">BANK NAME</span><br/><strong id="ue-bank-name">—</strong></div>
+          <div><span style="color:#888;font-size:.72rem;font-weight:700;">ACCOUNT NUMBER</span><br/><strong id="ue-bank-accno">—</strong></div>
+          <div><span style="color:#888;font-size:.72rem;font-weight:700;">IFSC CODE</span><br/><strong id="ue-bank-ifsc">—</strong></div>
+          <div><span style="color:#888;font-size:.72rem;font-weight:700;">BRANCH</span><br/><strong id="ue-bank-branch">—</strong></div>
+          <div><span style="color:#888;font-size:.72rem;font-weight:700;">ACCOUNT TYPE</span><br/><strong id="ue-bank-type">—</strong></div>
+        </div>
+      </div>
     </div>
 
     <!-- Wallet Tab -->
@@ -1370,7 +1387,7 @@
 
   // ── Users ─────────────────────────────────────────────────
   async function loadUsers() {
-    const { data: users } = await db.from('users').select('*').order('created_at',{ascending:false});
+    const { data: users } = await db.from('users').select('id,name,email,phone,role,gender,state,district,mobile,dob,created_at,bank_holder_name,bank_name,bank_account_no,bank_ifsc,bank_branch,bank_account_type').order('created_at',{ascending:false});
     const { data: wallets } = await db.from('coin_wallets').select('user_id,coins,cash_value');
     const walletMap = {};
     (wallets||[]).forEach(w => walletMap[w.user_id] = { coins: w.coins||0, cash_value: w.cash_value||0 });
@@ -1466,6 +1483,14 @@
     document.getElementById('ue-district').value = u.district || '';
     document.getElementById('ue-gender').value   = u.gender   || '';
     document.getElementById('ue-phone').value    = u.phone    || '';
+
+    // Bank details (read-only display)
+    document.getElementById('ue-bank-holder').textContent = u.bank_holder_name  || '—';
+    document.getElementById('ue-bank-name').textContent   = u.bank_name         || '—';
+    document.getElementById('ue-bank-accno').textContent  = u.bank_account_no   || '—';
+    document.getElementById('ue-bank-ifsc').textContent   = u.bank_ifsc         || '—';
+    document.getElementById('ue-bank-branch').textContent = u.bank_branch       || '—';
+    document.getElementById('ue-bank-type').textContent   = u.bank_account_type || '—';
 
     // Wallet fields
     document.getElementById('ue-coins-display').textContent = Number(u.coins||0).toLocaleString();
@@ -1564,6 +1589,46 @@
     document.getElementById('ue-cash-adj').value = '';
     showToast('✅ Cash set to ₹' + val.toFixed(2), 'success');
     renderUsersFiltered();
+  }
+
+  // ── Export Users to Excel ─────────────────────────────────
+  function exportUsersExcel() {
+    if (!allUsers.length) { showToast('No users to export', 'error'); return; }
+
+    const rows = allUsers.map(u => ({
+      'Name':                u.name             || '',
+      'Email':               u.email            || '',
+      'Phone':               u.phone            || u.mobile || '',
+      'Role':                u.role             || '',
+      'Gender':              u.gender           || '',
+      'State':               u.state            || '',
+      'District':            u.district         || '',
+      'Joined':              u.created_at ? new Date(u.created_at).toLocaleDateString('en-IN') : '',
+      'Coins':               u.coins            || 0,
+      'Cash Value (₹)':      Number(u.cash_value||0).toFixed(2),
+      'A/C Holder Name':     u.bank_holder_name  || '',
+      'Bank Name':           u.bank_name         || '',
+      'Account Number':      u.bank_account_no   || '',
+      'IFSC Code':           u.bank_ifsc         || '',
+      'Branch':              u.bank_branch       || '',
+      'Account Type':        u.bank_account_type || '',
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(rows);
+
+    // Column widths
+    ws['!cols'] = [
+      {wch:20},{wch:28},{wch:16},{wch:12},{wch:10},
+      {wch:16},{wch:16},{wch:14},{wch:10},{wch:14},
+      {wch:22},{wch:18},{wch:18},{wch:14},{wch:18},{wch:14}
+    ];
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Users');
+
+    const date = new Date().toISOString().slice(0,10);
+    XLSX.writeFile(wb, `AdNest_Users_${date}.xlsx`);
+    showToast('✅ Excel downloaded!', 'success');
   }
 
   // ── Transactions ──────────────────────────────────────────

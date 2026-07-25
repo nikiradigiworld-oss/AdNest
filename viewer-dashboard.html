@@ -433,6 +433,9 @@
       <span class="sidebar-icon">💬</span> Chat Support
       <span class="chat-badge" id="chat-badge" style="display:none">!</span>
     </div>
+    <div class="sidebar-item" onclick="switchView('profile', this)">
+      <span class="sidebar-icon">👤</span> My Profile
+    </div>
     <div class="sidebar-divider"></div>
     <a class="sidebar-item" id="view-admin-link" href="admin.html" style="display:none;">
       <span class="sidebar-icon">⚙️</span> Admin Panel
@@ -565,6 +568,90 @@
       </div>
     </div>
 
+    <!-- PROFILE VIEW -->
+    <div class="view" id="view-profile">
+      <div class="page-title">👤 My Profile</div>
+
+      <!-- Personal Info -->
+      <div class="panel" style="margin-bottom:1.2rem;">
+        <div class="panel-head"><h3>Personal Information</h3></div>
+        <div class="panel-body">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem;" class="profile-grid">
+            <div>
+              <label style="font-size:.75rem;font-weight:700;color:#aaa;display:block;margin-bottom:.3rem;">Full Name</label>
+              <input id="prof-name" type="text" placeholder="Your full name" style="width:100%;padding:.6rem .8rem;border:1.5px solid rgba(255,255,255,.15);border-radius:8px;background:rgba(255,255,255,.08);color:#fff;font-size:.9rem;outline:none;" />
+            </div>
+            <div>
+              <label style="font-size:.75rem;font-weight:700;color:#aaa;display:block;margin-bottom:.3rem;">Mobile</label>
+              <input id="prof-mobile" type="tel" placeholder="Mobile number" style="width:100%;padding:.6rem .8rem;border:1.5px solid rgba(255,255,255,.15);border-radius:8px;background:rgba(255,255,255,.08);color:#fff;font-size:.9rem;outline:none;" />
+            </div>
+            <div>
+              <label style="font-size:.75rem;font-weight:700;color:#aaa;display:block;margin-bottom:.3rem;">Gender</label>
+              <select id="prof-gender" style="width:100%;padding:.6rem .8rem;border:1.5px solid rgba(255,255,255,.15);border-radius:8px;background:rgba(30,30,50,1);color:#fff;font-size:.9rem;outline:none;">
+                <option value="">Select…</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:.75rem;font-weight:700;color:#aaa;display:block;margin-bottom:.3rem;">Date of Birth</label>
+              <input id="prof-dob" type="date" style="width:100%;padding:.6rem .8rem;border:1.5px solid rgba(255,255,255,.15);border-radius:8px;background:rgba(255,255,255,.08);color:#fff;font-size:.9rem;outline:none;" />
+            </div>
+            <div>
+              <label style="font-size:.75rem;font-weight:700;color:#aaa;display:block;margin-bottom:.3rem;">State</label>
+              <input id="prof-state" type="text" placeholder="Your state" style="width:100%;padding:.6rem .8rem;border:1.5px solid rgba(255,255,255,.15);border-radius:8px;background:rgba(255,255,255,.08);color:#fff;font-size:.9rem;outline:none;" />
+            </div>
+            <div>
+              <label style="font-size:.75rem;font-weight:700;color:#aaa;display:block;margin-bottom:.3rem;">District</label>
+              <input id="prof-district" type="text" placeholder="Your district" style="width:100%;padding:.6rem .8rem;border:1.5px solid rgba(255,255,255,.15);border-radius:8px;background:rgba(255,255,255,.08);color:#fff;font-size:.9rem;outline:none;" />
+            </div>
+          </div>
+          <button onclick="savePersonalInfo()" style="margin-top:1rem;background:#FFD700;color:#1a1a1a;border:none;border-radius:10px;padding:.7rem 1.8rem;font-weight:800;font-size:.95rem;cursor:pointer;">💾 Save Personal Info</button>
+        </div>
+      </div>
+
+      <!-- Bank Account Details -->
+      <div class="panel">
+        <div class="panel-head"><h3>🏦 Bank Account Details</h3><span style="font-size:.78rem;opacity:.7">For withdrawal payments</span></div>
+        <div class="panel-body">
+          <div style="background:rgba(255,215,0,.08);border:1px solid rgba(255,215,0,.2);border-radius:10px;padding:.8rem 1rem;margin-bottom:1rem;font-size:.8rem;color:#FFD700;">
+            ⚠️ Bank details are used only for processing coin withdrawal payments. Keep them accurate.
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem;" class="profile-grid">
+            <div style="grid-column:1/-1;">
+              <label style="font-size:.75rem;font-weight:700;color:#aaa;display:block;margin-bottom:.3rem;">Account Holder Name</label>
+              <input id="bank-holder" type="text" placeholder="As per bank records" style="width:100%;padding:.6rem .8rem;border:1.5px solid rgba(255,255,255,.15);border-radius:8px;background:rgba(255,255,255,.08);color:#fff;font-size:.9rem;outline:none;" />
+            </div>
+            <div>
+              <label style="font-size:.75rem;font-weight:700;color:#aaa;display:block;margin-bottom:.3rem;">Bank Name</label>
+              <input id="bank-name" type="text" placeholder="e.g. SBI, HDFC" style="width:100%;padding:.6rem .8rem;border:1.5px solid rgba(255,255,255,.15);border-radius:8px;background:rgba(255,255,255,.08);color:#fff;font-size:.9rem;outline:none;" />
+            </div>
+            <div>
+              <label style="font-size:.75rem;font-weight:700;color:#aaa;display:block;margin-bottom:.3rem;">Account Type</label>
+              <select id="bank-type" style="width:100%;padding:.6rem .8rem;border:1.5px solid rgba(255,255,255,.15);border-radius:8px;background:rgba(30,30,50,1);color:#fff;font-size:.9rem;outline:none;">
+                <option value="savings">Savings</option>
+                <option value="current">Current</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:.75rem;font-weight:700;color:#aaa;display:block;margin-bottom:.3rem;">Account Number</label>
+              <input id="bank-accno" type="text" placeholder="Account number" style="width:100%;padding:.6rem .8rem;border:1.5px solid rgba(255,255,255,.15);border-radius:8px;background:rgba(255,255,255,.08);color:#fff;font-size:.9rem;outline:none;" />
+            </div>
+            <div>
+              <label style="font-size:.75rem;font-weight:700;color:#aaa;display:block;margin-bottom:.3rem;">IFSC Code</label>
+              <input id="bank-ifsc" type="text" placeholder="e.g. SBIN0001234" style="width:100%;padding:.6rem .8rem;border:1.5px solid rgba(255,255,255,.15);border-radius:8px;background:rgba(255,255,255,.08);color:#fff;font-size:.9rem;outline:none;" maxlength="11" />
+            </div>
+            <div>
+              <label style="font-size:.75rem;font-weight:700;color:#aaa;display:block;margin-bottom:.3rem;">Branch Name</label>
+              <input id="bank-branch" type="text" placeholder="Branch name" style="width:100%;padding:.6rem .8rem;border:1.5px solid rgba(255,255,255,.15);border-radius:8px;background:rgba(255,255,255,.08);color:#fff;font-size:.9rem;outline:none;" />
+            </div>
+          </div>
+          <button onclick="saveBankDetails()" style="margin-top:1rem;background:#FFD700;color:#1a1a1a;border:none;border-radius:10px;padding:.7rem 1.8rem;font-weight:800;font-size:.95rem;cursor:pointer;">🏦 Save Bank Details</button>
+        </div>
+      </div>
+    </div>
+
   </main>
 </div>
 
@@ -603,6 +690,60 @@
     if (el) el.classList.add('active');
     if (name === 'history') loadHistory();
     if (name === 'chat')    loadChat();
+    if (name === 'profile') loadProfile();
+  }
+
+  // ── Profile & Bank ───────────────────────────────────
+  async function loadProfile() {
+    const { data } = await db.from('users').select('name,mobile,gender,dob,state,district,bank_holder_name,bank_name,bank_account_no,bank_ifsc,bank_branch,bank_account_type').eq('id', currentUser.id).single();
+    if (!data) return;
+    document.getElementById('prof-name').value     = data.name     || '';
+    document.getElementById('prof-mobile').value   = data.mobile   || '';
+    document.getElementById('prof-gender').value   = data.gender   || '';
+    document.getElementById('prof-dob').value      = data.dob      || '';
+    document.getElementById('prof-state').value    = data.state    || '';
+    document.getElementById('prof-district').value = data.district || '';
+    document.getElementById('bank-holder').value   = data.bank_holder_name  || '';
+    document.getElementById('bank-name').value     = data.bank_name         || '';
+    document.getElementById('bank-type').value     = data.bank_account_type || 'savings';
+    document.getElementById('bank-accno').value    = data.bank_account_no   || '';
+    document.getElementById('bank-ifsc').value     = data.bank_ifsc         || '';
+    document.getElementById('bank-branch').value   = data.bank_branch       || '';
+  }
+
+  async function savePersonalInfo() {
+    const upd = {
+      name:     document.getElementById('prof-name').value.trim(),
+      mobile:   document.getElementById('prof-mobile').value.trim(),
+      gender:   document.getElementById('prof-gender').value,
+      dob:      document.getElementById('prof-dob').value || null,
+      state:    document.getElementById('prof-state').value.trim(),
+      district: document.getElementById('prof-district').value.trim(),
+    };
+    if (!upd.name) { showToast('Name cannot be empty', 'error'); return; }
+    const { error } = await db.from('users').update(upd).eq('id', currentUser.id);
+    if (error) { showToast('Error: ' + error.message, 'error'); return; }
+    document.getElementById('nav-user-name').textContent = upd.name.split(' ')[0];
+    document.getElementById('nav-user-av').textContent   = upd.name.charAt(0).toUpperCase();
+    showToast('✅ Personal info saved!', 'success');
+  }
+
+  async function saveBankDetails() {
+    const holder = document.getElementById('bank-holder').value.trim();
+    const accno  = document.getElementById('bank-accno').value.trim();
+    const ifsc   = document.getElementById('bank-ifsc').value.trim().toUpperCase();
+    if (!holder || !accno || !ifsc) { showToast('Fill in account holder, account number and IFSC', 'error'); return; }
+    const upd = {
+      bank_holder_name:  holder,
+      bank_name:         document.getElementById('bank-name').value.trim(),
+      bank_account_type: document.getElementById('bank-type').value,
+      bank_account_no:   accno,
+      bank_ifsc:         ifsc,
+      bank_branch:       document.getElementById('bank-branch').value.trim(),
+    };
+    const { error } = await db.from('users').update(upd).eq('id', currentUser.id);
+    if (error) { showToast('Error: ' + error.message, 'error'); return; }
+    showToast('✅ Bank details saved!', 'success');
   }
 
   // ── Load wallet via RPC ──────────────────────────────
