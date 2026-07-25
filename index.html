@@ -1198,7 +1198,50 @@
       </select>
     </div>
 
-    <div style="display:flex;gap:.75rem;margin-top:1.4rem;">
+    <!-- Bank Account Details -->
+    <div style="margin:1.4rem 0 .8rem;padding-top:1.2rem;border-top:1.5px solid #f0f0f0;">
+      <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:1rem;">
+        <span style="font-size:1.1rem;">🏦</span>
+        <span style="font-size:.85rem;font-weight:800;color:#1a1a1a;">Bank Account Details</span>
+        <span style="font-size:.72rem;color:#aaa;margin-left:auto;">For withdrawal payments</span>
+      </div>
+      <div style="background:#fffbe6;border:1px solid #ffe082;border-radius:8px;padding:.6rem .9rem;font-size:.76rem;color:#795548;margin-bottom:1rem;">
+        ⚠️ Keep bank details accurate — used only for coin withdrawal payments.
+      </div>
+      <div class="pf-field">
+        <label class="pf-label">Account Holder Name</label>
+        <input class="pf-input" type="text" id="pf-bank-holder" placeholder="Name as per bank records" />
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;">
+        <div class="pf-field">
+          <label class="pf-label">Bank Name</label>
+          <input class="pf-input" type="text" id="pf-bank-name" placeholder="e.g. SBI, HDFC" />
+        </div>
+        <div class="pf-field">
+          <label class="pf-label">Account Type</label>
+          <select class="pf-input" id="pf-bank-type">
+            <option value="savings">Savings</option>
+            <option value="current">Current</option>
+          </select>
+        </div>
+      </div>
+      <div class="pf-field">
+        <label class="pf-label">Account Number</label>
+        <input class="pf-input" type="text" id="pf-bank-accno" placeholder="Bank account number" />
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;">
+        <div class="pf-field">
+          <label class="pf-label">IFSC Code</label>
+          <input class="pf-input" type="text" id="pf-bank-ifsc" placeholder="e.g. SBIN0001234" maxlength="11" style="text-transform:uppercase;" />
+        </div>
+        <div class="pf-field">
+          <label class="pf-label">Branch Name</label>
+          <input class="pf-input" type="text" id="pf-bank-branch" placeholder="Branch name" />
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:.75rem;margin-top:.5rem;">
       <button onclick="closeProfileModal()" style="flex:1;padding:.75rem;border:1.5px solid #e0e0e0;border-radius:10px;background:#fff;font-size:.9rem;font-weight:600;color:#666;cursor:pointer;">Cancel</button>
       <button onclick="saveProfile()" id="pf-save-btn" style="flex:2;padding:.75rem;border:none;border-radius:10px;background:var(--red);color:#fff;font-size:.9rem;font-weight:700;cursor:pointer;">Save Profile</button>
     </div>
@@ -1326,7 +1369,7 @@
     if (!user) return;
 
     const { data: profile } = await _db.from('users')
-      .select('name,mobile,dob,gender,country,state,district')
+      .select('name,mobile,dob,gender,country,state,district,bank_holder_name,bank_name,bank_account_no,bank_ifsc,bank_branch,bank_account_type')
       .eq('id', user.id).single();
 
     // Populate country dropdown first (then cascade state → district)
@@ -1338,6 +1381,14 @@
     document.getElementById('pf-mobile').value = profile?.mobile || profile?.phone || '';
     document.getElementById('pf-dob').value    = profile?.dob    || '';
     document.getElementById('pf-gender').value = profile?.gender || '';
+
+    // Bank details
+    document.getElementById('pf-bank-holder').value = profile?.bank_holder_name  || '';
+    document.getElementById('pf-bank-name').value   = profile?.bank_name         || '';
+    document.getElementById('pf-bank-type').value   = profile?.bank_account_type || 'savings';
+    document.getElementById('pf-bank-accno').value  = profile?.bank_account_no   || '';
+    document.getElementById('pf-bank-ifsc').value   = profile?.bank_ifsc         || '';
+    document.getElementById('pf-bank-branch').value = profile?.bank_branch       || '';
 
     // Load countries; cascade into state & district using saved values
     await loadCountries(savedCountry);
@@ -1387,11 +1438,17 @@
       .update({
         name,
         mobile,
-        dob:      dob      || null,
-        gender:   gender   || null,
-        country:  country  || null,
-        state:    state    || null,
-        district: district || null
+        dob:               dob      || null,
+        gender:            gender   || null,
+        country:           country  || null,
+        state:             state    || null,
+        district:          district || null,
+        bank_holder_name:  document.getElementById('pf-bank-holder').value.trim() || null,
+        bank_name:         document.getElementById('pf-bank-name').value.trim()   || null,
+        bank_account_type: document.getElementById('pf-bank-type').value          || 'savings',
+        bank_account_no:   document.getElementById('pf-bank-accno').value.trim()  || null,
+        bank_ifsc:         document.getElementById('pf-bank-ifsc').value.trim().toUpperCase() || null,
+        bank_branch:       document.getElementById('pf-bank-branch').value.trim() || null,
       })
       .eq('id', user.id);
 
