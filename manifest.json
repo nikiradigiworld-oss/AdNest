@@ -2,8 +2,8 @@
   "name": "Anaar – Incentive & Cashback Advertising",
   "short_name": "Anaar",
   "description": "Watch ads to earn coins and cash. Grow your business with targeted advertising.",
-  "start_url": "/index.html",
-  "scope": "/",
+  "start_url": "/AdNest/index.html",
+  "scope": "/AdNest/",
   "display": "standalone",
   "orientation": "portrait-primary",
   "background_color": "#8B1A1A",
@@ -28,13 +28,13 @@
     {
       "name": "Watch Ads",
       "short_name": "Watch",
-      "url": "/viewer-dashboard.html",
+      "url": "/AdNest/viewer-dashboard.html",
       "description": "Watch ads and earn coins"
     },
     {
       "name": "Post Ad",
       "short_name": "Advertise",
-      "url": "/advertiser-dashboard.html",
+      "url": "/AdNest/advertiser-dashboard.html",
       "description": "Post and manage your ads"
     }
   ],

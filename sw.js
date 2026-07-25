@@ -1,14 +1,15 @@
-const CACHE_NAME = 'anaar-v1';
+const CACHE_NAME = 'anaar-v2';
+const BASE = '/AdNest';
 const PRECACHE_URLS = [
-  '/',
-  '/index.html',
-  '/login.html',
-  '/signup.html',
-  '/viewer-dashboard.html',
-  '/advertiser-dashboard.html',
-  '/admin.html',
-  '/icon.svg',
-  '/manifest.json'
+  BASE + '/',
+  BASE + '/index.html',
+  BASE + '/login.html',
+  BASE + '/signup.html',
+  BASE + '/viewer-dashboard.html',
+  BASE + '/advertiser-dashboard.html',
+  BASE + '/admin.html',
+  BASE + '/icon.svg',
+  BASE + '/manifest.json'
 ];
 
 self.addEventListener('install', event => {
