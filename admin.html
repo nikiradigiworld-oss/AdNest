@@ -242,6 +242,33 @@
     .modal-btn.cancel  { background:#f0f0f0; color:#555; }
     .modal-btn:hover   { opacity:.85; }
 
+    /* ── USER EDIT MODAL ── */
+    .ue-header { display:flex; align-items:center; gap:1rem; margin-bottom:1.4rem; padding-bottom:1rem; border-bottom:1px solid #f0f0f0; }
+    .ue-av { width:52px; height:52px; border-radius:50%; background:var(--gold); color:var(--red); display:flex; align-items:center; justify-content:center; font-weight:900; font-size:1.4rem; flex-shrink:0; }
+    .ue-info h4 { font-size:1rem; font-weight:800; color:var(--dark); }
+    .ue-info p  { font-size:.78rem; color:#888; margin-top:2px; }
+    .ue-section { background:#f9f9f9; border-radius:12px; padding:1rem 1.1rem; margin-bottom:1rem; }
+    .ue-section-title { font-size:.72rem; font-weight:800; color:#888; text-transform:uppercase; letter-spacing:.6px; margin-bottom:.8rem; }
+    .ue-field { margin-bottom:.75rem; }
+    .ue-field label { display:block; font-size:.75rem; font-weight:700; color:#555; margin-bottom:.3rem; }
+    .ue-field input, .ue-field select {
+      width:100%; padding:.55rem .75rem; border:1.5px solid #e0e0e0; border-radius:8px;
+      font-size:.88rem; color:var(--dark); outline:none; background:#fff;
+    }
+    .ue-field input:focus, .ue-field select:focus { border-color:var(--red); }
+    .ue-field input[readonly] { background:#f5f5f5; color:#999; cursor:default; }
+    .ue-coin-row { display:flex; align-items:center; gap:.5rem; margin-bottom:.6rem; }
+    .ue-coin-val { flex:1; background:#fff; border:1.5px solid #e0e0e0; border-radius:8px; padding:.5rem .75rem; font-size:.88rem; font-weight:700; color:var(--dark); }
+    .ue-adj { display:flex; gap:.4rem; }
+    .ue-adj input { width:100px; padding:.5rem .6rem; border:1.5px solid #e0e0e0; border-radius:8px; font-size:.85rem; }
+    .ue-btn { padding:.5rem .9rem; border:none; border-radius:8px; font-size:.8rem; font-weight:700; cursor:pointer; transition:.15s; white-space:nowrap; }
+    .ue-btn:hover { opacity:.82; }
+    .ue-btn-add  { background:#e8f8ef; color:#1a7a4a; }
+    .ue-btn-sub  { background:#fdecea; color:#c0392b; }
+    .ue-btn-set  { background:#e8f0fe; color:#1a56db; }
+    .ue-btn-save { background:var(--red); color:#fff; width:100%; padding:.75rem; border:none; border-radius:10px; font-size:.95rem; font-weight:700; cursor:pointer; margin-top:.5rem; }
+    .ue-btn-save:hover { opacity:.88; }
+
     /* ── ANALYTICS BARS ── */
     .analytics-section { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:1.5rem; margin-bottom:1.5rem; }
     .chart-card { background:#fff; border-radius:14px; padding:1.4rem; box-shadow:var(--shadow); }
@@ -983,13 +1010,84 @@
   </div>
 </div>
 
-<!-- ── USER DETAIL MODAL ── -->
+<!-- ── USER EDIT MODAL ── -->
 <div class="modal-overlay" id="user-modal">
-  <div class="modal" onclick="event.stopPropagation()">
+  <div class="modal" onclick="event.stopPropagation()" style="max-width:480px;">
     <button class="modal-close" onclick="closeUserModal()">✕</button>
-    <h3>👤 User Details</h3>
-    <div id="user-modal-body"></div>
-    <div style="margin-top:1.2rem;display:flex;gap:.6rem;flex-wrap:wrap;" id="user-modal-actions"></div>
+    <h3>✏️ Edit User</h3>
+
+    <!-- Header -->
+    <div class="ue-header">
+      <div class="ue-av" id="ue-av">?</div>
+      <div class="ue-info">
+        <h4 id="ue-hdr-name">—</h4>
+        <p id="ue-hdr-email">—</p>
+      </div>
+    </div>
+
+    <!-- Profile Section -->
+    <div class="ue-section">
+      <div class="ue-section-title">👤 Profile</div>
+      <div class="ue-field">
+        <label>Full Name</label>
+        <input type="text" id="ue-name" placeholder="Full name" />
+      </div>
+      <div class="ue-field">
+        <label>Email</label>
+        <input type="text" id="ue-email" readonly />
+      </div>
+      <div class="ue-field">
+        <label>Role</label>
+        <select id="ue-role">
+          <option value="viewer">👁 Viewer</option>
+          <option value="advertiser">📢 Advertiser</option>
+          <option value="both">⭐ Both</option>
+          <option value="admin">🛡 Admin</option>
+        </select>
+      </div>
+      <div class="ue-field" style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;">
+        <div>
+          <label>State</label>
+          <input type="text" id="ue-state" placeholder="State" />
+        </div>
+        <div>
+          <label>District</label>
+          <input type="text" id="ue-district" placeholder="District" />
+        </div>
+      </div>
+      <button class="ue-btn-save" onclick="saveUserProfile()">💾 Save Profile</button>
+    </div>
+
+    <!-- Wallet Section -->
+    <div class="ue-section">
+      <div class="ue-section-title">🪙 Wallet — Coins</div>
+      <div class="ue-coin-row">
+        <div class="ue-coin-val">🪙 <span id="ue-coins-display">0</span> coins</div>
+      </div>
+      <div class="ue-adj">
+        <input type="number" id="ue-coins-adj" placeholder="Amount" min="0" />
+        <button class="ue-btn ue-btn-add" onclick="adjustCoins(1)">+ Add</button>
+        <button class="ue-btn ue-btn-sub" onclick="adjustCoins(-1)">− Deduct</button>
+        <button class="ue-btn ue-btn-set" onclick="setCoinsExact()">= Set</button>
+      </div>
+    </div>
+
+    <div class="ue-section">
+      <div class="ue-section-title">₹ Wallet — Cash Value</div>
+      <div class="ue-coin-row">
+        <div class="ue-coin-val">₹ <span id="ue-cash-display">0.00</span></div>
+      </div>
+      <div class="ue-adj">
+        <input type="number" id="ue-cash-adj" placeholder="₹ Amount" min="0" step="0.01" />
+        <button class="ue-btn ue-btn-add" onclick="adjustCash(1)">+ Add</button>
+        <button class="ue-btn ue-btn-sub" onclick="adjustCash(-1)">− Deduct</button>
+        <button class="ue-btn ue-btn-set" onclick="setCashExact()">= Set</button>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:.5rem;margin-top:.5rem;">
+      <button class="modal-btn cancel" onclick="closeUserModal()" style="flex:1;">Close</button>
+    </div>
   </div>
 </div>
 
@@ -1244,10 +1342,14 @@
   // ── Users ─────────────────────────────────────────────────
   async function loadUsers() {
     const { data: users } = await db.from('users').select('*').order('created_at',{ascending:false});
-    const { data: wallets } = await db.from('coin_wallets').select('user_id,coins');
-    const coinMap = {};
-    (wallets||[]).forEach(w => coinMap[w.user_id] = w.coins);
-    allUsers = (users||[]).map(u => ({ ...u, coins: coinMap[u.id] || 0 }));
+    const { data: wallets } = await db.from('coin_wallets').select('user_id,coins,cash_value');
+    const walletMap = {};
+    (wallets||[]).forEach(w => walletMap[w.user_id] = { coins: w.coins||0, cash_value: w.cash_value||0 });
+    allUsers = (users||[]).map(u => ({
+      ...u,
+      coins: walletMap[u.id]?.coins || 0,
+      cash_value: walletMap[u.id]?.cash_value || 0
+    }));
     renderUsersFiltered();
   }
 
@@ -1282,17 +1384,13 @@
         <td><strong>${esc(u.name||'—')}</strong></td>
         <td style="font-size:.8rem;color:#666;">${esc(u.email||u.phone||'—')}</td>
         <td><span class="badge badge-${u.role}">${u.role}</span></td>
-        <td>🪙 ${Number(u.coins).toLocaleString()}</td>
+        <td>
+          <div>🪙 ${Number(u.coins).toLocaleString()}</div>
+          <div style="font-size:.75rem;color:#27ae60;">₹${Number(u.cash_value||0).toFixed(2)}</div>
+        </td>
         <td>${fmtDate(u.created_at)}</td>
         <td>
-          <button class="btn-view" onclick="openUserModal('${u.id}')">👁 View</button>
-          <select class="role-select" onchange="changeUserRole('${u.id}', this.value, this)" title="Change role">
-            <option value="">Role…</option>
-            <option value="viewer"     ${u.role==='viewer'?'selected':''}>Viewer</option>
-            <option value="advertiser" ${u.role==='advertiser'?'selected':''}>Advertiser</option>
-            <option value="both"       ${u.role==='both'?'selected':''}>Both</option>
-            <option value="admin"      ${u.role==='admin'?'selected':''}>Admin</option>
-          </select>
+          <button class="btn-view" onclick="openUserModal('${u.id}')" style="background:#e8f0fe;color:#1a56db;">✏️ Edit</button>
         </td>
       </tr>`).join('');
   }
@@ -1307,39 +1405,118 @@
     renderUsersFiltered();
   }
 
-  // ── User Detail Modal ─────────────────────────────────────
+  // ── User Edit Modal ───────────────────────────────────────
+  let _editUserId = null;
+
   function openUserModal(id) {
     const u = allUsers.find(x => x.id === id);
     if (!u) return;
-    document.getElementById('user-modal-body').innerHTML = `
-      <div class="modal-row"><div class="modal-label">Name</div><div class="modal-val">${esc(u.name||'—')}</div></div>
-      <div class="modal-row"><div class="modal-label">Email</div><div class="modal-val">${esc(u.email||'—')}</div></div>
-      <div class="modal-row"><div class="modal-label">Phone</div><div class="modal-val">${esc(u.phone||'—')}</div></div>
-      <div class="modal-row"><div class="modal-label">Role</div><div class="modal-val"><span class="badge badge-${u.role}">${u.role}</span></div></div>
-      <div class="modal-row"><div class="modal-label">Coins</div><div class="modal-val">🪙 ${Number(u.coins).toLocaleString()}</div></div>
-      <div class="modal-row"><div class="modal-label">Gender</div><div class="modal-val">${esc(u.gender||'—')}</div></div>
-      <div class="modal-row"><div class="modal-label">State</div><div class="modal-val">${esc(u.state||'—')}</div></div>
-      <div class="modal-row"><div class="modal-label">District</div><div class="modal-val">${esc(u.district||'—')}</div></div>
-      <div class="modal-row"><div class="modal-label">Joined</div><div class="modal-val">${new Date(u.created_at).toLocaleString()}</div></div>
-    `;
-    document.getElementById('user-modal-actions').innerHTML = `
-      <button class="modal-btn approve" onclick="changeUserRoleModal('${u.id}','admin')">⚙️ Make Admin</button>
-      <button class="modal-btn cancel"  onclick="changeUserRoleModal('${u.id}','viewer')">👁 Set Viewer</button>
-      <button class="modal-btn cancel"  onclick="closeUserModal()">Close</button>
-    `;
+    _editUserId = id;
+
+    // Header
+    document.getElementById('ue-av').textContent        = (u.name||'?').charAt(0).toUpperCase();
+    document.getElementById('ue-hdr-name').textContent  = u.name || '—';
+    document.getElementById('ue-hdr-email').textContent = u.email || u.phone || '—';
+
+    // Profile fields
+    document.getElementById('ue-name').value    = u.name    || '';
+    document.getElementById('ue-email').value   = u.email   || u.phone || '';
+    document.getElementById('ue-role').value    = u.role    || 'viewer';
+    document.getElementById('ue-state').value   = u.state   || '';
+    document.getElementById('ue-district').value= u.district|| '';
+
+    // Wallet fields
+    document.getElementById('ue-coins-display').textContent = Number(u.coins||0).toLocaleString();
+    document.getElementById('ue-cash-display').textContent  = Number(u.cash_value||0).toFixed(2);
+    document.getElementById('ue-coins-adj').value = '';
+    document.getElementById('ue-cash-adj').value  = '';
+
     document.getElementById('user-modal').classList.add('open');
   }
-  function closeUserModal() { document.getElementById('user-modal').classList.remove('open'); }
+
+  function closeUserModal() { document.getElementById('user-modal').classList.remove('open'); _editUserId = null; }
   document.getElementById('user-modal').addEventListener('click', function(e) { if(e.target===this) closeUserModal(); });
 
-  async function changeUserRoleModal(userId, newRole) {
-    if (!confirm(`Set role to "${newRole}"?`)) return;
-    const { error } = await db.from('users').update({ role: newRole }).eq('id', userId);
+  async function saveUserProfile() {
+    if (!_editUserId) return;
+    const name     = document.getElementById('ue-name').value.trim();
+    const role     = document.getElementById('ue-role').value;
+    const state    = document.getElementById('ue-state').value.trim();
+    const district = document.getElementById('ue-district').value.trim();
+    if (!name) { showToast('Name cannot be empty', 'error'); return; }
+
+    const { error } = await db.from('users').update({ name, role, state, district }).eq('id', _editUserId);
     if (error) { showToast('Error: ' + error.message, 'error'); return; }
-    showToast('✅ Role updated to ' + newRole, 'success');
-    allUsers = allUsers.map(u => u.id===userId ? {...u, role:newRole} : u);
+
+    showToast('✅ Profile saved', 'success');
+    allUsers = allUsers.map(u => u.id===_editUserId ? {...u, name, role, state, district} : u);
+    document.getElementById('ue-hdr-name').textContent = name;
+    document.getElementById('ue-av').textContent = name.charAt(0).toUpperCase();
     renderUsersFiltered();
-    closeUserModal();
+  }
+
+  async function adjustCoins(sign) {
+    if (!_editUserId) return;
+    const amt = parseInt(document.getElementById('ue-coins-adj').value);
+    if (!amt || amt <= 0) { showToast('Enter a valid coin amount', 'error'); return; }
+    const u = allUsers.find(x => x.id === _editUserId);
+    const newCoins = Math.max(0, (u?.coins||0) + sign * amt);
+
+    const { error } = await db.from('coin_wallets').upsert({ user_id: _editUserId, coins: newCoins, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
+    if (error) { showToast('Error: ' + error.message, 'error'); return; }
+
+    allUsers = allUsers.map(u => u.id===_editUserId ? {...u, coins:newCoins} : u);
+    document.getElementById('ue-coins-display').textContent = Number(newCoins).toLocaleString();
+    document.getElementById('ue-coins-adj').value = '';
+    showToast((sign>0?'✅ Added ':'✅ Deducted ') + amt + ' coins', 'success');
+    renderUsersFiltered();
+  }
+
+  async function setCoinsExact() {
+    if (!_editUserId) return;
+    const val = parseInt(document.getElementById('ue-coins-adj').value);
+    if (isNaN(val) || val < 0) { showToast('Enter a valid coin value', 'error'); return; }
+
+    const { error } = await db.from('coin_wallets').upsert({ user_id: _editUserId, coins: val, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
+    if (error) { showToast('Error: ' + error.message, 'error'); return; }
+
+    allUsers = allUsers.map(u => u.id===_editUserId ? {...u, coins:val} : u);
+    document.getElementById('ue-coins-display').textContent = Number(val).toLocaleString();
+    document.getElementById('ue-coins-adj').value = '';
+    showToast('✅ Coins set to ' + val, 'success');
+    renderUsersFiltered();
+  }
+
+  async function adjustCash(sign) {
+    if (!_editUserId) return;
+    const amt = parseFloat(document.getElementById('ue-cash-adj').value);
+    if (!amt || amt <= 0) { showToast('Enter a valid cash amount', 'error'); return; }
+    const u = allUsers.find(x => x.id === _editUserId);
+    const newCash = Math.max(0, parseFloat(((u?.cash_value||0) + sign * amt).toFixed(2)));
+
+    const { error } = await db.from('coin_wallets').upsert({ user_id: _editUserId, cash_value: newCash, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
+    if (error) { showToast('Error: ' + error.message, 'error'); return; }
+
+    allUsers = allUsers.map(u => u.id===_editUserId ? {...u, cash_value:newCash} : u);
+    document.getElementById('ue-cash-display').textContent = newCash.toFixed(2);
+    document.getElementById('ue-cash-adj').value = '';
+    showToast((sign>0?'✅ Added ₹':'✅ Deducted ₹') + amt.toFixed(2), 'success');
+    renderUsersFiltered();
+  }
+
+  async function setCashExact() {
+    if (!_editUserId) return;
+    const val = parseFloat(document.getElementById('ue-cash-adj').value);
+    if (isNaN(val) || val < 0) { showToast('Enter a valid cash value', 'error'); return; }
+
+    const { error } = await db.from('coin_wallets').upsert({ user_id: _editUserId, cash_value: val, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
+    if (error) { showToast('Error: ' + error.message, 'error'); return; }
+
+    allUsers = allUsers.map(u => u.id===_editUserId ? {...u, cash_value:val} : u);
+    document.getElementById('ue-cash-display').textContent = val.toFixed(2);
+    document.getElementById('ue-cash-adj').value = '';
+    showToast('✅ Cash set to ₹' + val.toFixed(2), 'success');
+    renderUsersFiltered();
   }
 
   // ── Transactions ──────────────────────────────────────────
