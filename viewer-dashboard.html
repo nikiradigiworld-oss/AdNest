@@ -470,6 +470,16 @@
         <div class="s-value" id="stat-avail">0</div>
         <div class="s-sub">Watch &amp; earn</div>
       </div>
+      <div class="stat-card">
+        <div class="s-label">🎟 Referrals</div>
+        <div class="s-value" id="stat-ref-count">0</div>
+        <div class="s-sub">Friends invited</div>
+      </div>
+      <div class="stat-card">
+        <div class="s-label">🪙 Ref. Income</div>
+        <div class="s-value" id="stat-ref-coins">0</div>
+        <div class="s-sub">coins · <span id="stat-ref-cash">₹0.00</span></div>
+      </div>
     </div>
 
     <!-- WATCH ADS VIEW -->
@@ -838,16 +848,31 @@
 
   // ── Load wallet via RPC ──────────────────────────────
   async function loadWallet() {
-    const { data } = await db.rpc('get_viewer_stats', { p_user_id: currentUser.id });
-    const coins = data?.total_coins || 0;
-    const cash  = data?.cash_value  || 0;
-    document.getElementById('stat-coins').textContent    = Number(coins).toLocaleString();
-    document.getElementById('stat-cash').textContent     = '₹' + parseFloat(cash).toFixed(2);
-    document.getElementById('stat-watched').textContent  = data?.ads_watched  || 0;
-    document.getElementById('stat-avail').textContent    = data?.available_ads || 0;
-    document.getElementById('nav-coins').textContent     = Number(coins).toLocaleString();
-    document.getElementById('wallet-coins').textContent  = Number(coins).toLocaleString();
-    document.getElementById('wallet-cash').textContent   = parseFloat(cash).toFixed(2);
+    const [
+      { data },
+      { count: refCount },
+      { data: refEarnings }
+    ] = await Promise.all([
+      db.rpc('get_viewer_stats', { p_user_id: currentUser.id }),
+      db.from('users').select('*', { count: 'exact', head: true }).eq('referred_by', currentUser.id),
+      db.from('referral_earnings').select('coins_earned,cash_earned').eq('referrer_id', currentUser.id)
+    ]);
+
+    const coins    = data?.total_coins || 0;
+    const cash     = data?.cash_value  || 0;
+    const refCoins = (refEarnings || []).reduce((s, r) => s + (r.coins_earned || 0), 0);
+    const refCash  = (refEarnings || []).reduce((s, r) => s + Number(r.cash_earned || 0), 0);
+
+    document.getElementById('stat-coins').textContent     = Number(coins).toLocaleString();
+    document.getElementById('stat-cash').textContent      = '₹' + parseFloat(cash).toFixed(2);
+    document.getElementById('stat-watched').textContent   = data?.ads_watched  || 0;
+    document.getElementById('stat-avail').textContent     = data?.available_ads || 0;
+    document.getElementById('nav-coins').textContent      = Number(coins).toLocaleString();
+    document.getElementById('wallet-coins').textContent   = Number(coins).toLocaleString();
+    document.getElementById('wallet-cash').textContent    = parseFloat(cash).toFixed(2);
+    document.getElementById('stat-ref-count').textContent = refCount || 0;
+    document.getElementById('stat-ref-coins').textContent = refCoins.toLocaleString();
+    document.getElementById('stat-ref-cash').textContent  = '₹' + refCash.toFixed(2);
   }
 
   // ── Load active ads ───────────────────────────────────
