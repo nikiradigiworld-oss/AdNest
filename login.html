@@ -198,7 +198,7 @@
       <button class="btn-primary" id="btn-login" onclick="signIn()">Sign In</button>
 
       <p style="text-align:center;margin-top:1.2rem;font-size:0.83rem;color:#888;">
-        Don't have an account? <a href="signup.html" style="color:var(--red);font-weight:700;text-decoration:none;">Sign Up</a>
+        Don't have an account? <a href="/signup" style="color:var(--red);font-weight:700;text-decoration:none;">Sign Up</a>
       </p>
 
     </div>
@@ -332,7 +332,7 @@
     else localStorage.removeItem('anaar_email');
 
     btn.innerHTML = '✅ Success! Redirecting…';
-    setTimeout(() => { window.location.href = 'index.html'; }, 800);
+    setTimeout(() => { window.location.href = '/'; }, 800);
   }
 
   // ── Send Reset Link ────────────────────────────────────
@@ -409,7 +409,7 @@
     if (error) { showAlert('set-password', error.message, 'error'); return; }
 
     showAlert('set-password', '✅ Password updated! Signing you in…', 'success');
-    setTimeout(() => { window.location.href = 'index.html'; }, 2000);
+    setTimeout(() => { window.location.href = '/'; }, 2000);
   }
 </script>
 <script>if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js').catch(() => {}); }</script>

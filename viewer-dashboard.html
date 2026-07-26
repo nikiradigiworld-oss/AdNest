@@ -398,7 +398,7 @@
 
 <!-- TOP NAV -->
 <nav class="topnav">
-  <a class="brand" href="index.html">
+  <a class="brand" href="/">
     <div class="logo">A</div>
     <span class="brand-name">Anaar · Viewer</span>
   </a>
@@ -440,10 +440,10 @@
       <span class="sidebar-icon">👤</span> My Profile
     </div>
     <div class="sidebar-divider"></div>
-    <a class="sidebar-item" id="view-admin-link" href="admin.html" style="display:none;">
+    <a class="sidebar-item" id="view-admin-link" href="/admin" style="display:none;">
       <span class="sidebar-icon">⚙️</span> Admin Panel
     </a>
-    <a class="sidebar-item" href="index.html">
+    <a class="sidebar-item" href="/">
       <span class="sidebar-icon">🏠</span> Home
     </a>
   </aside>
@@ -797,7 +797,7 @@
   // ── Auth guard ────────────────────────────────────────
   async function init() {
     const { data: { user } } = await db.auth.getUser();
-    if (!user) { window.location.href = 'login.html'; return; }
+    if (!user) { window.location.href = '/login'; return; }
     currentUser = user;
     const uname = user.user_metadata?.name || user.email || user.phone || 'User';
     document.getElementById('nav-user-av').textContent   = uname.charAt(0).toUpperCase();
@@ -807,7 +807,7 @@
       document.getElementById('view-admin-link').style.display = 'flex';
     }
     db.auth.onAuthStateChange((event) => {
-      if (event === 'SIGNED_OUT') window.location.href = 'login.html';
+      if (event === 'SIGNED_OUT') window.location.href = '/login';
     });
     loadWallet();
     loadAds();
@@ -976,7 +976,7 @@
       return;
     }
     await db.auth.signOut();
-    window.location.href = 'login.html';
+    window.location.href = '/login';
   }
 
   // ── Load wallet via RPC ──────────────────────────────
@@ -1178,7 +1178,7 @@
       ]);
       if (rpcErr) throw new Error(rpcErr.message);
       if (!rpcData?.success) {
-        if (rpcData?.error === 'Not authenticated') { window.location.href = 'login.html'; return; }
+        if (rpcData?.error === 'Not authenticated') { window.location.href = '/login'; return; }
         throw new Error('RPC failed');
       }
       watchedAds = new Set((rpcData.watched || []).filter(Boolean));
@@ -1616,7 +1616,7 @@
   // ── Logout ────────────────────────────────────────────
   async function logout() {
     await db.auth.signOut();
-    window.location.href = 'login.html';
+    window.location.href = '/login';
   }
 
   // ── Chat helpers ──────────────────────────────────────

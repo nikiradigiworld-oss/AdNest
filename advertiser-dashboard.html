@@ -325,7 +325,7 @@
 
 <!-- TOP NAV -->
 <nav class="topnav">
-  <a class="brand" href="index.html">
+  <a class="brand" href="/">
     <div class="logo">A</div>
     <span class="brand-name">Anaar · Advertiser</span>
   </a>
@@ -364,10 +364,10 @@
       <span class="sidebar-icon">👤</span> My Profile
     </div>
     <div class="sidebar-divider"></div>
-    <a class="sidebar-item" id="adv-admin-link" href="admin.html" style="display:none;">
+    <a class="sidebar-item" id="adv-admin-link" href="/admin" style="display:none;">
       <span class="sidebar-icon">⚙️</span> Admin Panel
     </a>
-    <a class="sidebar-item" href="index.html">
+    <a class="sidebar-item" href="/">
       <span class="sidebar-icon">🏠</span> Home
     </a>
   </aside>
@@ -901,9 +901,9 @@
   // ── Auth guard ────────────────────────────────────────
   async function init() {
     const { data: { user } } = await db.auth.getUser();
-    if (!user) { window.location.href = 'login.html'; return; }
+    if (!user) { window.location.href = '/login'; return; }
     const role = user.user_metadata?.role || 'viewer';
-    if (role === 'viewer') { window.location.href = 'viewer-dashboard.html'; return; }
+    if (role === 'viewer') { window.location.href = '/viewer-dashboard'; return; }
     const uname = user.user_metadata?.name || user.email || user.phone || 'User';
     document.getElementById('nav-user-av').textContent   = uname.charAt(0).toUpperCase();
     document.getElementById('nav-user-name').textContent = uname.split(' ')[0];
@@ -1234,7 +1234,7 @@
   // ── Logout ────────────────────────────────────────────
   async function logout() {
     await db.auth.signOut();
-    window.location.href = 'login.html';
+    window.location.href = '/login';
   }
 
   recalc();

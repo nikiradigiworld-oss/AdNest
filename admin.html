@@ -505,7 +505,7 @@
     <div class="sb-item" onclick="switchView('settings',this)">
       <span class="icon">⚙️</span><span>Settings</span>
     </div>
-    <div class="sb-item" onclick="window.location.href='index.html'">
+    <div class="sb-item" onclick="window.location.href='/'">
       <span class="icon">🏠</span><span>Back to Site</span>
     </div>
   </nav>
@@ -1235,7 +1235,7 @@
     // Refresh session so JWT reflects latest user_metadata (role changes take effect)
     await db.auth.refreshSession();
     const { data: { user } } = await db.auth.getUser();
-    if (!user) { window.location.href = 'login.html'; return; }
+    if (!user) { window.location.href = '/login'; return; }
 
     // Check JWT metadata first, then fall back to users table
     let role = user.user_metadata?.role || 'viewer';
@@ -1250,7 +1250,7 @@
           <div style="font-size:3rem;">🚫</div>
           <h2 style="color:#8B1A1A;">Access Denied</h2>
           <p style="color:#666;max-width:360px;">You don't have admin permissions. Only users with the admin role can access this panel.</p>
-          <a href="index.html" style="background:#8B1A1A;color:#fff;border-radius:10px;padding:.75rem 1.8rem;text-decoration:none;font-weight:700;">Back to Home</a>
+          <a href="/" style="background:#8B1A1A;color:#fff;border-radius:10px;padding:.75rem 1.8rem;text-decoration:none;font-weight:700;">Back to Home</a>
         </div>`;
       return;
     }
@@ -2044,7 +2044,7 @@
   // ── Logout ────────────────────────────────────────────────
   async function logout() {
     await db.auth.signOut();
-    window.location.href = 'login.html';
+    window.location.href = '/login';
   }
 
   // ── Helpers ───────────────────────────────────────────────

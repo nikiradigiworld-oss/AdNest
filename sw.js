@@ -1,13 +1,12 @@
-const CACHE_NAME = 'anaar-v27';
+const CACHE_NAME = 'anaar-v28';
 const BASE = '';
 const PRECACHE_URLS = [
   BASE + '/',
-  BASE + '/index.html',
-  BASE + '/login.html',
-  BASE + '/signup.html',
-  BASE + '/viewer-dashboard.html',
-  BASE + '/advertiser-dashboard.html',
-  BASE + '/admin.html',
+  BASE + '/login',
+  BASE + '/signup',
+  BASE + '/viewer-dashboard',
+  BASE + '/advertiser-dashboard',
+  BASE + '/admin',
   BASE + '/icon.svg',
   BASE + '/manifest.json'
 ];

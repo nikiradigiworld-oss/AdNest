@@ -650,7 +650,7 @@
   <div style="display:flex;align-items:center;gap:.75rem;">
     <div class="nav-coin" id="nav-coin-chip" style="display:none;">🪙 <span id="nav-coin-val">0</span></div>
     <button id="btn-install-app" onclick="triggerInstall()" title="Install Anaar App" style="display:none;background:rgba(255,255,255,0.18);color:#fff;border:1px solid rgba(255,255,255,0.35);border-radius:8px;padding:5px 12px;font-size:0.82rem;font-weight:700;cursor:pointer;letter-spacing:.3px;">📲 Install</button>
-    <a id="nav-login-btn" href="login.html" style="display:none;background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.3);border-radius:8px;padding:5px 14px;font-size:0.82rem;font-weight:600;text-decoration:none;">Login</a>
+    <a id="nav-login-btn" href="/login" style="display:none;background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.3);border-radius:8px;padding:5px 14px;font-size:0.82rem;font-weight:600;text-decoration:none;">Login</a>
 
     <!-- Profile dropdown (shown when logged in) -->
     <div class="profile-wrap" id="profile-wrap" onclick="toggleProfileMenu(event)">
@@ -664,10 +664,10 @@
           <div class="p-name" id="drop-name">—</div>
           <div class="p-role" id="drop-role">—</div>
         </div>
-        <a class="profile-item" id="drop-dashboard" href="viewer-dashboard.html">🏠 My Dashboard</a>
+        <a class="profile-item" id="drop-dashboard" href="/viewer-dashboard">🏠 My Dashboard</a>
         <div class="profile-item" onclick="event.stopPropagation();openProfileModal()">👤 Edit Profile</div>
         <div class="profile-item" onclick="event.stopPropagation();openRoleModal()">🔄 Change Role</div>
-        <a class="profile-item" id="nav-admin-btn" href="admin.html" style="display:none;">⚙️ Admin Panel</a>
+        <a class="profile-item" id="nav-admin-btn" href="/admin" style="display:none;">⚙️ Admin Panel</a>
         <div class="profile-item" id="drop-install" onclick="event.stopPropagation();triggerInstall()" style="display:none;">📲 Install App</div>
         <div class="profile-item danger" onclick="event.stopPropagation();navLogout()">🚪 Logout</div>
       </div>
@@ -686,7 +686,7 @@
     <div id="portal-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;max-width:780px;margin:0 auto;">
 
       <!-- VIEWER CARD -->
-      <a href="viewer-dashboard.html" style="text-decoration:none;" id="portal-viewer-wrap">
+      <a href="/viewer-dashboard" style="text-decoration:none;" id="portal-viewer-wrap">
         <div class="portal-card" id="portal-viewer">
           <div class="portal-glow viewer-glow"></div>
           <div class="portal-icon">👁️</div>
@@ -703,7 +703,7 @@
       </a>
 
       <!-- ADVERTISER CARD -->
-      <a href="advertiser-dashboard.html" style="text-decoration:none;" id="portal-adv-wrap">
+      <a href="/advertiser-dashboard" style="text-decoration:none;" id="portal-adv-wrap">
         <div class="portal-card" id="portal-advertiser">
           <div class="portal-glow adv-glow"></div>
           <div class="portal-icon">📢</div>
@@ -720,7 +720,7 @@
       </a>
 
       <!-- ADMIN CARD (hidden until admin login) -->
-      <a href="admin.html" style="text-decoration:none;display:none;" id="portal-admin-wrap">
+      <a href="/admin" style="text-decoration:none;display:none;" id="portal-admin-wrap">
         <div class="portal-card" id="portal-admin">
           <div class="portal-glow admin-glow"></div>
           <div class="portal-icon">⚙️</div>
@@ -895,7 +895,7 @@
     <h2>Ready to Grow Your Business?</h2>
     <p>Join thousands of local advertisers on Anaar. Image ads from ₹0.30/click (CPC) — pay only when viewers click.</p>
     <div class="hero-btns" style="justify-content:center;margin-top:1.5rem;">
-      <a href="signup.html" class="btn btn-gold">Register as Advertiser</a>
+      <a href="/signup" class="btn btn-gold">Register as Advertiser</a>
       <a href="#coins" class="btn btn-outline">View Coin Rewards</a>
     </div>
   </div>
@@ -1095,9 +1095,9 @@
 
   _db.auth.onAuthStateChange((event, session) => {
     if (event === 'PASSWORD_RECOVERY') {
-      // Recovery link landed here — hand off to login.html which has the reset form
+      // Recovery link landed here — hand off to /login which has the reset form
       sessionStorage.setItem('anaar_pw_recovery', '1');
-      window.location.href = '/login.html';
+      window.location.href = '/login';
       return;
     }
     if (event === 'SIGNED_IN' && session) {
