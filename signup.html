@@ -235,7 +235,20 @@
         </div>
       </div>
 
-<div class="check-row">
+      <div class="field">
+        <label>Referral Code <span style="font-weight:400;color:#aaa;">(optional)</span></label>
+        <div class="input-wrap">
+          <span class="icon">🎟</span>
+          <input type="text" id="ref-code-input" placeholder="Enter referral code" autocomplete="off"
+            oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'')"
+            onblur="validateRefCode(this.value)" maxlength="8"
+            style="letter-spacing:.1em;font-weight:700;" />
+          <span id="ref-code-status" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:.85rem;"></span>
+        </div>
+        <div id="ref-code-hint" style="font-size:.73rem;margin-top:.3rem;min-height:1em;"></div>
+      </div>
+
+      <div class="check-row">
         <input type="checkbox" id="terms" />
         <label for="terms" style="margin:0">I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a></label>
       </div>
@@ -295,11 +308,75 @@
 <script>
   let selectedRole = null;
 
-  // Detect referral code from URL
-  const _refCode = new URLSearchParams(window.location.search).get('ref') || '';
-  if (_refCode) {
-    document.querySelector('.card-header p').innerHTML =
-      '🎁 You were invited! Sign up &amp; start earning.';
+  // Detect referral code from URL and pre-fill input
+  let _refCode = (new URLSearchParams(window.location.search).get('ref') || '').toUpperCase();
+  let _refValid = false;
+
+  window.addEventListener('DOMContentLoaded', () => {
+    const inp = document.getElementById('ref-code-input');
+    if (_refCode) {
+      inp.value = _refCode;
+      inp.readOnly = true;
+      inp.style.background = '#f0fff4';
+      inp.style.borderColor = '#27ae60';
+      document.getElementById('ref-code-status').textContent = '✅';
+      document.getElementById('ref-code-hint').textContent = '🎁 You were invited — enjoy bonus coins on signup!';
+      document.getElementById('ref-code-hint').style.color = '#27ae60';
+      document.querySelector('.card-header p').innerHTML = '🎁 You were invited! Sign up &amp; start earning.';
+      _refValid = true;
+    }
+  });
+
+  // Live validate a manually-entered referral code
+  let _refValidTimer = null;
+  async function validateRefCode(val) {
+    const inp    = document.getElementById('ref-code-input');
+    const status = document.getElementById('ref-code-status');
+    const hint   = document.getElementById('ref-code-hint');
+    if (!val) {
+      status.textContent = '';
+      hint.textContent   = '';
+      _refCode  = '';
+      _refValid = false;
+      inp.style.borderColor = '';
+      return;
+    }
+    if (val.length < 6) {
+      status.textContent    = '';
+      hint.textContent      = 'Referral codes are 8 characters';
+      hint.style.color      = '#aaa';
+      _refCode  = '';
+      _refValid = false;
+      return;
+    }
+    status.textContent = '⏳';
+    hint.textContent   = 'Checking…';
+    hint.style.color   = '#aaa';
+    clearTimeout(_refValidTimer);
+    _refValidTimer = setTimeout(async () => {
+      try {
+        const { data } = await db.from('users')
+          .select('id').eq('referral_code', val).maybeSingle();
+        if (data) {
+          status.textContent    = '✅';
+          hint.textContent      = '🎁 Valid code! You\'ll both earn bonus coins.';
+          hint.style.color      = '#27ae60';
+          inp.style.borderColor = '#27ae60';
+          _refCode  = val;
+          _refValid = true;
+        } else {
+          status.textContent    = '❌';
+          hint.textContent      = 'Invalid referral code — check and try again.';
+          hint.style.color      = '#e74c3c';
+          inp.style.borderColor = '#e74c3c';
+          _refCode  = '';
+          _refValid = false;
+        }
+      } catch {
+        status.textContent = '';
+        hint.textContent   = '';
+      }
+    }, 600);
   }
 
   function _genRefCode() {
@@ -419,11 +496,14 @@
       const user = data?.user;
 
       if (user && user.id) {
-        // Resolve referrer if a ref code was in the URL
+        // Read referral code from input (covers both URL and manual entry)
+        const inputCode = document.getElementById('ref-code-input').value.trim().toUpperCase();
+        const finalCode = inputCode || _refCode;
+
         let referredBy = null;
-        if (_refCode) {
+        if (finalCode) {
           const { data: referrer } = await db.from('users')
-            .select('id').eq('referral_code', _refCode).maybeSingle();
+            .select('id').eq('referral_code', finalCode).maybeSingle();
           if (referrer) referredBy = referrer.id;
         }
 
