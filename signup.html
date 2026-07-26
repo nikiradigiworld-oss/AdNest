@@ -394,59 +394,71 @@
     const btn = document.getElementById('btn-signup');
     btn.disabled = true; btn.textContent = 'Creating account…';
 
-    // Sign up with Supabase Auth — redirect to index.html after email verification
-    const redirectTo = window.location.origin + window.location.pathname.replace('signup.html','') + 'index.html';
-    const { data, error } = await db.auth.signUp({
-      email, password,
-      options: {
-        data: { name, role: selectedRole },
-        emailRedirectTo: redirectTo
-      }
-    });
-
-    if (error) {
-      showAlert(2, error.message, 'error');
-      btn.disabled = false; btn.textContent = 'Create Account';
-      return;
-    }
-
-    const user = data.user;
-
-    // Save profile to users table
-    if (user) {
-      // Resolve referrer if a ref code was in the URL
-      let referredBy = null;
-      if (_refCode) {
-        const { data: referrer } = await db.from('users')
-          .select('id').eq('referral_code', _refCode).maybeSingle();
-        if (referrer) referredBy = referrer.id;
-      }
-
-      const ownRefCode = _genRefCode();
-      await db.from('users').upsert({
-        id: user.id, email, name, role: selectedRole,
-        referral_code: ownRefCode,
-        referred_by:   referredBy
+    try {
+      // Sign up with Supabase Auth — redirect to index.html after email verification
+      const redirectTo = window.location.origin + window.location.pathname.replace('signup.html','') + 'index.html';
+      const { data, error } = await db.auth.signUp({
+        email, password,
+        options: {
+          data: { name, role: selectedRole },
+          emailRedirectTo: redirectTo
+        }
       });
 
-      // Create advertiser profile entry
-      if (selectedRole === 'advertiser' || selectedRole === 'both') {
-        await db.from('advertisers').upsert({ user_id: user.id });
+      if (error) {
+        const msg = (typeof error.message === 'string' && error.message)
+          ? error.message
+          : (typeof error === 'string' ? error : 'Signup failed. Please try again.');
+        showAlert(2, msg, 'error');
+        btn.disabled = false; btn.textContent = 'Create Account';
+        return;
       }
+
+      // Supabase returns null user when email confirmation is required
+      // and a fake user object when already registered — handle both
+      const user = data?.user;
+
+      if (user && user.id) {
+        // Resolve referrer if a ref code was in the URL
+        let referredBy = null;
+        if (_refCode) {
+          const { data: referrer } = await db.from('users')
+            .select('id').eq('referral_code', _refCode).maybeSingle();
+          if (referrer) referredBy = referrer.id;
+        }
+
+        const ownRefCode = _genRefCode();
+        await db.from('users').upsert({
+          id: user.id, email, name, role: selectedRole,
+          referral_code: ownRefCode,
+          referred_by:   referredBy
+        });
+
+        // Create advertiser profile entry
+        if (selectedRole === 'advertiser' || selectedRole === 'both') {
+          await db.from('advertisers').upsert({ user_id: user.id });
+        }
+      }
+
+      // Show success
+      document.getElementById('verify-email').textContent = email;
+      const titles = { viewer: 'Account Created!', advertiser: 'Advertiser Account Created!', both: 'Full Access Account Created!' };
+      const msgs   = {
+        viewer:     'After verifying your email, you can watch ads and earn real coin rewards!',
+        advertiser: 'After verifying your email, you can post ads, set budgets and track performance.',
+        both:       'After verifying your email, you can both run ads and earn coins as a viewer!'
+      };
+      document.getElementById('success-title').textContent = titles[selectedRole] || 'Account Created!';
+      document.getElementById('success-msg').textContent   = msgs[selectedRole]   || 'Please verify your email to get started.';
+
+      goToStep(3);
+
+    } catch (e) {
+      const msg = (e && typeof e.message === 'string' && e.message)
+        ? e.message : 'An unexpected error occurred. Please try again.';
+      showAlert(2, msg, 'error');
+      btn.disabled = false; btn.textContent = 'Create Account';
     }
-
-    // Show success
-    document.getElementById('verify-email').textContent = email;
-    const titles = { viewer: 'Account Created!', advertiser: 'Advertiser Account Created!', both: 'Full Access Account Created!' };
-    const msgs   = {
-      viewer:     'After verifying your email, you can watch ads and earn real coin rewards!',
-      advertiser: 'After verifying your email, you can post ads, set budgets and track performance.',
-      both:       'After verifying your email, you can both run ads and earn coins as a viewer!'
-    };
-    document.getElementById('success-title').textContent = titles[selectedRole];
-    document.getElementById('success-msg').textContent   = msgs[selectedRole];
-
-    goToStep(3);
   }
 </script>
 <script>if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js').catch(() => {}); }</script>
