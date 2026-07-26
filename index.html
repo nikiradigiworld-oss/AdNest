@@ -665,11 +665,11 @@
           <div class="p-role" id="drop-role">—</div>
         </div>
         <a class="profile-item" id="drop-dashboard" href="viewer-dashboard.html">🏠 My Dashboard</a>
-        <div class="profile-item" onclick="openProfileModal()">👤 Edit Profile</div>
-        <div class="profile-item" onclick="openRoleModal()">🔄 Change Role</div>
+        <div class="profile-item" onclick="event.stopPropagation();openProfileModal()">👤 Edit Profile</div>
+        <div class="profile-item" onclick="event.stopPropagation();openRoleModal()">🔄 Change Role</div>
         <a class="profile-item" id="nav-admin-btn" href="admin.html" style="display:none;">⚙️ Admin Panel</a>
-        <div class="profile-item" id="drop-install" onclick="triggerInstall()" style="display:none;">📲 Install App</div>
-        <div class="profile-item danger" onclick="navLogout()">🚪 Logout</div>
+        <div class="profile-item" id="drop-install" onclick="event.stopPropagation();triggerInstall()" style="display:none;">📲 Install App</div>
+        <div class="profile-item danger" onclick="event.stopPropagation();navLogout()">🚪 Logout</div>
       </div>
     </div>
   </div>
