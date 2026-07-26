@@ -431,6 +431,13 @@
           </div>
           <div class="upload-checking" id="upload-checking">🔍 Checking content for policy compliance…</div>
           <div class="upload-error" id="upload-error"></div>
+          <div id="compress-wrap" style="display:none;margin-top:.5rem;background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:8px;padding:.75rem 1rem;">
+            <div style="font-size:.82rem;font-weight:700;color:#1d4ed8;margin-bottom:.45rem;" id="compress-status">⚙️ Compressing video…</div>
+            <div style="background:#dbeafe;border-radius:20px;height:6px;overflow:hidden;">
+              <div id="compress-bar" style="width:0%;height:100%;background:linear-gradient(90deg,#3b82f6,#06b6d4);transition:width .3s;border-radius:20px;"></div>
+            </div>
+            <div style="font-size:.75rem;color:#6b7280;margin-top:.35rem;" id="compress-pct">0%</div>
+          </div>
 
           <!-- Link Paste (social media & app/website only) -->
           <div id="link-field" style="display:none;margin-bottom:1rem;">
@@ -701,6 +708,7 @@
 
 <script>
   let _walletBalance = 0;
+  let _pendingMediaFile = null;
   const ADV_CPR = 2000; // ₹0.05 = 100 coins → ₹1 = 2000 coins
   function _rupToCoins(r) { return Math.round(r * ADV_CPR).toLocaleString('en-IN'); }
 
@@ -753,6 +761,7 @@
           document.getElementById('media-input').value = '';
           return;
         }
+        _pendingMediaFile = file;
         document.getElementById('img-preview').src = ev.target.result;
         document.getElementById('img-preview').style.display = 'block';
         document.getElementById('vid-preview').style.display = 'none';
@@ -764,20 +773,23 @@
   }
 
   async function _handleVideo(file) {
-    if (file.size > 50 * 1024 * 1024) { _uploadErr('⛔ Max video size is 50MB.'); return; }
+    const MAX_DIRECT = 200 * 1024 * 1024;  // 200 MB — direct upload
+    const MAX_ACCEPT = 1024 * 1024 * 1024;  // 1 GB — absolute ceiling
+    if (file.size > MAX_ACCEPT) { _uploadErr('⛔ Video must be under 1 GB.'); return; }
+
     const url = URL.createObjectURL(file);
     const tmp = document.createElement('video');
     tmp.muted = true; tmp.src = url;
+
     tmp.onloadedmetadata = () => {
       const dur = Math.round(tmp.duration);
       if (dur < 10 || dur > 45) {
         _uploadErr(`⛔ Video must be 10–45 seconds (yours: ${dur}s).`);
-        URL.revokeObjectURL(url);
-        document.getElementById('media-input').value = '';
-        return;
+        URL.revokeObjectURL(url); document.getElementById('media-input').value = ''; return;
       }
       tmp.currentTime = Math.min(2, tmp.duration * 0.1);
     };
+
     tmp.onseeked = async () => {
       const canvas = document.createElement('canvas');
       canvas.width = 224; canvas.height = 224;
@@ -789,10 +801,20 @@
         _uploadChecking(false);
         if (bad) {
           _uploadErr('⛔ Explicit or nude content detected in video. This upload is not allowed on Anaar.');
-          URL.revokeObjectURL(url);
-          document.getElementById('media-input').value = '';
-          return;
+          URL.revokeObjectURL(url); document.getElementById('media-input').value = ''; return;
         }
+
+        let finalFile = file;
+        if (file.size > MAX_DIRECT) {
+          try {
+            finalFile = await _compressVideo(file);
+          } catch (e) {
+            _uploadErr('⛔ Auto-compression failed. Please reduce the file size below 200 MB manually.');
+            URL.revokeObjectURL(url); document.getElementById('media-input').value = ''; return;
+          }
+        }
+
+        _pendingMediaFile = finalFile;
         const vp = document.getElementById('vid-preview');
         vp.src = url; vp.style.display = 'block';
         document.getElementById('img-preview').style.display = 'none';
@@ -801,6 +823,57 @@
       frameImg.src = canvas.toDataURL();
     };
     tmp.load();
+  }
+
+  // ── FFmpeg.js video compression (for files > 200 MB) ──
+  function _showCompressUI(pct, msg) {
+    document.getElementById('compress-wrap').style.display = 'block';
+    document.getElementById('compress-status').textContent = msg;
+    document.getElementById('compress-bar').style.width = pct + '%';
+    document.getElementById('compress-pct').textContent = pct + '%';
+  }
+  function _hideCompressUI() {
+    document.getElementById('compress-wrap').style.display = 'none';
+  }
+
+  async function _compressVideo(file) {
+    _showCompressUI(0, '⏳ Loading compression engine (first time ~30 s)…');
+    const { FFmpeg } = await import('https://unpkg.com/@ffmpeg/ffmpeg@0.12.6/dist/esm/index.js');
+    const { fetchFile, toBlobURL } = await import('https://unpkg.com/@ffmpeg/util@0.12.1/dist/esm/index.js');
+
+    const ffmpeg = new FFmpeg();
+    ffmpeg.on('progress', ({ progress }) =>
+      _showCompressUI(Math.min(94, Math.round(progress * 100)), '⚙️ Compressing video…')
+    );
+
+    _showCompressUI(2, '⏳ Loading FFmpeg WASM…');
+    await ffmpeg.load({
+      coreURL: await toBlobURL('https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm/ffmpeg-core.js', 'text/javascript'),
+      wasmURL: await toBlobURL('https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm/ffmpeg-core.wasm', 'application/wasm'),
+    });
+
+    _showCompressUI(5, '📖 Reading file…');
+    const ext = (file.name.split('.').pop() || 'mp4').toLowerCase();
+    const inputName = `in.${ext}`;
+    await ffmpeg.writeFile(inputName, await fetchFile(file));
+
+    _showCompressUI(10, '⚙️ Compressing…');
+    await ffmpeg.exec([
+      '-i', inputName,
+      '-c:v', 'libx264', '-crf', '28', '-preset', 'fast',
+      '-c:a', 'aac', '-b:a', '128k',
+      '-movflags', '+faststart',
+      'out.mp4'
+    ]);
+
+    _showCompressUI(95, '📦 Finalizing…');
+    const data = await ffmpeg.readFile('out.mp4');
+    await ffmpeg.deleteFile(inputName).catch(() => {});
+    await ffmpeg.deleteFile('out.mp4').catch(() => {});
+    ffmpeg.terminate();
+
+    _hideCompressUI();
+    return new File([data.buffer], file.name.replace(/\.[^/.]+$/, '') + '_compressed.mp4', { type: 'video/mp4' });
   }
 
   // ── Auth guard ────────────────────────────────────────
@@ -906,6 +979,12 @@
 
   // ── Toggle upload vs link field + WhatsApp ───────────
   function toggleWA() {
+    _pendingMediaFile = null;
+    document.getElementById('media-input').value = '';
+    document.getElementById('img-preview').style.display = 'none';
+    document.getElementById('vid-preview').style.display = 'none';
+    document.getElementById('upload-placeholder').style.display = 'block';
+    _uploadErr(''); _hideCompressUI();
     const rate   = parseFloat(document.getElementById('ad-type').value);
     const isImg  = rate === 0.30;
     const isVid  = rate === 0.50;
@@ -936,7 +1015,7 @@
       if (mi) mi.accept = 'video/mp4,video/webm,video/quicktime,video/x-m4v';
       const ic = document.getElementById('upload-icon'); if (ic) ic.textContent = '🎬';
       const ut = document.getElementById('upload-title'); if (ut) ut.innerHTML = '<strong>Upload Video Ad</strong>';
-      const uh = document.getElementById('upload-hint'); if (uh) uh.textContent = 'MP4 · MOV · WEBM | 10–45 sec | Max 50MB';
+      const uh = document.getElementById('upload-hint'); if (uh) uh.textContent = 'MP4 · MOV · WEBM | 10–45 sec | Max 200MB (auto-compresses larger files)';
     } else if (isSoc) {
       if (qtyLabel) qtyLabel.textContent = 'Max Likes';
       if (qtyHint)  qtyHint.innerHTML = 'Each like costs advertiser ₹0.80 · Viewer earns ₹0.40';
@@ -1024,13 +1103,31 @@
     const isLink = rate === 0.80 || rate === 2.00;
     if (isLink && !link) { showAlert('post', 'Please paste your link.', 'error'); return; }
 
+    // Upload image/video to Supabase Storage
+    let mediaUrl = isLink ? (link || null) : null;
+    if (!isLink && _pendingMediaFile) {
+      const btn = document.querySelector('.btn-submit');
+      if (btn) btn.textContent = '⏳ Uploading media…';
+      const ext  = _pendingMediaFile.name.split('.').pop() || (adType === 'image' ? 'jpg' : 'mp4');
+      const path = `${user.id}/${Date.now()}.${ext}`;
+      const { error: upErr } = await db.storage.from('ad-media').upload(path, _pendingMediaFile, { cacheControl: '3600', upsert: false });
+      if (upErr) {
+        if (btn) btn.textContent = '🚀 Submit Ad for Review';
+        showAlert('post', '❌ Media upload failed: ' + upErr.message, 'error');
+        return;
+      }
+      const { data: { publicUrl } } = db.storage.from('ad-media').getPublicUrl(path);
+      mediaUrl = publicUrl;
+      if (btn) btn.textContent = '🚀 Submit Ad for Review';
+    }
+
     const payload = {
       advertiser_id: adv.id, title, ad_type: adType,
       target_area: target, target_value: targetValue || null,
       views_ordered: qty, rate_per_1k: rate,
       pricing_model: isCPC ? 'cpc' : 'cpm',
       budget_base: base, budget_gst: gst, budget_total: base+gst,
-      content_url: link || null
+      content_url: mediaUrl
     };
     if (wa) payload.whatsapp_number = wa.startsWith('+') ? wa : '+91' + wa.replace(/\D/g,'');
 
@@ -1045,6 +1142,7 @@
     document.getElementById('vid-preview').style.display = 'none';
     document.getElementById('upload-placeholder').style.display = 'block';
     document.getElementById('media-input').value = '';
+    _pendingMediaFile = null;
     _uploadErr('');
     recalc();
   }
