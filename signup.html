@@ -284,7 +284,7 @@
     <!-- STEP 2: Profile Details (optional) -->
     <div class="step" id="step-2">
       <div class="step-title">Your profile details</div>
-      <div class="step-sub">Help us personalise your experience. All fields are optional.</div>
+      <div class="step-sub">Pincode is required. Other fields are optional.</div>
       <div id="alert-2" class="alert"></div>
 
       <div class="two-col">
@@ -320,29 +320,31 @@
       </div>
 
       <div class="field">
-        <label>Pincode</label>
+        <label>Pincode <span style="color:var(--error);">*</span></label>
         <div class="input-wrap">
           <span class="icon">📍</span>
-          <input type="text" id="su-pincode" placeholder="6-digit pincode" maxlength="6"
-            oninput="this.value=this.value.replace(/\D/g,''); if(this.value.length===6) autoFillLocation(this.value)" />
-          <span id="su-pin-status" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:.82rem;"></span>
+          <input type="text" id="su-pincode" placeholder="Enter 6-digit pincode" maxlength="6"
+            oninput="this.value=this.value.replace(/\D/g,''); if(this.value.length===6) autoFillLocation(this.value); else resetLocation();" />
+          <span id="su-pin-status" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:.85rem;"></span>
+        </div>
+        <div id="su-pin-hint" style="font-size:.73rem;color:#aaa;margin-top:.25rem;"></div>
+      </div>
+
+      <div class="field" id="su-state-wrap" style="display:none;">
+        <label>State</label>
+        <div class="input-wrap">
+          <span class="icon">🗺️</span>
+          <input type="text" id="su-state" readonly style="background:#f0fff4;border-color:#27ae60;" />
         </div>
       </div>
 
-      <div class="two-col">
-        <div class="field">
-          <label>State</label>
-          <div class="input-wrap">
-            <span class="icon">🗺️</span>
-            <input type="text" id="su-state" placeholder="Auto-filled" readonly style="background:#f9f9f9;" />
-          </div>
-        </div>
-        <div class="field">
-          <label>District</label>
-          <div class="input-wrap">
-            <span class="icon">🏘️</span>
-            <input type="text" id="su-district" placeholder="Auto-filled" readonly style="background:#f9f9f9;" />
-          </div>
+      <div class="field" id="su-district-wrap" style="display:none;">
+        <label>District <span style="color:var(--error);">*</span></label>
+        <div class="input-wrap">
+          <span class="icon">🏘️</span>
+          <select id="su-district" class="field-select">
+            <option value="">Select district</option>
+          </select>
         </div>
       </div>
 
@@ -540,28 +542,74 @@
     goToStep(2);
   }
 
-  // ── Step 2: Profile details (optional) ───────────────
+  // ── Step 2: Profile details — pincode mandatory ──────
   function submitStep2() {
-    // All fields optional — just move to step 3
+    clearAlert(2);
+    const pin      = document.getElementById('su-pincode').value.trim();
+    const district = document.getElementById('su-district').value;
+    if (!pin || pin.length !== 6) {
+      showAlert(2, 'Please enter a valid 6-digit pincode.', 'error');
+      return;
+    }
+    if (!district) {
+      showAlert(2, 'Please select your district.', 'error');
+      return;
+    }
     goToStep(3);
   }
 
-  // ── Pincode auto-fill ─────────────────────────────────
+  // ── Pincode → state + district dropdown ──────────────
+  function resetLocation() {
+    document.getElementById('su-state').value = '';
+    document.getElementById('su-state-wrap').style.display    = 'none';
+    document.getElementById('su-district-wrap').style.display = 'none';
+    document.getElementById('su-district').innerHTML = '<option value="">Select district</option>';
+    document.getElementById('su-pin-status').textContent = '';
+    document.getElementById('su-pin-hint').textContent   = '';
+  }
+
   async function autoFillLocation(pin) {
     const status = document.getElementById('su-pin-status');
-    status.textContent = '⏳';
+    const hint   = document.getElementById('su-pin-hint');
+    status.textContent = '⏳'; hint.textContent = 'Looking up pincode…';
     try {
       const res  = await fetch(`https://api.postalpincode.in/pincode/${pin}`);
       const data = await res.json();
-      if (data?.[0]?.Status === 'Success' && data[0].PostOffice?.[0]) {
-        const po = data[0].PostOffice[0];
-        document.getElementById('su-state').value    = po.State    || '';
-        document.getElementById('su-district').value = po.District || '';
+      if (data?.[0]?.Status === 'Success' && data[0].PostOffice?.length) {
+        const offices = data[0].PostOffice;
+
+        // State — same for all offices under one pincode
+        const state = offices[0].State || '';
+        document.getElementById('su-state').value = state;
+        document.getElementById('su-state-wrap').style.display = 'block';
+
+        // Unique districts
+        const districts = [...new Set(offices.map(o => o.District).filter(Boolean))];
+        const sel = document.getElementById('su-district');
+        sel.innerHTML = '<option value="">Select your district</option>' +
+          districts.map(d => `<option value="${d}">${d}</option>`).join('');
+
+        // If only one district, auto-select it
+        if (districts.length === 1) sel.value = districts[0];
+
+        document.getElementById('su-district-wrap').style.display = 'block';
         status.textContent = '✅';
+        hint.textContent   = districts.length > 1
+          ? `${districts.length} districts found — please select yours`
+          : `${state}`;
+        hint.style.color = '#27ae60';
       } else {
         status.textContent = '❌';
+        hint.textContent   = 'Invalid pincode. Please check and re-enter.';
+        hint.style.color   = '#e74c3c';
+        document.getElementById('su-state-wrap').style.display    = 'none';
+        document.getElementById('su-district-wrap').style.display = 'none';
       }
-    } catch { status.textContent = ''; }
+    } catch {
+      status.textContent = '❌';
+      hint.textContent   = 'Could not fetch location. Check your connection.';
+      hint.style.color   = '#e74c3c';
+    }
   }
 
   // ── Role selection ────────────────────────────────────
