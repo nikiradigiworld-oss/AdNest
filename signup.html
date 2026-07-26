@@ -641,11 +641,16 @@
     btn.disabled = true; btn.textContent = 'Creating account…';
 
     try {
+      // Read referral code before signUp so it can be passed in metadata
+      const inputCode = document.getElementById('ref-code-input').value.trim().toUpperCase();
+      const finalCode = inputCode || _refCode || '';
+
       const redirectTo = window.location.origin + window.location.pathname.replace('signup.html','') + 'index.html';
       const { data, error } = await db.auth.signUp({
         email, password,
         options: {
-          data: { name, role: selectedRole },
+          // ref_code in metadata → handle_new_user trigger resolves referrer + credits bonus
+          data: { name, role: selectedRole, ref_code: finalCode },
           emailRedirectTo: redirectTo
         }
       });
@@ -656,37 +661,21 @@
         return;
       }
 
+      // Trigger already set referred_by + referral_code on the users row.
+      // We upsert extra profile fields (mobile, dob, etc.) — no session needed for insert
+      // because trigger already created the row; we rely on service-side upsert from trigger.
+      // Profile fields are saved after email confirmation via Edit Profile.
       const user = data?.user;
-
-      if (user && user.id) {
-        const inputCode = document.getElementById('ref-code-input').value.trim().toUpperCase();
-        const finalCode = inputCode || _refCode;
-
-        let referredBy = null;
-        if (finalCode) {
-          const { data: referrer } = await db.from('users')
-            .select('id').eq('referral_code', finalCode).maybeSingle();
-          if (referrer) referredBy = referrer.id;
-        }
-
-        const ownRefCode = _genRefCode();
-        const profileData = {
-          id: user.id, email, name, role: selectedRole,
-          referral_code: ownRefCode,
-          referred_by:   referredBy
-        };
+      if (user && user.id && (mobile || dob || gender || pincode || state || district)) {
+        const profileData = { id: user.id };
         if (mobile)   profileData.mobile   = mobile;
         if (dob)      profileData.dob      = dob;
         if (gender)   profileData.gender   = gender;
         if (pincode)  profileData.pincode  = pincode;
         if (state)    profileData.state    = state;
         if (district) profileData.district = district;
-
-        await db.from('users').upsert(profileData);
-
-        if (selectedRole === 'advertiser' || selectedRole === 'both') {
-          await db.from('advertisers').upsert({ user_id: user.id });
-        }
+        // Best-effort — may be blocked by RLS until email confirmed; user can update via profile
+        await db.from('users').update(profileData).eq('id', user.id);
       }
 
       document.getElementById('verify-email').textContent = email;
