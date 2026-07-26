@@ -445,9 +445,8 @@
     clearTimeout(_refValidTimer);
     _refValidTimer = setTimeout(async () => {
       try {
-        const { data } = await db.from('users')
-          .select('id').eq('referral_code', val).maybeSingle();
-        if (data) {
+        const { data: isValid } = await db.rpc('validate_referral_code', { p_code: val });
+        if (isValid) {
           status.textContent    = '✅';
           hint.textContent      = '🎁 Valid code! You\'ll both earn bonus coins.';
           hint.style.color      = '#27ae60';

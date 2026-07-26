@@ -892,16 +892,11 @@
     document.getElementById('ref-code-display').textContent = code;
     document.getElementById('ref-link-input').value = `${BASE_URL}/signup.html?ref=${code}`;
 
-    // Referral stats
-    const [{ count: refCount }, { data: earnings }] = await Promise.all([
-      db.from('users').select('*', { count: 'exact', head: true }).eq('referred_by', currentUser.id),
-      db.from('referral_earnings').select('coins_earned,cash_earned').eq('referrer_id', currentUser.id)
-    ]);
-    const totalCoins = (earnings || []).reduce((s, r) => s + (r.coins_earned || 0), 0);
-    const totalCash  = (earnings || []).reduce((s, r) => s + Number(r.cash_earned || 0), 0);
-    document.getElementById('ref-count').textContent        = refCount || 0;
-    document.getElementById('ref-earned-coins').textContent = totalCoins.toLocaleString();
-    document.getElementById('ref-earned-cash').textContent  = '₹' + totalCash.toFixed(2);
+    // Referral stats (SECURITY DEFINER bypasses RLS to count referred users)
+    const { data: refStats } = await db.rpc('get_referral_stats', { p_user_id: currentUser.id });
+    document.getElementById('ref-count').textContent        = refStats?.referral_count ?? 0;
+    document.getElementById('ref-earned-coins').textContent = Number(refStats?.coins_earned ?? 0).toLocaleString();
+    document.getElementById('ref-earned-cash').textContent  = '₹' + Number(refStats?.cash_earned ?? 0).toFixed(2);
     document.getElementById('bank-type').value     = data.bank_account_type || 'savings';
     document.getElementById('bank-accno').value    = data.bank_account_no   || '';
     document.getElementById('bank-ifsc').value     = data.bank_ifsc         || '';
@@ -983,20 +978,13 @@
 
   // ── Load wallet via RPC ──────────────────────────────
   async function loadWallet() {
-    const [
-      { data },
-      { count: refCount },
-      { data: refEarnings }
-    ] = await Promise.all([
+    const [{ data }, { data: refStats }] = await Promise.all([
       db.rpc('get_viewer_stats', { p_user_id: currentUser.id }),
-      db.from('users').select('*', { count: 'exact', head: true }).eq('referred_by', currentUser.id),
-      db.from('referral_earnings').select('coins_earned,cash_earned').eq('referrer_id', currentUser.id)
+      db.rpc('get_referral_stats', { p_user_id: currentUser.id }),
     ]);
 
     const coins    = data?.total_coins || 0;
     const cash     = data?.cash_value  || 0;
-    const refCoins = (refEarnings || []).reduce((s, r) => s + (r.coins_earned || 0), 0);
-    const refCash  = (refEarnings || []).reduce((s, r) => s + Number(r.cash_earned || 0), 0);
 
     document.getElementById('stat-coins').textContent     = Number(coins).toLocaleString();
     document.getElementById('stat-cash').textContent      = '₹' + parseFloat(cash).toFixed(2);
@@ -1005,9 +993,9 @@
     document.getElementById('nav-coins').textContent      = Number(coins).toLocaleString();
     document.getElementById('wallet-coins').textContent   = Number(coins).toLocaleString();
     document.getElementById('wallet-cash').textContent    = parseFloat(cash).toFixed(2);
-    document.getElementById('stat-ref-count').textContent = refCount || 0;
-    document.getElementById('stat-ref-coins').textContent = refCoins.toLocaleString();
-    document.getElementById('stat-ref-cash').textContent  = '₹' + refCash.toFixed(2);
+    document.getElementById('stat-ref-count').textContent = refStats?.referral_count ?? 0;
+    document.getElementById('stat-ref-coins').textContent = Number(refStats?.coins_earned ?? 0).toLocaleString();
+    document.getElementById('stat-ref-cash').textContent  = '₹' + Number(refStats?.cash_earned ?? 0).toFixed(2);
 
     // Populate withdrawal panel
     const wdBal = document.getElementById('wd-balance');
@@ -1201,8 +1189,7 @@
       } catch(e) {}
     } catch(err) {
       const grid = document.getElementById('ads-grid');
-      // Only show error if grid is still at loading state
-      if (grid && grid.querySelector('p')?.textContent === 'Loading ads…') {
+      if (grid && !grid.querySelector('.ad-card')) {
         grid.innerHTML = `<div class="empty"><div class="e-icon">⚠️</div>
           <p>Could not load ads. Check your connection.</p>
           <button onclick="loadAds()" style="margin-top:.8rem;padding:.5rem 1.2rem;background:var(--red);border:none;border-radius:8px;color:#fff;font-weight:700;cursor:pointer;">↻ Retry</button></div>`;

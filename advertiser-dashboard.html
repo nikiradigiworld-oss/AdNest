@@ -912,6 +912,7 @@
       document.getElementById('adv-admin-link').style.display = 'flex';
     }
     loadStats(user);
+    loadMyAds();
     checkUnreadChat();
     setInterval(checkUnreadChat, 30000);
   }
@@ -957,24 +958,33 @@
 
   // ── Load my ads ───────────────────────────────────────
   async function loadMyAds() {
-    const { data: { user } } = await db.auth.getUser();
-    const { data: adv } = await db.from('advertisers').select('id').eq('user_id', user.id).single();
-    if (!adv) return;
-    const { data: ads } = await db.from('ads').select('*').eq('advertiser_id', adv.id).order('created_at', { ascending: false });
     const tbody = document.getElementById('ads-tbody');
-    if (!ads || ads.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#aaa;padding:2rem">No ads yet. Post your first ad!</td></tr>';
-      return;
+    try {
+      const { data: { user } } = await db.auth.getUser();
+      const { data: adv } = await db.from('advertisers').select('id').eq('user_id', user.id).single();
+      if (!adv) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#aaa;padding:2rem">No ads yet. Post your first ad!</td></tr>';
+        return;
+      }
+      const { data: ads } = await db.from('ads').select('*').eq('advertiser_id', adv.id).order('created_at', { ascending: false });
+      if (!ads || ads.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#aaa;padding:2rem">No ads yet. Post your first ad!</td></tr>';
+        return;
+      }
+      tbody.innerHTML = ads.map(a => `
+        <tr>
+          <td><strong>${a.title}</strong></td>
+          <td>${a.ad_type}</td>
+          <td>${(a.views_ordered||0).toLocaleString()}</td>
+          <td>${(a.views_delivered||0).toLocaleString()}</td>
+          <td><span class="status-badge status-${a.status}">${a.status}</span></td>
+          <td>₹${(a.budget_total||0).toFixed(2)}</td>
+        </tr>`).join('');
+    } catch(err) {
+      if (tbody && !tbody.querySelector('tr td strong')) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#aaa;padding:2rem">Could not load ads. Refresh to retry.</td></tr>';
+      }
     }
-    tbody.innerHTML = ads.map(a => `
-      <tr>
-        <td><strong>${a.title}</strong></td>
-        <td>${a.ad_type}</td>
-        <td>${(a.views_ordered||0).toLocaleString()}</td>
-        <td>${(a.views_delivered||0).toLocaleString()}</td>
-        <td><span class="status-badge status-${a.status}">${a.status}</span></td>
-        <td>₹${(a.budget_total||0).toFixed(2)}</td>
-      </tr>`).join('');
   }
 
 
