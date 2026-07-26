@@ -806,6 +806,9 @@
     if (user.user_metadata?.role === 'admin') {
       document.getElementById('view-admin-link').style.display = 'flex';
     }
+    db.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_OUT') window.location.href = 'login.html';
+    });
     loadWallet();
     loadAds();
     checkUnreadChat();
@@ -1166,21 +1169,21 @@
       }
     } catch(e) {}
 
-    // 2. Fetch fresh data
+    // 2. Fetch fresh data via single SECURITY DEFINER RPC (bypasses RLS, session-safe)
     try {
       const _adsTimeout = new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 10000));
-      const [{ data: viewed, error: e1 }, { data: clicked, error: e2 }, { data: ads, error: e3 }] = await Promise.race([
-        Promise.all([
-          db.from('ad_views').select('ad_id').eq('viewer_id', currentUser.id),
-          db.from('ad_clicks').select('ad_id').eq('viewer_id', currentUser.id),
-          db.from('ads').select('id,title,ad_type,content_url,target_area,target_value,whatsapp_number,views_ordered,budget_total,rate_per_1k').eq('status','active'),
-        ]),
+      const { data: rpcData, error: rpcErr } = await Promise.race([
+        db.rpc('get_active_ads_for_viewer', { p_user_id: currentUser.id }),
         _adsTimeout,
       ]);
-      if (e3) throw new Error(e3.message);
-      watchedAds = new Set((viewed||[]).map(v => v.ad_id));
-      clickedAds = new Set((clicked||[]).map(c => c.ad_id));
-      const list = (ads || []);
+      if (rpcErr) throw new Error(rpcErr.message);
+      if (!rpcData?.success) {
+        if (rpcData?.error === 'Not authenticated') { window.location.href = 'login.html'; return; }
+        throw new Error('RPC failed');
+      }
+      watchedAds = new Set((rpcData.watched || []).filter(Boolean));
+      clickedAds = new Set((rpcData.clicked || []).filter(Boolean));
+      const list = (rpcData.ads || []);
       list.forEach(ad => { _adCache[ad.id] = ad; });
 
       // 3. Re-render and save to cache
