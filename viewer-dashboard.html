@@ -427,7 +427,7 @@
       <span class="sidebar-icon">📜</span> History
     </div>
     <div class="sidebar-item" onclick="switchView('surveys', this)">
-      <span class="sidebar-icon">📊</span> Survey Wall
+      <span class="sidebar-icon">📊</span> Earn More
     </div>
     <div class="sidebar-item" onclick="switchView('upgrade', this)">
       <span class="sidebar-icon">⬆️</span> Upgrade Role
@@ -587,7 +587,7 @@
 
     <!-- SURVEY WALL VIEW -->
     <div class="view" id="view-surveys">
-      <div class="page-title">📊 Survey Wall · Earn Coins</div>
+      <div class="page-title">📊 Earn More · Earn Coins</div>
       <div class="panel" style="margin-bottom:1rem;">
         <div class="panel-body" style="padding:.8rem 1rem;">
           <div style="background:rgba(255,215,0,.07);border:1px solid rgba(255,215,0,.2);border-radius:10px;padding:.8rem 1rem;font-size:.85rem;color:rgba(255,255,255,.85);line-height:1.6;">
@@ -1402,12 +1402,13 @@
       tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#aaa;padding:2rem">No history yet. Watch ads to earn coins!</td></tr>';
       return;
     }
+    const typeLabel = { earn: 'Ad View', earn_more: 'Earn More', bonus: 'Bonus', redeem: 'Redeem' };
     tbody.innerHTML = data.map(t => `
       <tr>
         <td>${new Date(t.created_at).toLocaleDateString('en-IN')}</td>
         <td>${t.description || '-'}</td>
         <td class="earn-badge">+${t.coins}</td>
-        <td>${t.type}</td>
+        <td>${typeLabel[t.type] || t.type}</td>
       </tr>`).join('');
   }
 
