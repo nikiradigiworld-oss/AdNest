@@ -1246,9 +1246,22 @@
 
 <style>
   .pf-field { margin-bottom:1rem; }
-  .pf-label { display:block;font-size:.8rem;font-weight:700;color:#555;margin-bottom:.35rem; }
-  .pf-input { width:100%;padding:.65rem .9rem;border:1.5px solid #e0e0e0;border-radius:10px;font-size:.9rem;color:#1a1a1a;outline:none;transition:border .2s; }
-  .pf-input:focus { border-color:var(--red); }
+  .pf-label { display:block;font-size:.78rem;font-weight:700;color:#444;margin-bottom:.3rem;letter-spacing:.02em; }
+  .pf-input {
+    width:100%; padding:.7rem 1rem;
+    border:1.8px solid #bbb; border-radius:10px;
+    font-size:.92rem; color:#1a1a1a;
+    background:#f5f5f5;
+    outline:none; transition:border-color .2s,background .2s;
+    box-sizing:border-box;
+    -webkit-appearance:none; appearance:none;
+  }
+  select.pf-input {
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23666' stroke-width='1.8' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat:no-repeat; background-position:right .9rem center;
+    padding-right:2.2rem;
+  }
+  .pf-input:focus { border-color:var(--red); background:#fff; }
 </style>
 
 <script>
