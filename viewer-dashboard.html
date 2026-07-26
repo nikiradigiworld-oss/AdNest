@@ -520,6 +520,31 @@
           </table>
         </div>
       </div>
+
+      <!-- Withdraw Cash -->
+      <div class="panel" id="withdrawal-panel">
+        <div class="panel-head"><h3>💸 Withdraw Cash</h3><span style="font-size:.78rem;opacity:.7">Min ₹100</span></div>
+        <div class="panel-body">
+          <div id="wd-alert" style="display:none;padding:.75rem 1rem;border-radius:10px;margin-bottom:1rem;font-size:.85rem;font-weight:600;"></div>
+          <div style="background:rgba(255,215,0,.07);border:1px solid rgba(255,215,0,.18);border-radius:10px;padding:.85rem 1rem;margin-bottom:1.2rem;font-size:.82rem;color:rgba(255,215,0,.9);">
+            Your withdrawable cash balance: <strong>₹<span id="wd-balance">0.00</span></strong>
+            <div style="margin-top:.3rem;font-size:.75rem;color:rgba(255,255,255,.45);">Minimum ₹100 · Credited to your registered bank account within 3–5 business days</div>
+          </div>
+          <div style="margin-bottom:.9rem;">
+            <label style="font-size:.75rem;font-weight:700;color:#aaa;display:block;margin-bottom:.35rem;">Amount to Withdraw (₹)</label>
+            <input id="wd-amount" type="number" min="100" step="50" placeholder="e.g. 500"
+              style="width:100%;padding:.65rem .9rem;border:1.5px solid rgba(255,255,255,.15);border-radius:9px;background:rgba(255,255,255,.07);color:#fff;font-size:.95rem;outline:none;" />
+          </div>
+          <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:.85rem 1rem;margin-bottom:1rem;font-size:.8rem;color:rgba(255,255,255,.5);">
+            Bank: <strong id="wd-bank-preview" style="color:rgba(255,255,255,.8);">Not set — update bank details in Profile</strong>
+          </div>
+          <button onclick="requestWithdrawal()" id="wd-btn"
+            style="width:100%;padding:.75rem;background:linear-gradient(135deg,#27ae60,#1e8449);color:#fff;border:none;border-radius:10px;font-weight:700;font-size:.95rem;cursor:pointer;">
+            💸 Request Withdrawal
+          </button>
+          <div id="wd-history" style="margin-top:1.2rem;"></div>
+        </div>
+      </div>
     </div>
 
     <!-- HISTORY VIEW -->
@@ -777,6 +802,7 @@
     if (name === 'history') loadHistory();
     if (name === 'chat')    loadChat();
     if (name === 'profile') loadProfile();
+    if (name === 'wallet')  { loadWallet(); loadWithdrawalPanel(); }
   }
 
   // ── Profile & Bank ───────────────────────────────────
@@ -901,6 +927,76 @@
     document.getElementById('stat-ref-count').textContent = refCount || 0;
     document.getElementById('stat-ref-coins').textContent = refCoins.toLocaleString();
     document.getElementById('stat-ref-cash').textContent  = '₹' + refCash.toFixed(2);
+
+    // Populate withdrawal panel
+    const wdBal = document.getElementById('wd-balance');
+    if (wdBal) wdBal.textContent = parseFloat(cash).toFixed(2);
+  }
+
+  // ── Withdrawal ────────────────────────────────────────
+  async function loadWithdrawalPanel() {
+    const { data: u } = await db.from('users')
+      .select('bank_holder_name,bank_name,bank_account_no,bank_ifsc')
+      .eq('id', currentUser.id).single();
+    const preview = document.getElementById('wd-bank-preview');
+    if (preview) {
+      if (u?.bank_account_no) {
+        preview.textContent = `${u.bank_name || 'Bank'} — ****${u.bank_account_no.slice(-4)} (${u.bank_holder_name || ''})`;
+        preview.style.color = 'rgba(255,255,255,.8)';
+      } else {
+        preview.textContent = 'Not set — update bank details in Profile';
+        preview.style.color = 'rgba(255,100,100,.8)';
+      }
+    }
+    const { data: reqs } = await db.from('withdrawal_requests')
+      .select('amount_rupees,status,requested_at').eq('user_id', currentUser.id)
+      .order('requested_at', { ascending: false }).limit(5);
+    const hist = document.getElementById('wd-history');
+    if (hist && reqs && reqs.length) {
+      hist.innerHTML = '<div style="font-size:.75rem;font-weight:700;color:#aaa;margin-bottom:.5rem;text-transform:uppercase;letter-spacing:.05em">Recent Requests</div>' +
+        reqs.map(r => {
+          const color = r.status === 'completed' ? '#27ae60' : r.status === 'rejected' ? '#e74c3c' : r.status === 'processing' ? '#f39c12' : '#888';
+          return `<div style="display:flex;justify-content:space-between;align-items:center;padding:.45rem 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:.82rem;">
+            <span>₹${parseFloat(r.amount_rupees).toFixed(2)}</span>
+            <span style="color:${color};font-weight:700;text-transform:capitalize;">${r.status}</span>
+            <span style="color:#666;font-size:.74rem;">${new Date(r.requested_at).toLocaleDateString('en-IN')}</span>
+          </div>`;
+        }).join('');
+    }
+  }
+
+  async function requestWithdrawal() {
+    const amt = parseFloat(document.getElementById('wd-amount').value);
+    const wdAlert = document.getElementById('wd-alert');
+    const show = (msg, ok) => {
+      wdAlert.textContent = msg;
+      wdAlert.style.background = ok ? 'rgba(39,174,96,.15)' : 'rgba(231,76,60,.15)';
+      wdAlert.style.color = ok ? '#2ecc71' : '#e74c3c';
+      wdAlert.style.display = 'block';
+    };
+    if (!amt || amt < 100) { show('Minimum withdrawal is ₹100', false); return; }
+    const cash = parseFloat(document.getElementById('wd-balance').textContent);
+    if (amt > cash) { show(`Insufficient balance. Available: ₹${cash.toFixed(2)}`, false); return; }
+
+    const { data: u } = await db.from('users').select('bank_account_no,bank_holder_name,bank_name,bank_ifsc,bank_branch,bank_account_type').eq('id', currentUser.id).single();
+    if (!u?.bank_account_no) { show('Please save your bank details in Profile first', false); return; }
+
+    const btn = document.getElementById('wd-btn');
+    btn.disabled = true; btn.textContent = 'Processing…';
+
+    const { error } = await db.rpc('request_withdrawal', { p_user_id: currentUser.id, p_rupees: amt });
+    btn.disabled = false; btn.textContent = '💸 Request Withdrawal';
+    if (error) { show('Error: ' + error.message, false); return; }
+
+    // Save bank snapshot with request
+    await db.from('withdrawal_requests')
+      .update({ bank_holder_name: u.bank_holder_name, bank_name: u.bank_name, bank_account_no: u.bank_account_no, bank_ifsc: u.bank_ifsc, bank_branch: u.bank_branch, bank_account_type: u.bank_account_type })
+      .eq('user_id', currentUser.id).eq('status', 'pending').order('requested_at', { ascending: false }).limit(1);
+
+    show(`✅ Withdrawal of ₹${amt.toFixed(2)} requested! We'll transfer to your bank within 3–5 business days.`, true);
+    document.getElementById('wd-amount').value = '';
+    loadWallet();
+    loadWithdrawalPanel();
   }
 
   // ── Load active ads ───────────────────────────────────

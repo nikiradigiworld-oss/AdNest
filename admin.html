@@ -486,6 +486,10 @@
     <div class="sb-item" onclick="switchView('payments',this)">
       <span class="icon">💳</span><span>Payments</span>
     </div>
+    <div class="sb-item" onclick="switchView('withdrawals',this)">
+      <span class="icon">💸</span><span>Withdrawals</span>
+      <span class="sb-badge" id="sb-wd-badge" style="display:none">0</span>
+    </div>
 
     <div class="sb-section">Support</div>
     <div class="sb-item" onclick="switchView('support',this)" id="sb-support">
@@ -796,6 +800,30 @@
           </tbody>
         </table>
       </div>
+    </div>
+  </div>
+
+  <!-- ══ WITHDRAWALS ══ -->
+  <div class="view" id="view-withdrawals">
+    <div class="top-bar">
+      <div>
+        <div class="section-tag">Finance</div>
+        <div class="page-title">Withdrawal Requests</div>
+        <div class="page-sub">Review and process viewer cash withdrawal requests</div>
+      </div>
+      <div class="top-bar-right">
+        <button class="refresh-btn" onclick="loadWithdrawals()">🔄 Refresh</button>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr><th>User</th><th>Amount</th><th>Bank</th><th>Account No.</th><th>IFSC</th><th>Requested</th><th>Status</th><th>Action</th></tr>
+        </thead>
+        <tbody id="wd-tbody">
+          <tr><td colspan="8"><div class="empty"><div class="e-icon">💸</div><p>Loading…</p></div></td></tr>
+        </tbody>
+      </table>
     </div>
   </div>
 
@@ -1241,6 +1269,7 @@
     loadSocialConfig();
     checkSupportUnread();
     setInterval(checkSupportUnread, 20000);
+    checkWithdrawalBadge();
   }
 
   // ── View switching ────────────────────────────────────────
@@ -1251,6 +1280,7 @@
     if (el) el.classList.add('active');
     if (name === 'support')       loadSupport();
     if (name === 'notifications') loadPushSubCount();
+    if (name === 'withdrawals')   loadWithdrawals();
   }
 
   function mobileSwitchView(name, el) {
@@ -1797,6 +1827,51 @@
     }).join('');
   }
 
+  // ── Withdrawals ───────────────────────────────────────────
+  async function loadWithdrawals() {
+    const { data, count } = await db.from('withdrawal_requests')
+      .select('*, users(name,email)', { count: 'exact' })
+      .order('requested_at', { ascending: false })
+      .limit(200);
+    const pending = (data||[]).filter(r => r.status === 'pending').length;
+    const badge = document.getElementById('sb-wd-badge');
+    if (badge) { badge.textContent = pending; badge.style.display = pending > 0 ? 'inline-flex' : 'none'; }
+    const tbody = document.getElementById('wd-tbody');
+    if (!data || !data.length) {
+      tbody.innerHTML = '<tr><td colspan="8"><div class="empty"><div class="e-icon">💸</div><p>No withdrawal requests yet</p></div></td></tr>';
+      return;
+    }
+    tbody.innerHTML = data.map(r => {
+      const name   = r.users?.name || r.users?.email || '—';
+      const scolor = r.status === 'completed' ? 'active' : r.status === 'rejected' ? 'rejected' : r.status === 'processing' ? 'pending' : 'pending';
+      const actions = r.status === 'pending' ? `
+        <button class="btn-approve" onclick="updateWithdrawal('${r.id}','processing')">⏳ Process</button>
+        <button class="btn-reject"  onclick="updateWithdrawal('${r.id}','completed')">✅ Done</button>
+        <button class="btn-role"    onclick="updateWithdrawal('${r.id}','rejected')">✗ Reject</button>` :
+        r.status === 'processing' ? `<button class="btn-approve" onclick="updateWithdrawal('${r.id}','completed')">✅ Mark Done</button>` : '—';
+      return `<tr>
+        <td><strong>${esc(name)}</strong></td>
+        <td><strong>₹${parseFloat(r.amount_rupees).toFixed(2)}</strong></td>
+        <td>${esc(r.bank_name||'—')}</td>
+        <td style="font-family:monospace;">${esc(r.bank_account_no||'—')}</td>
+        <td style="font-family:monospace;">${esc(r.bank_ifsc||'—')}</td>
+        <td style="font-size:.78rem;">${fmtDate(r.requested_at)}</td>
+        <td><span class="badge badge-${scolor}">${r.status}</span></td>
+        <td style="white-space:nowrap;">${actions}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  async function updateWithdrawal(id, newStatus) {
+    if (!confirm(`Mark this withdrawal as "${newStatus}"?`)) return;
+    const { error } = await db.from('withdrawal_requests')
+      .update({ status: newStatus, processed_at: new Date().toISOString() })
+      .eq('id', id);
+    if (error) { showToast('Error: ' + error.message, 'error'); return; }
+    showToast('✅ Withdrawal updated to ' + newStatus, 'success');
+    loadWithdrawals();
+  }
+
   // ── Analytics ─────────────────────────────────────────────
   async function loadAnalytics() {
     const [
@@ -1949,6 +2024,13 @@
 
   // ── Support Chat ──────────────────────────────────────────
   let _supportActiveUid = null;
+
+  async function checkWithdrawalBadge() {
+    const { count } = await db.from('withdrawal_requests')
+      .select('id', { count: 'exact', head: true }).eq('status', 'pending');
+    const badge = document.getElementById('sb-wd-badge');
+    if (badge) { badge.textContent = count || 0; badge.style.display = count > 0 ? 'inline-flex' : 'none'; }
+  }
 
   async function checkSupportUnread() {
     const { count } = await db.from('support_messages')

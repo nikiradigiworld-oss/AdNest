@@ -1057,6 +1057,22 @@
   recalc();
   init();
 
+  // Handle PayU return redirect
+  (function() {
+    const p = new URLSearchParams(window.location.search);
+    const payStatus = p.get('payment');
+    if (!payStatus) return;
+    window.history.replaceState({}, '', window.location.pathname);
+    if (payStatus === 'success') {
+      const amt = p.get('amt') ? '₹' + parseFloat(p.get('amt')).toFixed(2) : '';
+      showAlert('post', `✅ Payment successful! ${amt} added to your wallet. Coins will reflect shortly.`, 'success');
+    } else if (payStatus === 'failed') {
+      showAlert('post', '❌ Payment failed or cancelled. Please try again.', 'error');
+    } else if (payStatus === 'tampered') {
+      showAlert('post', '⚠️ Payment verification failed. Contact support if money was deducted.', 'error');
+    }
+  })();
+
   // ── Country / State / City API ────────────────────────
   // ── Hardcoded Indian States (no API dependency) ──
   const _INDIA_STATES = [
@@ -1211,34 +1227,39 @@
     if (cp) cp.textContent = _rupToCoins(n);
   }
 
-  function payWith(provider) {
-    const amt = parseInt(document.getElementById('funds-amount').value) || 100;
-    const upiId = 'anaar@upi'; // merchant UPI
-    const note  = encodeURIComponent('Anaar Wallet Top-up');
-    const name  = encodeURIComponent('Anaar Ads');
-    const urls = {
-      gpay:    `tez://upi/pay?pa=${upiId}&pn=${name}&am=${amt}&cu=INR&tn=${note}`,
-      phonepe: `phonepe://pay?pa=${upiId}&pn=${name}&am=${amt}&cu=INR&tn=${note}`,
-      paytm:   `paytmmp://pay?pa=${upiId}&pn=${name}&am=${amt}&cu=INR&tn=${note}`,
-      bhim:    `upi://pay?pa=${upiId}&pn=${name}&am=${amt}&cu=INR&tn=${note}`,
-    };
-    const url = urls[provider] || urls.bhim;
-    window.location.href = url;
-  }
+  const PAYU_ORDER_URL = 'https://qkbpdmeghjuucplbnnsz.supabase.co/functions/v1/payu-order';
 
-  function payWithUpiId() {
-    const upiId = document.getElementById('funds-upi-id').value.trim();
-    if (!upiId.includes('@')) { alert('Please enter a valid UPI ID (e.g. name@upi)'); return; }
-    submitFundsPayment(upiId);
-  }
-
-  function submitFundsPayment(upiId) {
+  async function initiatePayuPayment() {
     const amt = parseInt(document.getElementById('funds-amount').value) || 100;
-    if (amt < 50) { alert('Minimum ₹50 required.'); return; }
-    // In production, this would initiate a real payment gateway flow.
-    // For now, show a contact-admin instruction.
-    closeAddFunds();
-    alert(`To add ₹${amt} to your wallet:\n\nSend ₹${amt} to UPI ID: anaar@upi\nAfter payment, WhatsApp your screenshot to our support team and your balance will be updated within a few minutes.\n\nOr use the Chat Support to notify us!`);
+    if (amt < 50) { showAlert('funds', 'Minimum ₹50 required.', 'error'); return; }
+    const btn = document.getElementById('funds-pay-btn');
+    btn.disabled = true;
+    btn.textContent = 'Redirecting to PayU…';
+    try {
+      const { data: { session } } = await db.auth.getSession();
+      const res = await fetch(PAYU_ORDER_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+        body: JSON.stringify({ amount: amt })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Order creation failed');
+      // Build hidden form and submit to PayU
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = data.payu_url;
+      Object.entries(data.params).forEach(([k, v]) => {
+        const inp = document.createElement('input');
+        inp.type = 'hidden'; inp.name = k; inp.value = String(v);
+        form.appendChild(inp);
+      });
+      document.body.appendChild(form);
+      form.submit();
+    } catch (e) {
+      btn.disabled = false;
+      btn.textContent = '💳 Pay ₹' + amt + ' via PayU';
+      showAlert('funds', 'Error: ' + e.message, 'error');
+    }
   }
 
   // ── Chat helpers ──────────────────────────────────────
@@ -1343,36 +1364,21 @@
         <div style="font-size:.75rem;font-weight:400;color:#888;margin-top:2px">Rate: ₹0.05 = 100 coins</div>
       </div>
 
-      <div class="funds-divider"><span>Pay via</span></div>
+      <div class="funds-divider"><span>Secure Payment</span></div>
 
-      <!-- UPI app buttons -->
-      <div class="upi-options">
-        <button class="upi-btn" onclick="payWith('gpay')">
-          <span style="font-size:1.3rem">🟢</span> Google Pay
-        </button>
-        <button class="upi-btn" onclick="payWith('phonepe')">
-          <span style="font-size:1.3rem">🟣</span> PhonePe
-        </button>
-        <button class="upi-btn" onclick="payWith('paytm')">
-          <span style="font-size:1.3rem">🔵</span> Paytm
-        </button>
-        <button class="upi-btn" onclick="payWith('bhim')">
-          <span style="font-size:1.3rem">🇮🇳</span> BHIM UPI
-        </button>
-      </div>
-
-      <!-- Manual UPI ID -->
-      <div class="upi-id-row">
-        <input class="upi-id-input" id="funds-upi-id" placeholder="Or enter your UPI ID (e.g. name@upi)" type="text" />
-        <button class="lbb-btn" onclick="payWithUpiId()" style="padding:.6rem 1rem">Pay</button>
-      </div>
-
-      <button class="funds-pay-btn" id="funds-pay-btn" onclick="submitFundsPayment()">
-        Proceed to Pay ₹<span id="funds-pay-amt">100</span>
+      <button class="funds-pay-btn" id="funds-pay-btn" onclick="initiatePayuPayment()" style="margin-top:.5rem;font-size:1rem;padding:.85rem;">
+        💳 Pay ₹<span id="funds-pay-amt">100</span> via PayU
       </button>
+
+      <div style="display:flex;justify-content:center;gap:.5rem;margin:.8rem 0 .3rem;flex-wrap:wrap;">
+        <span style="font-size:.72rem;color:#888;background:#f5f5f5;border-radius:6px;padding:3px 8px;">UPI</span>
+        <span style="font-size:.72rem;color:#888;background:#f5f5f5;border-radius:6px;padding:3px 8px;">Credit / Debit Card</span>
+        <span style="font-size:.72rem;color:#888;background:#f5f5f5;border-radius:6px;padding:3px 8px;">Net Banking</span>
+        <span style="font-size:.72rem;color:#888;background:#f5f5f5;border-radius:6px;padding:3px 8px;">Wallets</span>
+      </div>
       <div class="funds-note">
-        Payments are secure and encrypted.<br>
-        Funds will reflect in your wallet within a few minutes after verification.
+        Payments processed securely by PayU.<br>
+        Coins credited instantly after payment confirmation.
       </div>
     </div>
   </div>
