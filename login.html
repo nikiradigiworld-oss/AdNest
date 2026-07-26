@@ -231,15 +231,42 @@
       </div>
     </div>
 
+    <!-- SET NEW PASSWORD (shown after clicking email link) -->
+    <div class="view" id="view-set-password">
+      <div id="alert-set-password" class="alert"></div>
+      <p style="font-size:.87rem;color:#555;line-height:1.6;margin-bottom:1.2rem">
+        Choose a new password for your account.
+      </p>
+      <div class="field">
+        <label>New Password</label>
+        <div class="input-wrap">
+          <span class="icon">🔒</span>
+          <input type="password" id="new-pw" placeholder="Min 6 characters"
+                 onkeydown="if(event.key==='Enter') updatePassword()" />
+          <span class="toggle-pw" onclick="toggleNewPw()">👁️</span>
+        </div>
+      </div>
+      <div class="field">
+        <label>Confirm New Password</label>
+        <div class="input-wrap">
+          <span class="icon">🔒</span>
+          <input type="password" id="confirm-pw" placeholder="Repeat password"
+                 onkeydown="if(event.key==='Enter') updatePassword()" />
+        </div>
+      </div>
+      <button class="btn-primary" id="btn-set-pw" onclick="updatePassword()">Set New Password</button>
+    </div>
+
   </div>
 </div>
 
 <script>
   // ── View switching ─────────────────────────────────────
   const headers = {
-    login: ['Welcome Back',     'Sign in to your Anaar account'],
-    reset: ['Reset Password',   'We\'ll email you a reset link'],
-    sent:  ['Email Sent',       'Check your inbox']
+    login:         ['Welcome Back',      'Sign in to your Anaar account'],
+    reset:         ['Reset Password',    'We\'ll email you a reset link'],
+    sent:          ['Email Sent',        'Check your inbox'],
+    'set-password':['Set New Password',  'Choose a secure new password']
   };
   function showView(name) {
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
@@ -318,9 +345,7 @@
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner"></span>Sending…';
 
-    const redirectTo = window.location.origin
-      + window.location.pathname.replace('login.html', '')
-      + 'index.html';
+    const redirectTo = window.location.origin + '/login.html';
 
     const { error } = await db.auth.resetPasswordForEmail(email, { redirectTo });
 
@@ -330,6 +355,44 @@
 
     document.getElementById('sent-email').textContent = email;
     showView('sent');
+  }
+
+  // ── Detect password recovery from email link ───────────
+  db.auth.onAuthStateChange((event) => {
+    if (event === 'PASSWORD_RECOVERY') {
+      showView('set-password');
+    }
+  });
+
+  function toggleNewPw() {
+    const inp = document.getElementById('new-pw');
+    inp.type = inp.type === 'password' ? 'text' : 'password';
+  }
+
+  // ── Set new password ───────────────────────────────────
+  async function updatePassword() {
+    clearAlert('set-password');
+    const pwd     = document.getElementById('new-pw').value;
+    const confirm = document.getElementById('confirm-pw').value;
+
+    if (pwd.length < 6) {
+      showAlert('set-password', 'Password must be at least 6 characters.', 'error'); return;
+    }
+    if (pwd !== confirm) {
+      showAlert('set-password', 'Passwords do not match.', 'error'); return;
+    }
+
+    const btn = document.getElementById('btn-set-pw');
+    btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Updating…';
+
+    const { error } = await db.auth.updateUser({ password: pwd });
+
+    btn.disabled = false; btn.textContent = 'Set New Password';
+
+    if (error) { showAlert('set-password', error.message, 'error'); return; }
+
+    showAlert('set-password', '✅ Password updated! Signing you in…', 'success');
+    setTimeout(() => { window.location.href = 'index.html'; }, 2000);
   }
 </script>
 <script>if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js').catch(() => {}); }</script>
