@@ -1561,7 +1561,7 @@
   async function changeUserRole(userId, newRole, selectEl) {
     if (!newRole) return;
     if (!confirm(`Change this user's role to "${newRole}"?`)) { selectEl.value=''; return; }
-    const { error } = await db.from('users').update({ role: newRole }).eq('id', userId);
+    const { error } = await db.rpc('admin_set_user_role', { p_user_id: userId, p_role: newRole });
     if (error) { showToast('Error: ' + error.message, 'error'); selectEl.value=''; return; }
     showToast('✅ Role updated to ' + newRole, 'success');
     allUsers = allUsers.map(u => u.id===userId ? {...u, role:newRole} : u);
@@ -1631,8 +1631,10 @@
     const phone    = document.getElementById('ue-phone').value.trim();
     if (!name) { showToast('Name cannot be empty', 'error'); return; }
 
-    const { error } = await db.from('users').update({ name, role, state, district, gender, phone }).eq('id', _editUserId);
+    const { error } = await db.from('users').update({ name, state, district, gender, phone }).eq('id', _editUserId);
     if (error) { showToast('Error: ' + error.message, 'error'); return; }
+    const { error: roleErr } = await db.rpc('admin_set_user_role', { p_user_id: _editUserId, p_role: role });
+    if (roleErr) { showToast('Profile saved but role sync failed: ' + roleErr.message, 'error'); return; }
 
     showToast('✅ Profile saved', 'success');
     allUsers = allUsers.map(u => u.id===_editUserId ? {...u, name, role, state, district, gender, phone} : u);
@@ -1901,9 +1903,10 @@
     const val = document.getElementById('admin-grant-email').value.trim();
     if (!val) { showToast('Enter email or phone', 'error'); return; }
     const col = val.includes('@') ? 'email' : 'phone';
-    const { data, error } = await db.from('users').update({ role:'admin' }).eq(col, val).select();
+    const { data: found } = await db.from('users').select('id').eq(col, val).maybeSingle();
+    if (!found) { showToast('User not found', 'error'); return; }
+    const { error } = await db.rpc('admin_set_user_role', { p_user_id: found.id, p_role: 'admin' });
     if (error) { showToast('Error: ' + error.message, 'error'); return; }
-    if (!data||!data.length) { showToast('User not found', 'error'); return; }
     showToast('✅ Admin access granted to ' + val, 'success');
     document.getElementById('admin-grant-email').value = '';
     loadUsers();
@@ -1914,9 +1917,11 @@
     if (!val) { showToast('Enter email or phone', 'error'); return; }
     if (!confirm('Revoke admin access for ' + val + '?')) return;
     const col = val.includes('@') ? 'email' : 'phone';
-    const { data, error } = await db.from('users').update({ role:'viewer' }).eq(col, val).eq('role','admin').select();
+    const { data: found } = await db.from('users').select('id,role').eq(col, val).maybeSingle();
+    if (!found) { showToast('User not found', 'error'); return; }
+    if (found.role !== 'admin') { showToast('That user is not an admin', 'error'); return; }
+    const { error } = await db.rpc('admin_set_user_role', { p_user_id: found.id, p_role: 'viewer' });
     if (error) { showToast('Error: ' + error.message, 'error'); return; }
-    if (!data||!data.length) { showToast('Admin user not found', 'error'); return; }
     showToast('Admin access revoked for ' + val, 'success');
     document.getElementById('admin-grant-email').value = '';
     loadUsers();
