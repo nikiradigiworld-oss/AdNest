@@ -740,6 +740,49 @@
   </div>
 </section>
 
+<!-- ── LEADERBOARD ── -->
+<section id="leaderboard" style="background:#fafafa;padding:3rem 1.5rem;">
+  <div class="container">
+    <div style="text-align:center;margin-bottom:2rem;">
+      <div class="section-tag" style="background:#1a1a1a;color:#FFD700;">🏆 LEADERBOARD</div>
+      <h2 style="font-size:1.6rem;font-weight:900;color:#1a1a1a;margin-top:.6rem;">Top 10 Community Stars</h2>
+      <p style="color:#777;font-size:.9rem;margin-top:.4rem;">Updated live · Names partially hidden for privacy</p>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;">
+
+      <!-- Top Referrers -->
+      <div style="background:#fff;border-radius:18px;box-shadow:0 4px 20px rgba(0,0,0,.07);overflow:hidden;">
+        <div style="background:linear-gradient(135deg,#8B1A1A,#B22222);padding:1rem 1.2rem;display:flex;align-items:center;gap:.6rem;">
+          <span style="font-size:1.3rem;">🎟</span>
+          <div>
+            <div style="color:#fff;font-weight:800;font-size:.95rem;">Top Referrers</div>
+            <div style="color:rgba(255,255,255,.65);font-size:.7rem;">Most friends invited</div>
+          </div>
+        </div>
+        <div id="lb-referrers" style="padding:.6rem 0;">
+          <div style="text-align:center;padding:1.5rem;color:#bbb;font-size:.85rem;">Loading…</div>
+        </div>
+      </div>
+
+      <!-- Top Earners -->
+      <div style="background:#fff;border-radius:18px;box-shadow:0 4px 20px rgba(0,0,0,.07);overflow:hidden;">
+        <div style="background:linear-gradient(135deg,#7B5E00,#B8860B);padding:1rem 1.2rem;display:flex;align-items:center;gap:.6rem;">
+          <span style="font-size:1.3rem;">🪙</span>
+          <div>
+            <div style="color:#FFD700;font-weight:800;font-size:.95rem;">Top Earners</div>
+            <div style="color:rgba(255,215,0,.6);font-size:.7rem;">Most coins earned</div>
+          </div>
+        </div>
+        <div id="lb-earners" style="padding:.6rem 0;">
+          <div style="text-align:center;padding:1.5rem;color:#bbb;font-size:.85rem;">Loading…</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
 <!-- ── HERO ── -->
 <header class="hero">
   <div class="hero-badge">&#127881; Incentive & Cashback Platform</div>
@@ -1011,6 +1054,38 @@
     'https://qkbpdmeghjuucplbnnsz.supabase.co',
     'sb_publishable_fCjXonXrWcaS9nmTW5B8Tw_CCNw5ybn'
   );
+
+  // ── Leaderboard ───────────────────────────────────────
+  const MEDALS = ['🥇','🥈','🥉'];
+
+  function renderLeaderboard(containerId, rows, valueKey, valueSuffix) {
+    const el = document.getElementById(containerId);
+    if (!rows || !rows.length) {
+      el.innerHTML = '<div style="text-align:center;padding:1.2rem;color:#bbb;font-size:.82rem;">No data yet — be the first!</div>';
+      return;
+    }
+    el.innerHTML = rows.map((r, i) => {
+      const medal  = i < 3 ? MEDALS[i] : `<span style="font-size:.8rem;font-weight:700;color:#aaa;">#${i+1}</span>`;
+      const isTop3 = i < 3;
+      const val    = valueKey === 'coins' ? Number(r[valueKey]).toLocaleString() + ' 🪙' : r[valueKey] + ' 👤';
+      return `<div style="display:flex;align-items:center;gap:.65rem;padding:.55rem 1.1rem;${isTop3 ? 'background:linear-gradient(90deg,rgba(255,215,0,.06),transparent);' : ''}border-bottom:1px solid #f5f5f5;">
+        <div style="width:26px;text-align:center;flex-shrink:0;font-size:${isTop3?'1.2rem':'.85rem'};">${medal}</div>
+        <div style="flex:1;font-size:.85rem;font-weight:700;color:#1a1a1a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r.display_name}</div>
+        <div style="font-size:.82rem;font-weight:800;color:${isTop3?'#8B1A1A':'#555'};flex-shrink:0;">${val}</div>
+      </div>`;
+    }).join('');
+  }
+
+  async function loadLeaderboards() {
+    const [{ data: referrers }, { data: earners }] = await Promise.all([
+      _db.rpc('get_top_referrers'),
+      _db.rpc('get_top_earners')
+    ]);
+    renderLeaderboard('lb-referrers', referrers, 'referral_count', '');
+    renderLeaderboard('lb-earners',   earners,   'coins', '');
+  }
+
+  loadLeaderboards();
 
   _db.auth.onAuthStateChange((event, session) => {
     if (event === 'SIGNED_IN' && session) {
