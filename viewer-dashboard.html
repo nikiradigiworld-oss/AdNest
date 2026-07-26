@@ -832,11 +832,16 @@
     document.getElementById('bank-holder').value   = data.bank_holder_name  || '';
     document.getElementById('bank-name').value     = data.bank_name         || '';
 
-    // Referral section
-    const code = data.referral_code || '';
+    // Referral section — generate and save code if missing
     const BASE_URL = 'https://nikiradigiworld-oss.github.io/AdNest';
-    document.getElementById('ref-code-display').textContent = code || '—';
-    document.getElementById('ref-link-input').value = code ? `${BASE_URL}/signup.html?ref=${code}` : '';
+    let code = data.referral_code || '';
+    if (!code) {
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      code = Array.from({length: 8}, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+      await db.from('users').update({ referral_code: code }).eq('id', currentUser.id);
+    }
+    document.getElementById('ref-code-display').textContent = code;
+    document.getElementById('ref-link-input').value = `${BASE_URL}/signup.html?ref=${code}`;
 
     // Referral stats
     const [{ count: refCount }, { data: earnings }] = await Promise.all([
