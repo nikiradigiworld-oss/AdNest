@@ -599,6 +599,10 @@
               <input id="prof-dob" type="date" style="width:100%;padding:.6rem .8rem;border:1.5px solid rgba(255,255,255,.15);border-radius:8px;background:rgba(255,255,255,.08);color:#fff;font-size:.9rem;outline:none;" />
             </div>
             <div>
+              <label style="font-size:.75rem;font-weight:700;color:#aaa;display:block;margin-bottom:.3rem;">Pincode</label>
+              <input id="prof-pincode" type="text" inputmode="numeric" maxlength="6" placeholder="6-digit pincode (auto-fills state &amp; district)" oninput="onDashPincodeInput(this.value)" style="width:100%;padding:.6rem .8rem;border:1.5px solid rgba(255,255,255,.15);border-radius:8px;background:rgba(255,255,255,.08);color:#fff;font-size:.9rem;outline:none;" />
+            </div>
+            <div>
               <label style="font-size:.75rem;font-weight:700;color:#aaa;display:block;margin-bottom:.3rem;">State</label>
               <input id="prof-state" type="text" placeholder="Your state" style="width:100%;padding:.6rem .8rem;border:1.5px solid rgba(255,255,255,.15);border-radius:8px;background:rgba(255,255,255,.08);color:#fff;font-size:.9rem;outline:none;" />
             </div>
@@ -694,8 +698,21 @@
   }
 
   // ── Profile & Bank ───────────────────────────────────
+  async function onDashPincodeInput(val) {
+    if (!/^\d{6}$/.test(val)) return;
+    try {
+      const res  = await fetch(`https://api.postalpincode.in/pincode/${val}`);
+      const data = await res.json();
+      if (!data || data[0]?.Status !== 'Success') return;
+      const po = data[0].PostOffice?.[0];
+      if (!po) return;
+      document.getElementById('prof-district').value = po.District || '';
+      document.getElementById('prof-state').value    = po.State    || '';
+    } catch (e) { /* ignore */ }
+  }
+
   async function loadProfile() {
-    const { data } = await db.from('users').select('name,mobile,gender,dob,state,district,bank_holder_name,bank_name,bank_account_no,bank_ifsc,bank_branch,bank_account_type').eq('id', currentUser.id).single();
+    const { data } = await db.from('users').select('name,mobile,gender,dob,state,district,pincode,bank_holder_name,bank_name,bank_account_no,bank_ifsc,bank_branch,bank_account_type').eq('id', currentUser.id).single();
     if (!data) return;
     document.getElementById('prof-name').value     = data.name     || '';
     document.getElementById('prof-mobile').value   = data.mobile   || '';
@@ -703,6 +720,7 @@
     document.getElementById('prof-dob').value      = data.dob      || '';
     document.getElementById('prof-state').value    = data.state    || '';
     document.getElementById('prof-district').value = data.district || '';
+    document.getElementById('prof-pincode').value  = data.pincode  || '';
     document.getElementById('bank-holder').value   = data.bank_holder_name  || '';
     document.getElementById('bank-name').value     = data.bank_name         || '';
     document.getElementById('bank-type').value     = data.bank_account_type || 'savings';
@@ -714,6 +732,7 @@
   async function savePersonalInfo() {
     const upd = {
       name:     document.getElementById('prof-name').value.trim(),
+      pincode:  document.getElementById('prof-pincode').value.trim() || null,
       mobile:   document.getElementById('prof-mobile').value.trim(),
       gender:   document.getElementById('prof-gender').value,
       dob:      document.getElementById('prof-dob').value || null,

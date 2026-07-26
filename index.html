@@ -1180,16 +1180,18 @@
       </select>
     </div>
     <div class="pf-field">
+      <label class="pf-label">Pincode</label>
+      <input class="pf-input" id="pf-pincode" type="text" inputmode="numeric" maxlength="6" placeholder="6-digit pincode (auto-fills state &amp; district)" oninput="onPincodeInput(this.value)">
+    </div>
+    <div class="pf-field">
       <label class="pf-label">State</label>
-      <select class="pf-input" id="pf-state" onchange="onStateChange()">
+      <select class="pf-input" id="pf-state">
         <option value="">Select state…</option>
       </select>
     </div>
-    <div class="pf-field" id="pf-district-wrap" style="display:none;">
-      <label class="pf-label">District / City</label>
-      <select class="pf-input" id="pf-district">
-        <option value="">Select district…</option>
-      </select>
+    <div class="pf-field">
+      <label class="pf-label">District</label>
+      <input class="pf-input" id="pf-district" type="text" placeholder="District (auto-filled from pincode)">
     </div>
 
     <!-- Bank Account Details -->
@@ -1266,9 +1268,6 @@
     stateEl.innerHTML = '<option value="">Loading states…</option>';
     stateEl.disabled = true;
 
-    document.getElementById('pf-district').innerHTML = '<option value="">Select district…</option>';
-    document.getElementById('pf-district-wrap').style.display = 'none';
-
     const states = await cscGet('/countries/IN/states');
     states.sort((a, b) => a.name.localeCompare(b.name));
 
@@ -1282,27 +1281,23 @@
     }
   }
 
-  // When user picks a state — load its districts
-  async function onStateChange() {
-    const stateEl  = document.getElementById('pf-state');
-    const stateIso = stateEl.value;
-    const distEl   = document.getElementById('pf-district');
-    distEl.innerHTML = '<option value="">Select district…</option>';
-    document.getElementById('pf-district-wrap').style.display = 'none';
-    if (!stateIso) return;
+  // Pincode auto-fill: enter 6 digits → fill State + District
+  async function onPincodeInput(val) {
+    if (!/^\d{6}$/.test(val)) return;
+    try {
+      const res  = await fetch(`https://api.postalpincode.in/pincode/${val}`);
+      const data = await res.json();
+      if (!data || data[0]?.Status !== 'Success') return;
+      const po = data[0].PostOffice?.[0];
+      if (!po) return;
 
-    distEl.innerHTML = '<option value="">Loading districts…</option>';
-    distEl.disabled  = true;
-    document.getElementById('pf-district-wrap').style.display = 'block';
+      document.getElementById('pf-district').value = po.District || '';
 
-    const cities = await cscGet(`/countries/IN/states/${stateIso}/cities`);
-    cities.sort((a, b) => a.name.localeCompare(b.name));
-
-    distEl.disabled = false;
-    distEl.innerHTML = '<option value="">Select district / city…</option>' +
-      (cities.length
-        ? cities.map(c => `<option value="${c.name}">${c.name}</option>`).join('')
-        : '<option value="">No cities found</option>');
+      const stateName = po.State || '';
+      const stateEl   = document.getElementById('pf-state');
+      const opt = [...stateEl.options].find(o => o.dataset.name === stateName);
+      if (opt) stateEl.value = opt.value;
+    } catch (e) { /* ignore */ }
   }
 
   // ── Profile Modal Open ────────────────────────────────────
@@ -1315,16 +1310,18 @@
     if (!user) return;
 
     const { data: profile } = await _db.from('users')
-      .select('name,mobile,dob,gender,country,state,district,bank_holder_name,bank_name,bank_account_no,bank_ifsc,bank_branch,bank_account_type')
+      .select('name,mobile,dob,gender,country,state,district,pincode,bank_holder_name,bank_name,bank_account_no,bank_ifsc,bank_branch,bank_account_type')
       .eq('id', user.id).single();
 
     const savedState    = profile?.state    || '';
     const savedDistrict = profile?.district || '';
 
-    document.getElementById('pf-name').value   = profile?.name   || user.user_metadata?.name || '';
-    document.getElementById('pf-mobile').value = profile?.mobile || profile?.phone || '';
-    document.getElementById('pf-dob').value    = profile?.dob    || '';
-    document.getElementById('pf-gender').value = profile?.gender || '';
+    document.getElementById('pf-name').value     = profile?.name    || user.user_metadata?.name || '';
+    document.getElementById('pf-mobile').value   = profile?.mobile  || profile?.phone || '';
+    document.getElementById('pf-dob').value      = profile?.dob     || '';
+    document.getElementById('pf-gender').value   = profile?.gender  || '';
+    document.getElementById('pf-pincode').value  = profile?.pincode || '';
+    document.getElementById('pf-district').value = savedDistrict;
 
     // Bank details
     document.getElementById('pf-bank-holder').value = profile?.bank_holder_name  || '';
@@ -1334,19 +1331,8 @@
     document.getElementById('pf-bank-ifsc').value   = profile?.bank_ifsc         || '';
     document.getElementById('pf-bank-branch').value = profile?.bank_branch       || '';
 
-    // Load Indian states, pre-select saved state
+    // Load Indian states and pre-select saved state
     await loadIndiaStates(savedState);
-
-    // If state was saved, load its districts and pre-select saved district
-    if (savedState) {
-      const stateEl = document.getElementById('pf-state');
-      const opt = [...stateEl.options].find(o => o.dataset.name === savedState || o.value === savedState);
-      if (opt) {
-        stateEl.value = opt.value;
-        await onStateChange();
-        if (savedDistrict) document.getElementById('pf-district').value = savedDistrict;
-      }
-    }
   }
 
   function closeProfileModal() {
@@ -1363,7 +1349,8 @@
     const mobile   = document.getElementById('pf-mobile').value.trim();
     const dob      = document.getElementById('pf-dob').value;
     const gender   = document.getElementById('pf-gender').value;
-    const district = document.getElementById('pf-district').value;
+    const district = document.getElementById('pf-district').value.trim();
+    const pincode  = document.getElementById('pf-pincode').value.trim();
 
     // Save state as display name (dataset.name), country always India
     const stateEl = document.getElementById('pf-state');
@@ -1393,6 +1380,7 @@
         bank_account_no:   document.getElementById('pf-bank-accno').value.trim()  || null,
         bank_ifsc:         document.getElementById('pf-bank-ifsc').value.trim().toUpperCase() || null,
         bank_branch:       document.getElementById('pf-bank-branch').value.trim() || null,
+        pincode:           pincode || null,
       })
       .eq('id', user.id);
 
