@@ -674,9 +674,19 @@
         <div class="panel-body" style="text-align:center;padding:2.5rem">
           <div style="font-size:3rem;margin-bottom:.5rem">🪙</div>
           <div style="font-size:2.5rem;font-weight:900;color:var(--red)"><span id="wallet-display">0</span> coins</div>
-          <div style="color:#888;margin-top:.4rem;font-size:.9rem">Coin Balance</div>
+          <div style="color:#888;margin-top:.4rem;font-size:.9rem">Total Balance</div>
           <div style="margin-top:.6rem;font-size:1.1rem;font-weight:700;color:#444">= ₹<span id="wallet-cash">0.00</span></div>
-          <div style="color:#aaa;font-size:.8rem;margin-top:.2rem">Cash Value &nbsp;·&nbsp; ₹0.05 = 100 coins</div>
+          <div style="display:flex;justify-content:center;gap:1.5rem;margin-top:1rem;font-size:.85rem;">
+            <div style="background:#fff8e1;border-radius:10px;padding:.6rem 1.2rem;">
+              <div style="color:#aaa;font-size:.75rem;margin-bottom:.2rem">🪙 Coin Wallet</div>
+              <div style="font-weight:700;color:#f59e0b;">₹<span id="wallet-coin-cash">0.00</span></div>
+            </div>
+            <div style="background:#f0fdf4;border-radius:10px;padding:.6rem 1.2rem;">
+              <div style="color:#aaa;font-size:.75rem;margin-bottom:.2rem">💳 Paid Wallet</div>
+              <div style="font-weight:700;color:#16a34a;">₹<span id="wallet-adv-bal">0.00</span></div>
+            </div>
+          </div>
+          <div style="color:#aaa;font-size:.78rem;margin-top:.8rem;">Coin wallet used first when placing ads · ₹0.05 = 100 coins</div>
           <button class="btn-submit" style="max-width:240px;margin:1.5rem auto 0" onclick="openAddFunds()">+ Add Funds</button>
         </div>
       </div>
@@ -708,9 +718,21 @@
 
 <script>
   let _walletBalance = 0;
+  let _coinWalletCash = 0;
+  let _advWalletBal   = 0;
   let _pendingMediaFile = null;
   const ADV_CPR = 2000; // ₹0.05 = 100 coins → ₹1 = 2000 coins
   function _rupToCoins(r) { return Math.round(r * ADV_CPR).toLocaleString('en-IN'); }
+
+  function _updateWalletUI() {
+    const bal = _walletBalance;
+    document.getElementById('wallet-bal').textContent     = _rupToCoins(bal);
+    document.getElementById('wallet-display').textContent = _rupToCoins(bal);
+    const wc = document.getElementById('wallet-cash'); if (wc) wc.textContent = bal.toFixed(2);
+    const cc = document.getElementById('wallet-coin-cash'); if (cc) cc.textContent = _coinWalletCash.toFixed(2);
+    const aw = document.getElementById('wallet-adv-bal');  if (aw) aw.textContent = _advWalletBal.toFixed(2);
+    _updateLowBalBanner();
+  }
 
   // ── AI Content Filter (NSFW) ──────────────────────────
   let _nsfwModel = null;
@@ -912,21 +934,18 @@
       // fallback: direct query
       const { data: adv } = await db.from('advertisers').select('id,wallet_balance').eq('user_id', user.id).single();
       if (!adv) return;
-      const bal = parseFloat(adv.wallet_balance) || 0;
-      _walletBalance = bal;
-      document.getElementById('wallet-bal').textContent     = _rupToCoins(bal);
-      document.getElementById('wallet-display').textContent = _rupToCoins(bal);
-      const wc = document.getElementById('wallet-cash'); if (wc) wc.textContent = bal.toFixed(2);
-      _updateLowBalBanner();
+      const { data: cw } = await db.from('coin_wallets').select('cash_value').eq('user_id', user.id).single();
+      _advWalletBal   = parseFloat(adv.wallet_balance) || 0;
+      _coinWalletCash = parseFloat(cw?.cash_value) || 0;
+      _walletBalance  = _advWalletBal + _coinWalletCash;
+      _updateWalletUI();
       return;
     }
     const s = data;
-    const bal = parseFloat(s.wallet_balance) || 0;
-    _walletBalance = bal;
-    document.getElementById('wallet-bal').textContent     = _rupToCoins(bal);
-    document.getElementById('wallet-display').textContent = _rupToCoins(bal);
-    const wc = document.getElementById('wallet-cash'); if (wc) wc.textContent = bal.toFixed(2);
-    _updateLowBalBanner();
+    _advWalletBal   = parseFloat(s.wallet_balance)   || 0;
+    _coinWalletCash = parseFloat(s.coin_wallet_cash)  || 0;
+    _walletBalance  = parseFloat(s.combined_balance)  || 0;
+    _updateWalletUI();
     document.getElementById('stat-ads').textContent    = s.total_ads || 0;
     document.getElementById('stat-views').textContent  = Number(s.total_views || 0).toLocaleString();
     document.getElementById('stat-active').textContent = s.active_ads || 0;
@@ -1121,19 +1140,34 @@
       if (btn) btn.textContent = '🚀 Submit Ad for Review';
     }
 
-    const payload = {
-      advertiser_id: adv.id, title, ad_type: adType,
-      target_area: target, target_value: targetValue || null,
-      views_ordered: qty, rate_per_1k: rate,
-      pricing_model: isCPC ? 'cpc' : 'cpm',
-      budget_base: base, budget_gst: gst, budget_total: base+gst,
-      content_url: mediaUrl
-    };
-    if (wa) payload.whatsapp_number = wa.startsWith('+') ? wa : '+91' + wa.replace(/\D/g,'');
+    const waFmt = wa ? (wa.startsWith('+') ? wa : '+91' + wa.replace(/\D/g,'')) : null;
 
-    const { error } = await db.from('ads').insert(payload);
+    const { data: result, error } = await db.rpc('submit_ad_with_wallet', {
+      p_user_id:       user.id,
+      p_advertiser_id: adv.id,
+      p_title:         title,
+      p_ad_type:       adType,
+      p_content_url:   mediaUrl,
+      p_target_area:   target,
+      p_target_value:  targetValue || null,
+      p_views_ordered: qty,
+      p_rate_per_1k:   rate,
+      p_pricing_model: isCPC ? 'cpc' : 'cpm',
+      p_budget_base:   base,
+      p_budget_gst:    gst,
+      p_budget_total:  base + gst,
+      p_whatsapp:      waFmt
+    });
 
     if (error) { showAlert('post', error.message, 'error'); return; }
+    if (!result?.success) { showAlert('post', result?.message || 'Submission failed.', 'error'); return; }
+
+    // Update wallet balances instantly
+    _coinWalletCash = parseFloat(result.remaining_coin_cash) || 0;
+    _advWalletBal   = parseFloat(result.remaining_adv_bal)   || 0;
+    _walletBalance  = _coinWalletCash + _advWalletBal;
+    _updateWalletUI();
+
     showAlert('post', '✅ Ad submitted for review! You will be notified once approved.', 'success');
     document.getElementById('ad-title').value = '';
     document.getElementById('ad-whatsapp').value = '';
