@@ -989,7 +989,6 @@
     document.getElementById('stat-coins').textContent     = Number(coins).toLocaleString();
     document.getElementById('stat-cash').textContent      = '₹' + parseFloat(cash).toFixed(2);
     document.getElementById('stat-watched').textContent   = data?.ads_watched  || 0;
-    document.getElementById('stat-avail').textContent     = data?.available_ads || 0;
     document.getElementById('nav-coins').textContent      = Number(coins).toLocaleString();
     document.getElementById('wallet-coins').textContent   = Number(coins).toLocaleString();
     document.getElementById('wallet-cash').textContent    = parseFloat(cash).toFixed(2);
@@ -1169,10 +1168,14 @@
 
     // 2. Fetch fresh data
     try {
-      const [{ data: viewed, error: e1 }, { data: clicked, error: e2 }, { data: ads, error: e3 }] = await Promise.all([
-        db.from('ad_views').select('ad_id').eq('viewer_id', currentUser.id),
-        db.from('ad_clicks').select('ad_id').eq('viewer_id', currentUser.id),
-        db.from('ads').select('id,title,ad_type,content_url,target_area,target_value,whatsapp_number,views_ordered,budget_total,rate_per_1k').eq('status','active'),
+      const _adsTimeout = new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 10000));
+      const [{ data: viewed, error: e1 }, { data: clicked, error: e2 }, { data: ads, error: e3 }] = await Promise.race([
+        Promise.all([
+          db.from('ad_views').select('ad_id').eq('viewer_id', currentUser.id),
+          db.from('ad_clicks').select('ad_id').eq('viewer_id', currentUser.id),
+          db.from('ads').select('id,title,ad_type,content_url,target_area,target_value,whatsapp_number,views_ordered,budget_total,rate_per_1k').eq('status','active'),
+        ]),
+        _adsTimeout,
       ]);
       if (e3) throw new Error(e3.message);
       watchedAds = new Set((viewed||[]).map(v => v.ad_id));
