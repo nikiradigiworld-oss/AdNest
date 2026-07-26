@@ -1031,14 +1031,13 @@
 
   // ── Load active ads ───────────────────────────────────
   async function loadAds() {
-    const [{ data: viewed }, { data: clicked }] = await Promise.all([
+    const [{ data: viewed }, { data: clicked }, { data: ads }] = await Promise.all([
       db.from('ad_views').select('ad_id').eq('viewer_id', currentUser.id),
       db.from('ad_clicks').select('ad_id').eq('viewer_id', currentUser.id),
+      db.from('ads').select('id,title,ad_type,content_url,target_area,target_value,whatsapp_number,views_ordered,budget_total,rate_per_1k').eq('status','active'),
     ]);
     watchedAds = new Set((viewed||[]).map(v => v.ad_id));
     clickedAds = new Set((clicked||[]).map(c => c.ad_id));
-
-    const { data: ads } = await db.from('ads').select('*').eq('status', 'active');
     const list = ads || [];
     list.forEach(ad => { _adCache[ad.id] = ad; });
 
