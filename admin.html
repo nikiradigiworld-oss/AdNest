@@ -812,6 +812,7 @@
         <div class="page-sub">Review and process viewer cash withdrawal requests</div>
       </div>
       <div class="top-bar-right">
+        <button class="refresh-btn" onclick="exportWithdrawalsExcel()" style="background:#1a7f4b;color:#fff;border-color:#1a7f4b;">📥 Export Excel</button>
         <button class="refresh-btn" onclick="loadWithdrawals()">🔄 Refresh</button>
       </div>
     </div>
@@ -1870,6 +1871,44 @@
     if (error) { showToast('Error: ' + error.message, 'error'); return; }
     showToast('✅ Withdrawal updated to ' + newStatus, 'success');
     loadWithdrawals();
+  }
+
+  // ── Export Withdrawals to Excel ───────────────────────────
+  async function exportWithdrawalsExcel() {
+    showToast('Fetching withdrawal data…', 'info');
+    const { data, error } = await db.from('withdrawal_requests')
+      .select('*, users(name,email)')
+      .order('requested_at', { ascending: false });
+    if (error) { showToast('Error: ' + error.message, 'error'); return; }
+    if (!data || !data.length) { showToast('No withdrawal requests to export', 'error'); return; }
+
+    const rows = data.map(r => ({
+      'Name':             r.users?.name          || '',
+      'Email':            r.users?.email         || '',
+      'Amount (₹)':       Number(r.amount_rupees || 0).toFixed(2),
+      'A/C Holder Name':  r.bank_holder_name     || '',
+      'Bank Name':        r.bank_name            || '',
+      'Account Number':   r.bank_account_no      || '',
+      'IFSC Code':        r.bank_ifsc            || '',
+      'Branch':           r.bank_branch          || '',
+      'Account Type':     r.bank_account_type    || '',
+      'Status':           r.status               || '',
+      'Requested At':     r.requested_at  ? new Date(r.requested_at).toLocaleString('en-IN')  : '',
+      'Processed At':     r.processed_at  ? new Date(r.processed_at).toLocaleString('en-IN')  : '',
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(rows);
+    ws['!cols'] = [
+      {wch:22},{wch:30},{wch:12},{wch:22},{wch:18},
+      {wch:20},{wch:14},{wch:18},{wch:14},{wch:12},{wch:22},{wch:22}
+    ];
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Withdrawals');
+
+    const date = new Date().toISOString().slice(0,10);
+    XLSX.writeFile(wb, `AdNest_Withdrawals_${date}.xlsx`);
+    showToast('✅ Excel downloaded!', 'success');
   }
 
   // ── Analytics ─────────────────────────────────────────────
