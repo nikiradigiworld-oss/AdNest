@@ -523,7 +523,7 @@
 
       <!-- Withdraw Cash -->
       <div class="panel" id="withdrawal-panel">
-        <div class="panel-head"><h3>💸 Withdraw Cash</h3><span style="font-size:.78rem;opacity:.7">Min ₹100</span></div>
+        <div class="panel-head"><h3>💸 Withdraw Cash</h3><span style="font-size:.78rem;opacity:.7">Min ₹1,000</span></div>
         <div class="panel-body">
           <div id="wd-alert" style="display:none;padding:.75rem 1rem;border-radius:10px;margin-bottom:1rem;font-size:.85rem;font-weight:600;"></div>
           <div style="background:rgba(255,215,0,.07);border:1px solid rgba(255,215,0,.18);border-radius:10px;padding:.85rem 1rem;margin-bottom:1.2rem;font-size:.82rem;color:rgba(255,215,0,.9);">
@@ -979,7 +979,7 @@
       wdAlert.style.color = ok ? '#2ecc71' : '#e74c3c';
       wdAlert.style.display = 'block';
     };
-    if (!amt || amt < 100) { show('Minimum withdrawal is ₹100', false); return; }
+    if (!amt || amt < 1000) { show('Minimum withdrawal is ₹1,000', false); return; }
     const cash = parseFloat(document.getElementById('wd-balance').textContent);
     if (amt > cash) { show(`Insufficient balance. Available: ₹${cash.toFixed(2)}`, false); return; }
 
