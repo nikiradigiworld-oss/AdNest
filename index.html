@@ -1076,6 +1076,30 @@
     }).join('');
   }
 
+  const _VAPID_PUB = 'BKCdn-S7id6ildl1fmb_Oj9ddR6i6WHGFU7_WOroy1T32RSn1QKixmLpgH5jdj85hBfKeGdFfe_SEr5OkpRVWZw';
+  function _b64ToUint8(b64) {
+    const pad = '='.repeat((4 - b64.length % 4) % 4);
+    const raw = atob((b64 + pad).replace(/-/g, '+').replace(/_/g, '/'));
+    return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
+  }
+  async function subscribePushHome(userId) {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+    try {
+      const perm = await Notification.requestPermission();
+      if (perm !== 'granted') return;
+      const reg = await navigator.serviceWorker.ready;
+      const existing = await reg.pushManager.getSubscription();
+      const sub = existing || await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: _b64ToUint8(_VAPID_PUB)
+      });
+      await _db.from('push_subscriptions').upsert(
+        { user_id: userId, endpoint: sub.endpoint, subscription: JSON.parse(JSON.stringify(sub)) },
+        { onConflict: 'user_id,endpoint' }
+      );
+    } catch (e) { /* ignore — permission denied or unsupported */ }
+  }
+
   async function loadLeaderboards() {
     const [{ data: referrers }, { data: earners }] = await Promise.all([
       _db.rpc('get_top_referrers'),
@@ -1099,6 +1123,7 @@
       setTimeout(() => { toast.style.display = 'none'; }, 5000);
       showProfile(session.user);
       applyRolePortals(role);
+      subscribePushHome(session.user.id);
     }
     if (event === 'SIGNED_OUT') {
       hideProfile();

@@ -738,6 +738,34 @@
     loadAds();
     checkUnreadChat();
     setInterval(checkUnreadChat, 30000);
+    subscribePush(user.id);
+  }
+
+  // ── Push subscription ────────────────────────────────
+  const VAPID_PUBLIC = 'BKCdn-S7id6ildl1fmb_Oj9ddR6i6WHGFU7_WOroy1T32RSn1QKixmLpgH5jdj85hBfKeGdFfe_SEr5OkpRVWZw';
+
+  function urlBase64ToUint8Array(b64) {
+    const pad = '='.repeat((4 - b64.length % 4) % 4);
+    const raw = atob((b64 + pad).replace(/-/g, '+').replace(/_/g, '/'));
+    return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
+  }
+
+  async function subscribePush(userId) {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+    try {
+      const perm = await Notification.requestPermission();
+      if (perm !== 'granted') return;
+      const reg = await navigator.serviceWorker.ready;
+      const existing = await reg.pushManager.getSubscription();
+      const sub = existing || await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC)
+      });
+      await db.from('push_subscriptions').upsert(
+        { user_id: userId, endpoint: sub.endpoint, subscription: JSON.parse(JSON.stringify(sub)) },
+        { onConflict: 'user_id,endpoint' }
+      );
+    } catch (e) { /* permission denied or browser unsupported */ }
   }
 
   // ── View switching ────────────────────────────────────
