@@ -104,13 +104,32 @@
     input[type="email"],
     input[type="password"],
     input[type="text"],
-    input[type="tel"] {
+    input[type="tel"],
+    input[type="date"],
+    input[type="number"] {
       width: 100%; padding: .72rem 1rem .72rem 2.4rem;
       border: 1.5px solid #e0e0e0; border-radius: 10px;
       font-size: 0.93rem; color: var(--dark);
       outline: none; transition: border .2s; background: var(--white);
     }
+    select.field-select {
+      width: 100%; padding: .72rem 1rem .72rem 2.4rem;
+      border: 1.5px solid #e0e0e0; border-radius: 10px;
+      font-size: 0.93rem; color: var(--dark);
+      outline: none; transition: border .2s; background: var(--white);
+      appearance: none; cursor: pointer;
+    }
+    select.field-select:focus { border-color: var(--red); }
     input:focus { border-color: var(--red); }
+    .btn-skip {
+      display: block; width: 100%; background: transparent;
+      border: 1.5px solid #e0e0e0; border-radius: 12px;
+      padding: .7rem; font-size: .88rem; font-weight: 600;
+      color: #888; cursor: pointer; margin-top: .6rem;
+      transition: border .2s;
+    }
+    .btn-skip:hover { border-color: #aaa; color: #555; }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; }
 
     .toggle-pw {
       position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
@@ -189,6 +208,7 @@
     <div class="step-dot active" id="dot-1"></div>
     <div class="step-dot" id="dot-2"></div>
     <div class="step-dot" id="dot-3"></div>
+    <div class="step-dot" id="dot-4"></div>
   </div>
 
   <div class="card-body">
@@ -261,11 +281,80 @@
 
     </div>
 
-    <!-- STEP 2: Role -->
+    <!-- STEP 2: Profile Details (optional) -->
     <div class="step" id="step-2">
+      <div class="step-title">Your profile details</div>
+      <div class="step-sub">Help us personalise your experience. All fields are optional.</div>
+      <div id="alert-2" class="alert"></div>
+
+      <div class="two-col">
+        <div class="field">
+          <label>Mobile Number</label>
+          <div class="input-wrap">
+            <span class="icon">📱</span>
+            <input type="tel" id="su-mobile" placeholder="10-digit number" maxlength="10"
+              oninput="this.value=this.value.replace(/\D/g,'')" />
+          </div>
+        </div>
+        <div class="field">
+          <label>Date of Birth</label>
+          <div class="input-wrap">
+            <span class="icon">🎂</span>
+            <input type="date" id="su-dob" />
+          </div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Gender</label>
+        <div class="input-wrap">
+          <span class="icon">👤</span>
+          <select id="su-gender" class="field-select">
+            <option value="">Select gender</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+            <option value="other">Other</option>
+            <option value="prefer_not">Prefer not to say</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Pincode</label>
+        <div class="input-wrap">
+          <span class="icon">📍</span>
+          <input type="text" id="su-pincode" placeholder="6-digit pincode" maxlength="6"
+            oninput="this.value=this.value.replace(/\D/g,''); if(this.value.length===6) autoFillLocation(this.value)" />
+          <span id="su-pin-status" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:.82rem;"></span>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div class="field">
+          <label>State</label>
+          <div class="input-wrap">
+            <span class="icon">🗺️</span>
+            <input type="text" id="su-state" placeholder="Auto-filled" readonly style="background:#f9f9f9;" />
+          </div>
+        </div>
+        <div class="field">
+          <label>District</label>
+          <div class="input-wrap">
+            <span class="icon">🏘️</span>
+            <input type="text" id="su-district" placeholder="Auto-filled" readonly style="background:#f9f9f9;" />
+          </div>
+        </div>
+      </div>
+
+      <button class="btn-primary" onclick="submitStep2()">Continue →</button>
+      <button class="btn-skip" onclick="goToStep(3)">Skip for now</button>
+    </div>
+
+    <!-- STEP 3: Role -->
+    <div class="step" id="step-3">
       <div class="step-title">Choose your role</div>
       <div class="step-sub">How will you use Anaar?</div>
-      <div id="alert-2" class="alert"></div>
+      <div id="alert-3" class="alert"></div>
 
       <div class="role-grid">
         <div class="role-card" id="role-viewer" onclick="selectRole('viewer')">
@@ -285,12 +374,11 @@
         </div>
       </div>
 
-
-      <button class="btn-primary" id="btn-signup" onclick="submitStep2()">Create Account</button>
+      <button class="btn-primary" id="btn-signup" onclick="submitStep3()">Create Account</button>
     </div>
 
-    <!-- STEP 3: Success / Verify Email -->
-    <div class="step" id="step-3">
+    <!-- STEP 4: Success / Verify Email -->
+    <div class="step" id="step-4">
       <div class="success-screen">
         <div class="big-icon">🎉</div>
         <h2 id="success-title">Account Created!</h2>
@@ -388,8 +476,9 @@
   function goToStep(n) {
     document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
     document.getElementById('step-' + n).classList.add('active');
-    for (let i = 1; i <= 3; i++) {
+    for (let i = 1; i <= 4; i++) {
       const d = document.getElementById('dot-' + i);
+      if (!d) continue;
       d.classList.remove('active','done');
       if (i < n) d.classList.add('done');
       else if (i === n) d.classList.add('active');
@@ -451,6 +540,30 @@
     goToStep(2);
   }
 
+  // ── Step 2: Profile details (optional) ───────────────
+  function submitStep2() {
+    // All fields optional — just move to step 3
+    goToStep(3);
+  }
+
+  // ── Pincode auto-fill ─────────────────────────────────
+  async function autoFillLocation(pin) {
+    const status = document.getElementById('su-pin-status');
+    status.textContent = '⏳';
+    try {
+      const res  = await fetch(`https://api.postalpincode.in/pincode/${pin}`);
+      const data = await res.json();
+      if (data?.[0]?.Status === 'Success' && data[0].PostOffice?.[0]) {
+        const po = data[0].PostOffice[0];
+        document.getElementById('su-state').value    = po.State    || '';
+        document.getElementById('su-district').value = po.District || '';
+        status.textContent = '✅';
+      } else {
+        status.textContent = '❌';
+      }
+    } catch { status.textContent = ''; }
+  }
+
   // ── Role selection ────────────────────────────────────
   function selectRole(role) {
     selectedRole = role;
@@ -459,20 +572,27 @@
     document.getElementById('role-both').classList.toggle('selected', role === 'both');
   }
 
-  // ── Step 2: Sign up with Supabase ─────────────────────
-  async function submitStep2() {
-    clearAlert(2);
-    if (!selectedRole) { showAlert(2,'Please choose a role.','error'); return; }
+  // ── Step 3: Sign up with Supabase ─────────────────────
+  async function submitStep3() {
+    clearAlert(3);
+    if (!selectedRole) { showAlert(3,'Please choose a role.','error'); return; }
 
     const name     = document.getElementById('name').value.trim();
     const email    = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value;
 
+    // Collect profile fields (all optional)
+    const mobile   = document.getElementById('su-mobile').value.trim();
+    const dob      = document.getElementById('su-dob').value;
+    const gender   = document.getElementById('su-gender').value;
+    const pincode  = document.getElementById('su-pincode').value.trim();
+    const state    = document.getElementById('su-state').value.trim();
+    const district = document.getElementById('su-district').value.trim();
+
     const btn = document.getElementById('btn-signup');
     btn.disabled = true; btn.textContent = 'Creating account…';
 
     try {
-      // Sign up with Supabase Auth — redirect to index.html after email verification
       const redirectTo = window.location.origin + window.location.pathname.replace('signup.html','') + 'index.html';
       const { data, error } = await db.auth.signUp({
         email, password,
@@ -483,17 +603,14 @@
       });
 
       if (error) {
-        showAlert(2, _fmtErr(error), 'error');
+        showAlert(3, _fmtErr(error), 'error');
         btn.disabled = false; btn.textContent = 'Create Account';
         return;
       }
 
-      // Supabase returns null user when email confirmation is required
-      // and a fake user object when already registered — handle both
       const user = data?.user;
 
       if (user && user.id) {
-        // Read referral code from input (covers both URL and manual entry)
         const inputCode = document.getElementById('ref-code-input').value.trim().toUpperCase();
         const finalCode = inputCode || _refCode;
 
@@ -505,19 +622,25 @@
         }
 
         const ownRefCode = _genRefCode();
-        await db.from('users').upsert({
+        const profileData = {
           id: user.id, email, name, role: selectedRole,
           referral_code: ownRefCode,
           referred_by:   referredBy
-        });
+        };
+        if (mobile)   profileData.mobile   = mobile;
+        if (dob)      profileData.dob      = dob;
+        if (gender)   profileData.gender   = gender;
+        if (pincode)  profileData.pincode  = pincode;
+        if (state)    profileData.state    = state;
+        if (district) profileData.district = district;
 
-        // Create advertiser profile entry
+        await db.from('users').upsert(profileData);
+
         if (selectedRole === 'advertiser' || selectedRole === 'both') {
           await db.from('advertisers').upsert({ user_id: user.id });
         }
       }
 
-      // Show success
       document.getElementById('verify-email').textContent = email;
       const titles = { viewer: 'Account Created!', advertiser: 'Advertiser Account Created!', both: 'Full Access Account Created!' };
       const msgs   = {
@@ -528,10 +651,10 @@
       document.getElementById('success-title').textContent = titles[selectedRole] || 'Account Created!';
       document.getElementById('success-msg').textContent   = msgs[selectedRole]   || 'Please verify your email to get started.';
 
-      goToStep(3);
+      goToStep(4);
 
     } catch (e) {
-      showAlert(2, _fmtErr(e) || 'An unexpected error occurred. Please try again.', 'error');
+      showAlert(3, _fmtErr(e) || 'An unexpected error occurred. Please try again.', 'error');
       btn.disabled = false; btn.textContent = 'Create Account';
     }
   }
