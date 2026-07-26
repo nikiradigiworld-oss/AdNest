@@ -1065,9 +1065,11 @@
     window.history.replaceState({}, '', window.location.pathname);
     if (payStatus === 'success') {
       const amt = p.get('amt') ? '₹' + parseFloat(p.get('amt')).toFixed(2) : '';
-      showAlert('post', `✅ Payment successful! ${amt} added to your wallet. Coins will reflect shortly.`, 'success');
+      showAlert('post', `✅ Payment successful! ${amt} added to your wallet. Coins credited instantly.`, 'success');
     } else if (payStatus === 'failed') {
-      showAlert('post', '❌ Payment failed or cancelled. Please try again.', 'error');
+      showAlert('post', '❌ Payment failed. Please try again or contact support.', 'error');
+    } else if (payStatus === 'cancelled') {
+      showAlert('post', '⚠️ Payment was cancelled. No money was charged.', 'error');
     } else if (payStatus === 'tampered') {
       showAlert('post', '⚠️ Payment verification failed. Contact support if money was deducted.', 'error');
     }
@@ -1227,38 +1229,38 @@
     if (cp) cp.textContent = _rupToCoins(n);
   }
 
-  const PAYU_ORDER_URL = 'https://qkbpdmeghjuucplbnnsz.supabase.co/functions/v1/payu-order';
+  const CCAV_ORDER_URL = 'https://qkbpdmeghjuucplbnnsz.supabase.co/functions/v1/ccav-order';
 
-  async function initiatePayuPayment() {
+  async function initiatePayment() {
     const amt = parseInt(document.getElementById('funds-amount').value) || 100;
-    if (amt < 50) { showAlert('funds', 'Minimum ₹50 required.', 'error'); return; }
+    if (amt < 50) { showAlert('post', 'Minimum ₹50 required.', 'error'); return; }
     const btn = document.getElementById('funds-pay-btn');
     btn.disabled = true;
-    btn.textContent = 'Redirecting to PayU…';
+    btn.textContent = 'Redirecting to CCAvenue…';
     try {
       const { data: { session } } = await db.auth.getSession();
-      const res = await fetch(PAYU_ORDER_URL, {
+      const res = await fetch(CCAV_ORDER_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
         body: JSON.stringify({ amount: amt })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Order creation failed');
-      // Build hidden form and submit to PayU
+      // Build form and submit to CCAvenue
       const form = document.createElement('form');
       form.method = 'POST';
-      form.action = data.payu_url;
-      Object.entries(data.params).forEach(([k, v]) => {
+      form.action = data.ccav_url;
+      [['encRequest', data.enc_request], ['access_code', data.access_code]].forEach(([k, v]) => {
         const inp = document.createElement('input');
-        inp.type = 'hidden'; inp.name = k; inp.value = String(v);
+        inp.type = 'hidden'; inp.name = k; inp.value = v;
         form.appendChild(inp);
       });
       document.body.appendChild(form);
       form.submit();
     } catch (e) {
       btn.disabled = false;
-      btn.textContent = '💳 Pay ₹' + amt + ' via PayU';
-      showAlert('funds', 'Error: ' + e.message, 'error');
+      btn.textContent = '💳 Pay ₹' + amt + ' via CCAvenue';
+      showAlert('post', 'Error: ' + e.message, 'error');
     }
   }
 
@@ -1366,8 +1368,8 @@
 
       <div class="funds-divider"><span>Secure Payment</span></div>
 
-      <button class="funds-pay-btn" id="funds-pay-btn" onclick="initiatePayuPayment()" style="margin-top:.5rem;font-size:1rem;padding:.85rem;">
-        💳 Pay ₹<span id="funds-pay-amt">100</span> via PayU
+      <button class="funds-pay-btn" id="funds-pay-btn" onclick="initiatePayment()" style="margin-top:.5rem;font-size:1rem;padding:.85rem;">
+        💳 Pay ₹<span id="funds-pay-amt">100</span> via CCAvenue
       </button>
 
       <div style="display:flex;justify-content:center;gap:.5rem;margin:.8rem 0 .3rem;flex-wrap:wrap;">
