@@ -345,7 +345,7 @@
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner"></span>Sending…';
 
-    const redirectTo = window.location.origin + '/login.html';
+    const redirectTo = window.location.origin + '/';
 
     const { error } = await db.auth.resetPasswordForEmail(email, { redirectTo });
 
@@ -357,7 +357,24 @@
     showView('sent');
   }
 
-  // ── Detect password recovery from email link ───────────
+  // ── Detect password recovery (3 methods) ──────────────
+
+  // Method 1: sessionStorage flag set by index.html when recovery lands there
+  if (sessionStorage.getItem('anaar_pw_recovery')) {
+    sessionStorage.removeItem('anaar_pw_recovery');
+    showView('set-password');
+  }
+
+  // Method 2: implicit flow — hash contains type=recovery
+  (function() {
+    const h = new URLSearchParams(window.location.hash.replace('#',''));
+    if (h.get('type') === 'recovery' && h.get('access_token')) {
+      window.history.replaceState({}, '', window.location.pathname);
+      showView('set-password');
+    }
+  })();
+
+  // Method 3: PKCE / onAuthStateChange
   db.auth.onAuthStateChange((event) => {
     if (event === 'PASSWORD_RECOVERY') {
       showView('set-password');

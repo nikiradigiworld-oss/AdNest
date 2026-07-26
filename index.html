@@ -1094,6 +1094,12 @@
   loadLeaderboards();
 
   _db.auth.onAuthStateChange((event, session) => {
+    if (event === 'PASSWORD_RECOVERY') {
+      // Recovery link landed here — hand off to login.html which has the reset form
+      sessionStorage.setItem('anaar_pw_recovery', '1');
+      window.location.href = '/login.html';
+      return;
+    }
     if (event === 'SIGNED_IN' && session) {
       const name = session.user.user_metadata?.name || session.user.email || 'there';
       const role = session.user.user_metadata?.role || 'viewer';
