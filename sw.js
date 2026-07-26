@@ -1,5 +1,5 @@
-const CACHE_NAME = 'anaar-v13';
-const BASE = '/AdNest';
+const CACHE_NAME = 'anaar-v14';
+const BASE = '';
 const PRECACHE_URLS = [
   BASE + '/',
   BASE + '/index.html',
@@ -29,13 +29,13 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('push', event => {
-  let data = { title: 'Anaar', body: 'You have a new notification.', icon: '/AdNest/icon.svg', url: '/AdNest/' };
+  let data = { title: 'Anaar', body: 'You have a new notification.', icon: '/icon.svg', url: '/' };
   try { if (event.data) Object.assign(data, JSON.parse(event.data.text())); } catch {}
   event.waitUntil(
     self.registration.showNotification(data.title, {
       body: data.body,
       icon: data.icon,
-      badge: '/AdNest/icon.svg',
+      badge: '/icon.svg',
       data: { url: data.url }
     })
   );
@@ -43,7 +43,7 @@ self.addEventListener('push', event => {
 
 self.addEventListener('notificationclick', event => {
   event.notification.close();
-  const url = event.notification.data?.url || '/AdNest/';
+  const url = event.notification.data?.url || '/';
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
       const match = list.find(c => c.url === url);
