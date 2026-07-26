@@ -479,21 +479,37 @@
 
             <div class="form-group" id="tgt-state-wrap" style="display:none">
               <label>State</label>
-              <select id="tgt-state" onchange="onTgtStateChange()">
+              <select id="tgt-state" onchange="onTgtStateChange()"
+                style="padding:.55rem .8rem;border:1.5px solid #ddd;border-radius:8px;font-size:.88rem;width:100%;outline:none;background:#fff;">
                 <option value="">Select state…</option>
               </select>
             </div>
 
-            <div class="form-group" id="tgt-district-wrap" style="display:none">
-              <label>District / City</label>
-              <input type="text" id="tgt-district" placeholder="e.g. Chennai, Coimbatore"
-                     style="padding:.55rem .8rem;border:1.5px solid #ddd;border-radius:8px;font-size:.88rem;width:100%;outline:none;" />
+            <!-- District chips (used in both district + pincode modes) -->
+            <div class="form-group" id="tgt-district-wrap" style="display:none;grid-column:1/-1">
+              <label id="tgt-district-label">Districts / Cities</label>
+              <div id="district-chips" style="display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:.5rem;min-height:.5rem;"></div>
+              <!-- Manual district input (district mode only) -->
+              <div id="tgt-district-input-wrap" style="display:none;gap:.5rem;align-items:center;">
+                <input type="text" id="tgt-district-input" placeholder="Type district name, press Enter to add"
+                  style="flex:1;padding:.55rem .8rem;border:1.5px solid #ddd;border-radius:8px;font-size:.88rem;outline:none;"
+                  onkeydown="if(event.key==='Enter'){event.preventDefault();addDistrictChip(this.value);this.value='';}" />
+                <button type="button" onclick="addDistrictChip(document.getElementById('tgt-district-input').value);document.getElementById('tgt-district-input').value='';"
+                  style="padding:.55rem 1rem;background:var(--red);color:#fff;border:none;border-radius:8px;font-size:.85rem;font-weight:700;cursor:pointer;white-space:nowrap;">+ Add</button>
+              </div>
+              <div id="tgt-district-hint" style="font-size:.72rem;color:#aaa;margin-top:.3rem;"></div>
             </div>
 
-            <div class="form-group" id="tgt-pincode-wrap" style="display:none">
-              <label>Pincode</label>
-              <input type="text" id="tgt-pincode" placeholder="e.g. 560001" maxlength="10"
-                     style="padding:.55rem .8rem;border:1.5px solid #ddd;border-radius:8px;font-size:.88rem;width:100%;outline:none;" />
+            <!-- Pincode input (pincode mode only) -->
+            <div class="form-group" id="tgt-pincode-wrap" style="display:none;grid-column:1/-1">
+              <label>Enter Pincode <span style="font-weight:400;color:#aaa;font-size:.78rem">(enter multiple to target multiple areas)</span></label>
+              <div style="display:flex;gap:.5rem;align-items:center;">
+                <input type="text" id="tgt-pincode-input" placeholder="6-digit pincode" maxlength="6"
+                  style="flex:1;padding:.55rem .8rem;border:1.5px solid #ddd;border-radius:8px;font-size:.88rem;outline:none;"
+                  oninput="this.value=this.value.replace(/\D/g,''); if(this.value.length===6) tgtAutoFillPincode(this.value);" />
+                <span id="tgt-pin-status" style="font-size:1rem;"></span>
+              </div>
+              <div id="tgt-pin-hint" style="font-size:.72rem;margin-top:.3rem;"></div>
             </div>
 
           </div>
@@ -977,24 +993,25 @@
     const wa      = document.getElementById('ad-whatsapp').value.trim();
 
     // Build target_value from location fields
-    const stateEl  = document.getElementById('tgt-state');
-    const stateName = stateEl.value || '';
-    const distName  = (document.getElementById('tgt-district')?.value || '').trim();
-    const pincode   = (document.getElementById('tgt-pincode')?.value  || '').trim();
+    const stateEl   = document.getElementById('tgt-state');
+    const stateName = stateEl?.value || '';
+    const districts = _selectedDistricts.join(', ');
 
     let targetValue = 'India';
-    if (stateName) targetValue += ', ' + stateName;
-    if (distName && target !== 'state')   targetValue += ', ' + distName;
-    if (pincode  && target === 'pincode') targetValue += ' – ' + pincode;
-    if (target === 'nationwide') targetValue = 'All India';
+    if (target === 'nationwide') {
+      targetValue = 'All India';
+    } else {
+      if (stateName) targetValue = stateName;
+      if (districts && target !== 'state') targetValue += ' — ' + districts;
+    }
 
     if (!title) { showAlert('post','Enter an ad title.','error'); return; }
-    if ((target==='state'||target==='district'||target==='pincode') && !stateName)
+    if (target !== 'nationwide' && !stateName)
       { showAlert('post','Please select a state.','error'); return; }
-    if ((target==='district'||target==='pincode') && !distName)
-      { showAlert('post','Please enter a district / city.','error'); return; }
-    if (target==='pincode' && !pincode)
-      { showAlert('post','Please enter a pincode.','error'); return; }
+    if ((target === 'district' || target === 'pincode') && _selectedDistricts.length === 0)
+      { showAlert('post', target === 'pincode'
+          ? 'Please enter at least one pincode to set the target area.'
+          : 'Please add at least one district.', 'error'); return; }
 
     const { data: { user } } = await db.auth.getUser();
     const { data: adv } = await db.from('advertisers').select('id').eq('user_id', user.id).single();
@@ -1093,25 +1110,104 @@
       _INDIA_STATES.map(s => `<option value="${s}">${s}</option>`).join('');
   }
 
+  let _selectedDistricts = [];
+
+  function addDistrictChip(name) {
+    name = (name || '').trim();
+    if (!name || _selectedDistricts.map(d => d.toLowerCase()).includes(name.toLowerCase())) return;
+    _selectedDistricts.push(name);
+    renderDistrictChips();
+  }
+
+  function removeDistrictChip(name) {
+    _selectedDistricts = _selectedDistricts.filter(d => d !== name);
+    renderDistrictChips();
+  }
+
+  function renderDistrictChips() {
+    const c = document.getElementById('district-chips');
+    if (!c) return;
+    c.innerHTML = _selectedDistricts.map(d =>
+      `<span style="display:inline-flex;align-items:center;gap:.3rem;padding:.28rem .75rem;background:#fff0f0;border:1.5px solid var(--red);border-radius:20px;font-size:.78rem;font-weight:700;color:var(--red);">
+        ${d}
+        <span onclick="removeDistrictChip('${d.replace(/'/g,"\\'")}');" style="cursor:pointer;font-size:.9rem;color:#aaa;font-weight:400;line-height:1;" title="Remove">×</span>
+      </span>`
+    ).join('');
+    const hint = document.getElementById('tgt-district-hint');
+    if (hint) hint.textContent = _selectedDistricts.length
+      ? `${_selectedDistricts.length} area(s) selected` : '';
+  }
+
+  async function tgtAutoFillPincode(pin) {
+    const status = document.getElementById('tgt-pin-status');
+    const hint   = document.getElementById('tgt-pin-hint');
+    status.textContent = '⏳'; hint.textContent = ''; hint.style.color = '#aaa';
+    try {
+      const res  = await fetch(`https://api.postalpincode.in/pincode/${pin}`);
+      const data = await res.json();
+      if (data?.[0]?.Status === 'Success' && data[0].PostOffice?.length) {
+        const offices   = data[0].PostOffice;
+        const state     = offices[0].State || '';
+        const districts = [...new Set(offices.map(o => o.District).filter(Boolean))];
+
+        // Auto-select state
+        const stateEl = document.getElementById('tgt-state');
+        if (!stateEl.value) {
+          const opt = [...stateEl.options].find(o => o.value === state);
+          if (opt) stateEl.value = opt.value;
+        }
+
+        // Add districts as chips
+        districts.forEach(d => addDistrictChip(d));
+
+        status.textContent   = '✅';
+        hint.textContent     = `${state} — ${districts.join(', ')} added`;
+        hint.style.color     = '#27ae60';
+        document.getElementById('tgt-pincode-input').value = '';
+      } else {
+        status.textContent = '❌';
+        hint.textContent   = 'Invalid pincode — please check and try again.';
+        hint.style.color   = '#e74c3c';
+      }
+    } catch {
+      status.textContent = '❌';
+      hint.textContent   = 'Could not fetch. Check your connection.';
+      hint.style.color   = '#e74c3c';
+    }
+  }
+
   function onTargetTypeChange() {
     const t = document.getElementById('ad-target').value;
-    const needState    = t === 'pincode' || t === 'district' || t === 'state';
+    const needState    = t !== 'nationwide';
     const needDistrict = t === 'pincode' || t === 'district';
+    const needPincode  = t === 'pincode';
+
     document.getElementById('tgt-state-wrap').style.display    = needState    ? 'block' : 'none';
     document.getElementById('tgt-district-wrap').style.display = needDistrict ? 'block' : 'none';
-    document.getElementById('tgt-pincode-wrap').style.display  = t === 'pincode' ? 'block' : 'none';
-    // Reset district/pincode on type change
-    const distEl = document.getElementById('tgt-district');
-    if (distEl) distEl.value = '';
-    const pinEl = document.getElementById('tgt-pincode');
-    if (pinEl) pinEl.value = '';
-    // Load states if needed (hardcoded — always instant)
+    document.getElementById('tgt-pincode-wrap').style.display  = needPincode  ? 'block' : 'none';
+
+    // District mode shows manual text entry; pincode mode auto-adds from API
+    const diw = document.getElementById('tgt-district-input-wrap');
+    if (diw) diw.style.display = t === 'district' ? 'flex' : 'none';
+
+    const lbl = document.getElementById('tgt-district-label');
+    if (lbl) lbl.textContent = t === 'pincode'
+      ? 'Districts added from pincode' : 'Districts / Cities';
+
+    // Reset on type change
+    _selectedDistricts = [];
+    renderDistrictChips();
+    const pinInp = document.getElementById('tgt-pincode-input');
+    if (pinInp) { pinInp.value = ''; }
+    const status = document.getElementById('tgt-pin-status');
+    if (status) status.textContent = '';
+    const hint = document.getElementById('tgt-pin-hint');
+    if (hint) hint.textContent = '';
+
     if (needState) _loadStates();
   }
 
-  function onTgtStateChange() {
-    // District is now a free-text input — nothing to cascade
-  }
+  function onTgtStateChange() { /* State auto-fills from pincode lookup */ }
 
   // Trigger initial show/hide
   onTargetTypeChange();
