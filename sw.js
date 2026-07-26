@@ -1,4 +1,4 @@
-const CACHE_NAME = 'anaar-v3';
+const CACHE_NAME = 'anaar-v4';
 const BASE = '/AdNest';
 const PRECACHE_URLS = [
   BASE + '/',
@@ -32,16 +32,14 @@ self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
   if (!event.request.url.startsWith(self.location.origin)) return;
 
+  // Network-first: always try fresh, fall back to cache offline
   event.respondWith(
-    caches.match(event.request).then(cached => {
-      const network = fetch(event.request).then(response => {
-        if (response && response.status === 200) {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
-        }
-        return response;
-      });
-      return cached || network;
-    })
+    fetch(event.request).then(response => {
+      if (response && response.status === 200) {
+        const clone = response.clone();
+        caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+      }
+      return response;
+    }).catch(() => caches.match(event.request))
   );
 });
