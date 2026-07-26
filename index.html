@@ -1180,21 +1180,15 @@
       </select>
     </div>
     <div class="pf-field">
-      <label class="pf-label">Country</label>
-      <select class="pf-input" id="pf-country" onchange="onCountryChange()">
-        <option value="">Select country</option>
-      </select>
-    </div>
-    <div class="pf-field">
-      <label class="pf-label">State / Province / Region</label>
+      <label class="pf-label">State</label>
       <select class="pf-input" id="pf-state" onchange="onStateChange()">
-        <option value="">Select state / province</option>
+        <option value="">Select state…</option>
       </select>
     </div>
     <div class="pf-field" id="pf-district-wrap" style="display:none;">
-      <label class="pf-label">District</label>
+      <label class="pf-label">District / City</label>
       <select class="pf-input" id="pf-district">
-        <option value="">Select district</option>
+        <option value="">Select district…</option>
       </select>
     </div>
 
@@ -1256,107 +1250,59 @@
 </style>
 
 <script>
-  // ── Country / State / City API (countrystatecity.in) ─────
-  const CSC_KEY = 'a85b9043d62eea3506b72b62d99ccfa8a0a2d92de9dfd3d780f79c12c12a64cb';
+  // ── India State / District API (countrystatecity.in) ────
+  const CSC_KEY  = 'a85b9043d62eea3506b72b62d99ccfa8a0a2d92de9dfd3d780f79c12c12a64cb';
   const CSC_BASE = 'https://api.countrystatecity.in/v1';
 
   async function cscGet(path) {
-    const res = await fetch(CSC_BASE + path, {
-      headers: { 'X-CSCAPI-KEY': CSC_KEY }
-    });
+    const res = await fetch(CSC_BASE + path, { headers: { 'X-CSCAPI-KEY': CSC_KEY } });
     if (!res.ok) return [];
     return res.json();
   }
 
-  function setSelectLoading(id, text) {
-    const el = document.getElementById(id);
-    el.innerHTML = `<option value="">${text}</option>`;
-    el.disabled = true;
-  }
-  function setSelectReady(id, items, valueFn, labelFn, placeholder) {
-    const el = document.getElementById(id);
-    el.disabled = false;
-    el.innerHTML = `<option value="">${placeholder}</option>` +
-      items.map(i => `<option value="${valueFn(i)}">${labelFn(i)}</option>`).join('');
-  }
+  // Load Indian states on modal open
+  async function loadIndiaStates(savedStateName) {
+    const stateEl = document.getElementById('pf-state');
+    stateEl.innerHTML = '<option value="">Loading states…</option>';
+    stateEl.disabled = true;
 
-  // Load all countries into the country dropdown
-  async function loadCountries(selectedIso2) {
-    setSelectLoading('pf-country', 'Loading countries…');
-    const countries = await cscGet('/countries');
-    countries.sort((a, b) => a.name.localeCompare(b.name));
-    const el = document.getElementById('pf-country');
-    el.disabled = false;
-    el.innerHTML = '<option value="">Select country</option>' +
-      countries.map(c =>
-        `<option value="${c.iso2}" data-name="${c.name}">${c.name}</option>`
-      ).join('');
-    if (selectedIso2) {
-      el.value = selectedIso2;
-      await loadStates(selectedIso2);
-    }
-  }
-
-  // Load states when a country is chosen
-  async function onCountryChange() {
-    const iso2 = document.getElementById('pf-country').value;
-    // reset downstream
-    document.getElementById('pf-state').innerHTML = '<option value="">Select state / province</option>';
-    document.getElementById('pf-district').innerHTML = '<option value="">Select district / city</option>';
-    document.getElementById('pf-district-wrap').style.display = 'none';
-    if (!iso2) return;
-    await loadStates(iso2);
-  }
-
-  async function loadStates(countryIso2, selectedStateName) {
-    setSelectLoading('pf-state', 'Loading states…');
-    document.getElementById('pf-district').innerHTML = '<option value="">Select district / city</option>';
+    document.getElementById('pf-district').innerHTML = '<option value="">Select district…</option>';
     document.getElementById('pf-district-wrap').style.display = 'none';
 
-    const states = await cscGet(`/countries/${countryIso2}/states`);
+    const states = await cscGet('/countries/IN/states');
     states.sort((a, b) => a.name.localeCompare(b.name));
 
-    const el = document.getElementById('pf-state');
-    el.disabled = false;
-    el.innerHTML = '<option value="">Select state / province</option>' +
-      states.map(s =>
-        `<option value="${s.iso2}" data-name="${s.name}" data-country="${countryIso2}">${s.name}</option>`
-      ).join('');
+    stateEl.disabled = false;
+    stateEl.innerHTML = '<option value="">Select state…</option>' +
+      states.map(s => `<option value="${s.iso2}" data-name="${s.name}">${s.name}</option>`).join('');
 
-    if (selectedStateName) {
-      // match by name since we stored name in DB
-      const opt = [...el.options].find(o => o.dataset.name === selectedStateName);
-      if (opt) { el.value = opt.value; await loadDistricts(countryIso2, opt.value); }
+    if (savedStateName) {
+      const opt = [...stateEl.options].find(o => o.dataset.name === savedStateName || o.value === savedStateName);
+      if (opt) { stateEl.value = opt.value; }
     }
   }
 
-  // Load cities/districts when a state is chosen
+  // When user picks a state — load its districts
   async function onStateChange() {
-    const stateEl = document.getElementById('pf-state');
-    const iso2    = stateEl.value;
-    const country = stateEl.options[stateEl.selectedIndex]?.dataset.country || '';
-    document.getElementById('pf-district').innerHTML = '<option value="">Select district / city</option>';
+    const stateEl  = document.getElementById('pf-state');
+    const stateIso = stateEl.value;
+    const distEl   = document.getElementById('pf-district');
+    distEl.innerHTML = '<option value="">Select district…</option>';
     document.getElementById('pf-district-wrap').style.display = 'none';
-    if (!iso2 || !country) return;
-    await loadDistricts(country, iso2);
-  }
+    if (!stateIso) return;
 
-  async function loadDistricts(countryIso2, stateIso2, selectedCity) {
-    setSelectLoading('pf-district', 'Loading cities…');
+    distEl.innerHTML = '<option value="">Loading districts…</option>';
+    distEl.disabled  = true;
     document.getElementById('pf-district-wrap').style.display = 'block';
 
-    const cities = await cscGet(`/countries/${countryIso2}/states/${stateIso2}/cities`);
+    const cities = await cscGet(`/countries/IN/states/${stateIso}/cities`);
     cities.sort((a, b) => a.name.localeCompare(b.name));
 
-    const el = document.getElementById('pf-district');
-    el.disabled = false;
-    if (!cities.length) {
-      el.innerHTML = '<option value="">No cities found</option>';
-    } else {
-      el.innerHTML = '<option value="">Select city / district</option>' +
-        cities.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
-    }
-    if (selectedCity) el.value = selectedCity;
+    distEl.disabled = false;
+    distEl.innerHTML = '<option value="">Select district / city…</option>' +
+      (cities.length
+        ? cities.map(c => `<option value="${c.name}">${c.name}</option>`).join('')
+        : '<option value="">No cities found</option>');
   }
 
   // ── Profile Modal Open ────────────────────────────────────
@@ -1372,8 +1318,6 @@
       .select('name,mobile,dob,gender,country,state,district,bank_holder_name,bank_name,bank_account_no,bank_ifsc,bank_branch,bank_account_type')
       .eq('id', user.id).single();
 
-    // Populate country dropdown first (then cascade state → district)
-    const savedCountry  = profile?.country  || '';
     const savedState    = profile?.state    || '';
     const savedDistrict = profile?.district || '';
 
@@ -1390,16 +1334,17 @@
     document.getElementById('pf-bank-ifsc').value   = profile?.bank_ifsc         || '';
     document.getElementById('pf-bank-branch').value = profile?.bank_branch       || '';
 
-    // Load countries; cascade into state & district using saved values
-    await loadCountries(savedCountry);
+    // Load Indian states, pre-select saved state
+    await loadIndiaStates(savedState);
 
-    if (savedCountry && savedState) {
+    // If state was saved, load its districts and pre-select saved district
+    if (savedState) {
       const stateEl = document.getElementById('pf-state');
-      // find the option whose display name matches savedState
       const opt = [...stateEl.options].find(o => o.dataset.name === savedState || o.value === savedState);
       if (opt) {
         stateEl.value = opt.value;
-        await loadDistricts(savedCountry, opt.value, savedDistrict);
+        await onStateChange();
+        if (savedDistrict) document.getElementById('pf-district').value = savedDistrict;
       }
     }
   }
@@ -1420,11 +1365,10 @@
     const gender   = document.getElementById('pf-gender').value;
     const district = document.getElementById('pf-district').value;
 
-    // Store state & country as display names for readability
-    const stateEl   = document.getElementById('pf-state');
-    const countryEl = document.getElementById('pf-country');
-    const state     = stateEl.options[stateEl.selectedIndex]?.dataset.name   || stateEl.value   || '';
-    const country   = countryEl.options[countryEl.selectedIndex]?.dataset.name || countryEl.value || '';
+    // Save state as display name (dataset.name), country always India
+    const stateEl = document.getElementById('pf-state');
+    const state   = stateEl.options[stateEl.selectedIndex]?.dataset.name || stateEl.value || '';
+    const country = 'India';
 
     if (mobile && !/^\d{10}$/.test(mobile)) {
       msg.style.display = 'block'; msg.style.color = 'var(--red2)';
