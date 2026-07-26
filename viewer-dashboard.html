@@ -1344,22 +1344,38 @@
     _vidAd = ad; _vidBtn = btn; _vidMinWatched = false;
 
     const player = document.getElementById('vid-player');
-    player.src = ad.content_url || '';
-    player.currentTime = 0;
-    document.getElementById('vid-title').textContent   = ad.title || 'Video Advertisement';
-    document.getElementById('vid-status').textContent  = '▶ Watch the full video to earn ₹0.25 + 500 coins';
-    document.getElementById('vid-success').style.display = 'none';
-    document.getElementById('vid-wa-btn').style.display   = 'none';
-    document.getElementById('video-viewer-overlay').classList.add('open');
-    player.play().catch(() => {});
+    const iframe  = document.getElementById('vid-iframe');
+    const isBunny = (ad.content_url || '').includes('mediadelivery.net');
 
-    // Allow claiming after 15 s minimum
+    if (isBunny) {
+      iframe.src = ad.content_url;
+      iframe.style.display  = 'block';
+      player.style.display  = 'none';
+      player.src = '';
+    } else {
+      player.src = ad.content_url || '';
+      player.currentTime = 0;
+      player.style.display  = 'block';
+      iframe.style.display  = 'none';
+      iframe.src = '';
+      player.play().catch(() => {});
+    }
+
+    document.getElementById('vid-title').textContent  = ad.title || 'Video Advertisement';
+    document.getElementById('vid-status').textContent = '▶ Watch the full video to earn ₹0.25 + 500 coins';
+    document.getElementById('vid-success').style.display = 'none';
+    document.getElementById('vid-wa-btn').style.display  = 'none';
+    document.getElementById('video-viewer-overlay').classList.add('open');
+
+    // Allow claiming after 15 s minimum watch time
     _vidMinTimer = setTimeout(() => { _vidMinWatched = true; }, 15000);
   }
 
   function closeVideoViewer() {
     const player = document.getElementById('vid-player');
+    const iframe  = document.getElementById('vid-iframe');
     player.pause(); player.src = '';
+    iframe.src = '';
     if (_vidMinTimer) { clearTimeout(_vidMinTimer); _vidMinTimer = null; }
     document.getElementById('video-viewer-overlay').classList.remove('open');
     _vidAd = null; _vidBtn = null;
@@ -1690,7 +1706,9 @@
 <div class="ad-viewer-overlay" id="video-viewer-overlay">
   <button class="av-close" onclick="closeVideoViewer()">✕</button>
   <video id="vid-player" playsinline controls
-         style="max-width:92vw;max-height:52vh;border-radius:14px;background:#000;outline:none"></video>
+         style="max-width:92vw;max-height:52vh;border-radius:14px;background:#000;outline:none;display:none"></video>
+  <iframe id="vid-iframe" allowfullscreen allow="autoplay; fullscreen"
+          style="display:none;width:min(92vw,560px);height:min(52vh,315px);border:none;border-radius:14px;background:#000"></iframe>
   <div class="av-title" id="vid-title"></div>
   <div class="av-status" id="vid-status">Watch the full video to earn ₹0.25 + 500 coins</div>
   <button onclick="_creditVideoAd()"
