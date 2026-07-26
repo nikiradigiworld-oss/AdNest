@@ -648,7 +648,7 @@
   <!-- Social icons injected here by loadSocialIcons() -->
   <div id="nav-social-icons" style="display:flex;align-items:center;gap:.45rem;"></div>
   <div style="display:flex;align-items:center;gap:.75rem;">
-    <div class="nav-coin">&#8377; 400 <span>&#127873;</span></div>
+    <div class="nav-coin" id="nav-coin-chip" style="display:none;">🪙 <span id="nav-coin-val">0</span></div>
     <button id="btn-install-app" onclick="triggerInstall()" title="Install Anaar App" style="display:none;background:rgba(255,255,255,0.18);color:#fff;border:1px solid rgba(255,255,255,0.35);border-radius:8px;padding:5px 12px;font-size:0.82rem;font-weight:700;cursor:pointer;letter-spacing:.3px;">📲 Install</button>
     <a id="nav-login-btn" href="login.html" style="display:none;background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.3);border-radius:8px;padding:5px 14px;font-size:0.82rem;font-weight:600;text-decoration:none;">Login</a>
 
@@ -1175,12 +1175,20 @@
     document.getElementById('drop-dashboard').href        = dashHref;
     document.getElementById('profile-wrap').style.display = 'flex';
     document.getElementById('nav-login-btn').style.display = 'none';
+    // Load coin balance
+    _db.from('coin_wallets').select('coins').eq('user_id', user.id).single().then(({ data }) => {
+      if (data) {
+        document.getElementById('nav-coin-val').textContent  = Number(data.coins).toLocaleString('en-IN');
+        document.getElementById('nav-coin-chip').style.display = 'flex';
+      }
+    });
   }
 
   function hideProfile() {
     document.getElementById('profile-wrap').style.display  = 'none';
     document.getElementById('nav-login-btn').style.display = 'block';
     document.getElementById('nav-admin-btn').style.display = 'none';
+    document.getElementById('nav-coin-chip').style.display = 'none';
   }
 
   // Apply role-based portal visibility
