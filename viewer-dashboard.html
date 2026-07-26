@@ -1077,12 +1077,15 @@
       const cpc       = cpcReward[ad.ad_type];
       const isSoc     = ad.ad_type === 'social_link';
       const isImg     = ad.ad_type === 'image';
-      const btnVerb   = isSoc ? '👍 Like' : '👆 Click';
-      const doneLabel = isSoc ? '✅ Liked' : '✅ Clicked';
+      const isVid2    = ad.ad_type === 'video';
+      const btnVerb   = isSoc ? '👍 Like' : isVid2 ? '▶ Watch' : '👆 Click';
+      const doneLabel = isSoc ? '✅ Liked' : isVid2 ? '✅ Watched' : '✅ Clicked';
 
+      const isVid = ad.ad_type === 'video';
       const btnOnclick = done ? ''
         : isImg ? `openAdViewer('${ad.id}', this)`
         : isSoc  ? `openSocialViewer('${ad.id}', this)`
+        : isVid  ? `openVideoViewer('${ad.id}', this)`
         : `clickAd('${ad.id}', this, 'click')`;
 
       const rewardHtml = isCPC
@@ -1258,6 +1261,74 @@
     document.getElementById('ad-viewer-overlay').classList.remove('open');
     _adViewerBtn = null;
   }
+
+  // ── Video Ad Viewer ───────────────────────────────────
+  let _vidAd = null, _vidBtn = null, _vidMinWatched = false, _vidMinTimer = null;
+
+  function openVideoViewer(adId, btn) {
+    const ad = _adCache[adId];
+    if (!ad) return;
+    _vidAd = ad; _vidBtn = btn; _vidMinWatched = false;
+
+    const player = document.getElementById('vid-player');
+    player.src = ad.content_url || '';
+    player.currentTime = 0;
+    document.getElementById('vid-title').textContent   = ad.title || 'Video Advertisement';
+    document.getElementById('vid-status').textContent  = '▶ Watch the full video to earn ₹0.25 + 500 coins';
+    document.getElementById('vid-success').style.display = 'none';
+    document.getElementById('vid-wa-btn').style.display   = 'none';
+    document.getElementById('video-viewer-overlay').classList.add('open');
+    player.play().catch(() => {});
+
+    // Allow claiming after 15 s minimum
+    _vidMinTimer = setTimeout(() => { _vidMinWatched = true; }, 15000);
+  }
+
+  function closeVideoViewer() {
+    const player = document.getElementById('vid-player');
+    player.pause(); player.src = '';
+    if (_vidMinTimer) { clearTimeout(_vidMinTimer); _vidMinTimer = null; }
+    document.getElementById('video-viewer-overlay').classList.remove('open');
+    _vidAd = null; _vidBtn = null;
+  }
+
+  async function _creditVideoAd() {
+    if (!_vidAd) return;
+    if (!_vidMinWatched) {
+      document.getElementById('vid-status').textContent = '⏳ Watch at least 15 seconds to earn coins.';
+      return;
+    }
+    const status = document.getElementById('vid-status');
+    status.textContent = 'Processing…';
+    const { data, error } = await db.rpc('record_ad_click', {
+      p_viewer_id: currentUser.id, p_ad_id: _vidAd.id
+    });
+    if (error || (data && !data.success)) {
+      status.textContent = data?.message || error?.message || 'Error processing reward';
+      return;
+    }
+    const cash  = data?.cash  || 0.25;
+    const coins = data?.coins || 500;
+    document.getElementById('vid-success').textContent  = `✅ +₹${cash.toFixed(2)} earned! (${coins} coins)`;
+    document.getElementById('vid-success').style.display = 'block';
+    status.textContent = '';
+    clickedAds.add(_vidAd.id);
+    db.rpc('credit_referral_bonus', { p_viewer_id: currentUser.id, p_ad_id: _vidAd.id });
+    if (_vidBtn) {
+      _vidBtn.className = 'btn-watch watched'; _vidBtn.textContent = '✅ Watched';
+      _vidBtn.disabled = true; _vidBtn.onclick = null;
+    }
+    if (_vidAd.whatsapp_number) {
+      const waBtn = document.getElementById('vid-wa-btn');
+      waBtn.href = `https://wa.me/${_vidAd.whatsapp_number.replace(/\D/g,'')}`;
+      waBtn.style.display = 'flex';
+    }
+    loadWallet();
+    _vidAd = null;
+  }
+
+  // Auto-credit when video ends; also wire up the claim button
+  document.getElementById('vid-player').addEventListener('ended', _creditVideoAd);
 
   // ── Social Media Ad Viewer ────────────────────────────
   let _smAd  = null;
@@ -1540,6 +1611,24 @@
   </button>
 
   <div class="av-success" id="sm-success" style="display:none"></div>
+</div>
+
+<!-- ── Video Ad Viewer Modal ──────────────────────────── -->
+<div class="ad-viewer-overlay" id="video-viewer-overlay">
+  <button class="av-close" onclick="closeVideoViewer()">✕</button>
+  <video id="vid-player" playsinline controls
+         style="max-width:92vw;max-height:52vh;border-radius:14px;background:#000;outline:none"></video>
+  <div class="av-title" id="vid-title"></div>
+  <div class="av-status" id="vid-status">Watch the full video to earn ₹0.25 + 500 coins</div>
+  <button onclick="_creditVideoAd()"
+          style="margin-top:.5rem;padding:.6rem 1.8rem;border:none;border-radius:10px;
+                 background:var(--gold);color:#1a1a1a;font-weight:800;font-size:.95rem;cursor:pointer;">
+    ✅ Claim Coins
+  </button>
+  <div class="av-success" id="vid-success" style="display:none"></div>
+  <a id="vid-wa-btn" class="av-wa-btn" href="#" target="_blank" rel="noopener" style="display:none">
+    💬 WhatsApp Advertiser
+  </a>
 </div>
 
 <!-- ── Photo Ad Viewer Modal ─────────────────────────── -->
