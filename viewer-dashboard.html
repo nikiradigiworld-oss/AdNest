@@ -846,6 +846,7 @@
     document.getElementById('view-' + name).classList.add('active');
     document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
     if (el) el.classList.add('active');
+    if (name === 'ads')     loadAds();
     if (name === 'history') loadHistory();
     if (name === 'chat')    loadChat();
     if (name === 'profile') loadProfile();
@@ -1178,27 +1179,35 @@
       }
     } catch(e) {}
 
-    // 2. Fetch fresh data in the background
-    const [{ data: viewed }, { data: clicked }, { data: ads }] = await Promise.all([
-      db.from('ad_views').select('ad_id').eq('viewer_id', currentUser.id),
-      db.from('ad_clicks').select('ad_id').eq('viewer_id', currentUser.id),
-      db.from('ads').select('id,title,ad_type,content_url,target_area,target_value,whatsapp_number,views_ordered,budget_total,rate_per_1k').eq('status','active'),
-    ]);
-    watchedAds = new Set((viewed||[]).map(v => v.ad_id));
-    clickedAds = new Set((clicked||[]).map(c => c.ad_id));
-    const list = ads || [];
-    list.forEach(ad => { _adCache[ad.id] = ad; });
-
-    // 3. Re-render with fresh data and save to cache
-    _renderAds(list);
+    // 2. Fetch fresh data
     try {
-      localStorage.setItem(CACHE_KEY, JSON.stringify({
-        ads: list,
-        watched: [...watchedAds],
-        clicked: [...clickedAds],
-        ts: Date.now()
-      }));
-    } catch(e) {}
+      const [{ data: viewed, error: e1 }, { data: clicked, error: e2 }, { data: ads, error: e3 }] = await Promise.all([
+        db.from('ad_views').select('ad_id').eq('viewer_id', currentUser.id),
+        db.from('ad_clicks').select('ad_id').eq('viewer_id', currentUser.id),
+        db.from('ads').select('id,title,ad_type,content_url,target_area,target_value,whatsapp_number,views_ordered,budget_total,rate_per_1k').eq('status','active'),
+      ]);
+      if (e3) throw new Error(e3.message);
+      watchedAds = new Set((viewed||[]).map(v => v.ad_id));
+      clickedAds = new Set((clicked||[]).map(c => c.ad_id));
+      const list = (ads || []);
+      list.forEach(ad => { _adCache[ad.id] = ad; });
+
+      // 3. Re-render and save to cache
+      _renderAds(list);
+      try {
+        localStorage.setItem(CACHE_KEY, JSON.stringify({
+          ads: list, watched: [...watchedAds], clicked: [...clickedAds], ts: Date.now()
+        }));
+      } catch(e) {}
+    } catch(err) {
+      const grid = document.getElementById('ads-grid');
+      // Only show error if grid is still at loading state
+      if (grid && grid.querySelector('p')?.textContent === 'Loading ads…') {
+        grid.innerHTML = `<div class="empty"><div class="e-icon">⚠️</div>
+          <p>Could not load ads. Check your connection.</p>
+          <button onclick="loadAds()" style="margin-top:.8rem;padding:.5rem 1.2rem;background:var(--red);border:none;border-radius:8px;color:#fff;font-weight:700;cursor:pointer;">↻ Retry</button></div>`;
+      }
+    }
   }
 
   // ── Watch ad & earn coins ─────────────────────────────
