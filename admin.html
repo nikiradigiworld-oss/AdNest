@@ -579,6 +579,18 @@
         <div class="s-value" id="s-advertisers">—</div>
         <div class="s-sub">business accounts</div>
       </div>
+      <div class="stat-card c-purple">
+        <div class="s-icon">🎟</div>
+        <div class="s-label">Referral Coins Paid</div>
+        <div class="s-value" id="s-ref-coins">—</div>
+        <div class="s-sub">to referrers</div>
+      </div>
+      <div class="stat-card c-green">
+        <div class="s-icon">💸</div>
+        <div class="s-label">Referral Cash Paid</div>
+        <div class="s-value" id="s-ref-cash">—</div>
+        <div class="s-sub">platform cost</div>
+      </div>
     </div>
 
     <!-- Quick actions -->
@@ -1220,7 +1232,8 @@
       { data: viewsData },
       { data: coinsData },
       { data: revenueData },
-      { count: totalAdv }
+      { count: totalAdv },
+      { data: refData }
     ] = await Promise.all([
       db.from('users').select('*', { count:'exact', head:true }),
       db.from('ads').select('*', { count:'exact', head:true }),
@@ -1229,12 +1242,15 @@
       db.from('ads').select('views_delivered'),
       db.from('coin_wallets').select('coins'),
       db.from('payments').select('total_amount').eq('status','success'),
-      db.from('advertisers').select('*', { count:'exact', head:true })
+      db.from('advertisers').select('*', { count:'exact', head:true }),
+      db.from('referral_earnings').select('coins_earned,cash_earned')
     ]);
 
     const totalViews   = (viewsData  ||[]).reduce((s,r) => s+(r.views_delivered||0), 0);
     const totalCoins   = (coinsData  ||[]).reduce((s,r) => s+(r.coins||0), 0);
     const totalRevenue = (revenueData||[]).reduce((s,r) => s+parseFloat(r.total_amount||0), 0);
+    const refCoins     = (refData    ||[]).reduce((s,r) => s+(r.coins_earned||0), 0);
+    const refCash      = (refData    ||[]).reduce((s,r) => s+Number(r.cash_earned||0), 0);
 
     document.getElementById('s-users').textContent      = totalUsers  || 0;
     document.getElementById('s-ads').textContent        = totalAds    || 0;
@@ -1244,6 +1260,8 @@
     document.getElementById('s-coins').textContent      = totalCoins.toLocaleString();
     document.getElementById('s-revenue').textContent    = '₹' + totalRevenue.toFixed(2);
     document.getElementById('s-advertisers').textContent= totalAdv   || 0;
+    document.getElementById('s-ref-coins').textContent  = refCoins.toLocaleString();
+    document.getElementById('s-ref-cash').textContent   = '₹' + refCash.toFixed(2);
     document.getElementById('pending-count').textContent= (pendingAds||0) + ' pending';
 
     const badge = document.getElementById('sb-pending-badge');

@@ -654,6 +654,50 @@
           <button onclick="saveBankDetails()" style="margin-top:1rem;background:#FFD700;color:#1a1a1a;border:none;border-radius:10px;padding:.7rem 1.8rem;font-weight:800;font-size:.95rem;cursor:pointer;">🏦 Save Bank Details</button>
         </div>
       </div>
+
+      <!-- Referral Program -->
+      <div class="panel">
+        <div class="panel-head">
+          <h3>🎟 Referral Program</h3>
+          <span style="font-size:.78rem;opacity:.7">Earn per ad your referrals watch</span>
+        </div>
+        <div class="panel-body">
+          <div style="background:rgba(255,215,0,.07);border:1px solid rgba(255,215,0,.2);border-radius:10px;padding:.8rem 1rem;margin-bottom:1rem;font-size:.8rem;color:rgba(255,255,255,.85);line-height:1.5;">
+            🪙 Every time someone you referred watches an ad, you automatically earn <strong style="color:#FFD700;">+100 coins</strong> &amp; <strong style="color:#FFD700;">+₹0.05</strong> in your wallet.
+          </div>
+
+          <div style="margin-bottom:.9rem;">
+            <label style="font-size:.72rem;font-weight:700;color:#aaa;display:block;margin-bottom:.35rem;">Your Referral Code</label>
+            <div style="display:flex;gap:.5rem;align-items:center;">
+              <div id="ref-code-display" style="flex:1;padding:.6rem 1rem;background:rgba(255,255,255,.06);border:1.8px solid rgba(255,215,0,.4);border-radius:9px;font-size:1.05rem;font-weight:900;color:#FFD700;letter-spacing:.18em;">—</div>
+              <button onclick="copyRefCode()" style="padding:.6rem 1rem;background:rgba(255,215,0,.12);border:1px solid rgba(255,215,0,.35);border-radius:9px;color:#FFD700;font-size:.82rem;font-weight:700;cursor:pointer;">📋 Copy</button>
+            </div>
+          </div>
+
+          <div style="margin-bottom:1.2rem;">
+            <label style="font-size:.72rem;font-weight:700;color:#aaa;display:block;margin-bottom:.35rem;">Share Referral Link</label>
+            <div style="display:flex;gap:.5rem;align-items:center;">
+              <input id="ref-link-input" readonly style="flex:1;padding:.6rem .9rem;background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.1);border-radius:9px;color:rgba(255,255,255,.75);font-size:.72rem;outline:none;" />
+              <button onclick="copyRefLink()" style="padding:.6rem 1rem;background:var(--red);border:none;border-radius:9px;color:#fff;font-size:.82rem;font-weight:700;cursor:pointer;">🔗 Share</button>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;">
+            <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:.8rem;text-align:center;">
+              <div style="font-size:1.5rem;font-weight:900;color:#FFD700;" id="ref-count">0</div>
+              <div style="font-size:.7rem;color:#aaa;margin-top:.2rem;">Friends Referred</div>
+            </div>
+            <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:.8rem;text-align:center;">
+              <div style="font-size:1.5rem;font-weight:900;color:#FFD700;" id="ref-earned-coins">0</div>
+              <div style="font-size:.7rem;color:#aaa;margin-top:.2rem;">Coins Earned</div>
+            </div>
+            <div style="grid-column:1/-1;background:rgba(76,175,80,.08);border:1px solid rgba(76,175,80,.2);border-radius:10px;padding:.8rem;text-align:center;">
+              <div style="font-size:1.5rem;font-weight:900;color:#4CAF50;" id="ref-earned-cash">₹0.00</div>
+              <div style="font-size:.7rem;color:#aaa;margin-top:.2rem;">Cash Earned from Referrals</div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
   </main>
@@ -712,7 +756,7 @@
   }
 
   async function loadProfile() {
-    const { data } = await db.from('users').select('name,mobile,gender,dob,state,district,pincode,bank_holder_name,bank_name,bank_account_no,bank_ifsc,bank_branch,bank_account_type').eq('id', currentUser.id).single();
+    const { data } = await db.from('users').select('name,mobile,gender,dob,state,district,pincode,bank_holder_name,bank_name,bank_account_no,bank_ifsc,bank_branch,bank_account_type,referral_code').eq('id', currentUser.id).single();
     if (!data) return;
     document.getElementById('prof-name').value     = data.name     || '';
     document.getElementById('prof-mobile').value   = data.mobile   || '';
@@ -723,10 +767,37 @@
     document.getElementById('prof-pincode').value  = data.pincode  || '';
     document.getElementById('bank-holder').value   = data.bank_holder_name  || '';
     document.getElementById('bank-name').value     = data.bank_name         || '';
+
+    // Referral section
+    const code = data.referral_code || '';
+    const BASE_URL = 'https://nikiradigiworld-oss.github.io/AdNest';
+    document.getElementById('ref-code-display').textContent = code || '—';
+    document.getElementById('ref-link-input').value = code ? `${BASE_URL}/signup.html?ref=${code}` : '';
+
+    // Referral stats
+    const [{ count: refCount }, { data: earnings }] = await Promise.all([
+      db.from('users').select('*', { count: 'exact', head: true }).eq('referred_by', currentUser.id),
+      db.from('referral_earnings').select('coins_earned,cash_earned').eq('referrer_id', currentUser.id)
+    ]);
+    const totalCoins = (earnings || []).reduce((s, r) => s + (r.coins_earned || 0), 0);
+    const totalCash  = (earnings || []).reduce((s, r) => s + Number(r.cash_earned || 0), 0);
+    document.getElementById('ref-count').textContent        = refCount || 0;
+    document.getElementById('ref-earned-coins').textContent = totalCoins.toLocaleString();
+    document.getElementById('ref-earned-cash').textContent  = '₹' + totalCash.toFixed(2);
     document.getElementById('bank-type').value     = data.bank_account_type || 'savings';
     document.getElementById('bank-accno').value    = data.bank_account_no   || '';
     document.getElementById('bank-ifsc').value     = data.bank_ifsc         || '';
     document.getElementById('bank-branch').value   = data.bank_branch       || '';
+  }
+
+  function copyRefCode() {
+    const code = document.getElementById('ref-code-display').textContent;
+    navigator.clipboard.writeText(code).then(() => showToast('📋 Referral code copied!'));
+  }
+  function copyRefLink() {
+    const link = document.getElementById('ref-link-input').value;
+    if (!link) return;
+    navigator.clipboard.writeText(link).then(() => showToast('🔗 Referral link copied! Share with friends.'));
   }
 
   async function savePersonalInfo() {
@@ -889,6 +960,7 @@
     watchedAds.add(adId);
     showToast('🪙 +' + coins + ' coins earned!');
     loadWallet();
+    db.rpc('credit_referral_bonus', { p_viewer_id: currentUser.id, p_ad_id: adId });
   }
 
   // ── Click photo ad & earn ₹0.15 ──────────────────────
@@ -914,6 +986,7 @@
     const emoji = isLike ? '👍' : '💰';
     showToast(emoji + ' +₹' + cash.toFixed(2) + ' earned! (' + coins + ' coins)');
     loadWallet();
+    db.rpc('credit_referral_bonus', { p_viewer_id: currentUser.id, p_ad_id: adId });
   }
 
   // ── Photo Ad Viewer – 30-sec watch flow ──────────────
@@ -982,6 +1055,7 @@
       succ.style.display = 'block';
       status.textContent = '';
       clickedAds.add(ad.id);
+      db.rpc('credit_referral_bonus', { p_viewer_id: currentUser.id, p_ad_id: ad.id });
 
       if (_adViewerBtn) {
         _adViewerBtn.className   = 'btn-watch watched';

@@ -295,6 +295,18 @@
 <script>
   let selectedRole = null;
 
+  // Detect referral code from URL
+  const _refCode = new URLSearchParams(window.location.search).get('ref') || '';
+  if (_refCode) {
+    document.querySelector('.card-header p').innerHTML =
+      '🎁 You were invited! Sign up &amp; start earning.';
+  }
+
+  function _genRefCode() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    return Array.from({length: 8}, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+  }
+
   // ── Step nav ──────────────────────────────────────────
   function goToStep(n) {
     document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
@@ -402,7 +414,20 @@
 
     // Save profile to users table
     if (user) {
-      await db.from('users').upsert({ id: user.id, email, name, role: selectedRole });
+      // Resolve referrer if a ref code was in the URL
+      let referredBy = null;
+      if (_refCode) {
+        const { data: referrer } = await db.from('users')
+          .select('id').eq('referral_code', _refCode).maybeSingle();
+        if (referrer) referredBy = referrer.id;
+      }
+
+      const ownRefCode = _genRefCode();
+      await db.from('users').upsert({
+        id: user.id, email, name, role: selectedRole,
+        referral_code: ownRefCode,
+        referred_by:   referredBy
+      });
 
       // Create advertiser profile entry
       if (selectedRole === 'advertiser' || selectedRole === 'both') {
