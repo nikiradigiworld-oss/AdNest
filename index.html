@@ -1136,7 +1136,7 @@
     const name  = user.user_metadata?.name || user.email || 'User';
     const initial = name.charAt(0).toUpperCase();
     const roleLabel = role === 'advertiser' ? 'Advertiser' : role === 'both' ? 'Viewer & Advertiser' : role === 'admin' ? 'Admin' : 'Viewer';
-    const dashHref  = role === 'advertiser' ? 'advertiser-dashboard.html' : role === 'admin' ? 'admin.html' : role === 'both' ? 'viewer-dashboard.html' : 'viewer-dashboard.html';
+    const dashHref  = role === 'advertiser' ? '/advertiser-dashboard' : role === 'admin' ? '/admin' : '/viewer-dashboard';
 
     document.getElementById('profile-avatar').textContent = initial;
     document.getElementById('profile-name').textContent   = name.split(' ')[0];
@@ -1164,7 +1164,7 @@
         if (code) {
           document.getElementById('home-ref-code-box').textContent = code;
           document.getElementById('home-ref-link-input').value =
-            `https://anaar.fun/signup.html?ref=${code}`;
+            `https://anaar.fun/signup?ref=${code}`;
           document.getElementById('referral-banner-section').style.display = 'block';
         }
       });
@@ -1492,7 +1492,7 @@
     }
     document.getElementById('pf-ref-code').textContent = refCode;
     document.getElementById('pf-ref-link').value =
-      `https://anaar.fun/signup.html?ref=${refCode}`;
+      `https://anaar.fun/signup?ref=${refCode}`;
 
     // Load Indian states and pre-select saved state
     await loadIndiaStates(savedState);

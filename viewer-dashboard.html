@@ -1610,7 +1610,7 @@
 
     alertEl.style.background = '#d4edda'; alertEl.style.color = '#155724';
     alertEl.textContent = '✅ Role upgraded to ' + (newRole === 'both' ? 'Viewer & Advertiser' : 'Advertiser') + '! Redirecting…';
-    setTimeout(() => { window.location.href = newRole === 'both' ? 'index.html' : 'advertiser-dashboard.html'; }, 1500);
+    setTimeout(() => { window.location.href = newRole === 'both' ? '/' : '/advertiser-dashboard'; }, 1500);
   }
 
   // ── Logout ────────────────────────────────────────────
