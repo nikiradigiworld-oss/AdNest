@@ -1064,7 +1064,7 @@
   function _renderAds(list) {
 
     const avail = list.filter(a =>
-      a.ad_type === 'image' ? !clickedAds.has(a.id) : !watchedAds.has(a.id)
+      a.ad_type === 'video' ? !watchedAds.has(a.id) : !clickedAds.has(a.id)
     ).length;
     document.getElementById('stat-avail').textContent   = avail;
     document.getElementById('stat-watched').textContent = watchedAds.size + clickedAds.size;
@@ -1080,8 +1080,9 @@
     const emojiMap  = { image: '🖼️', video: '🎬', social_link: '📲', app_website: '📱' };
 
     grid.innerHTML = list.map(ad => {
-      const isCPC  = ad.ad_type === 'image' || ad.ad_type === 'video' || ad.ad_type === 'social_link' || ad.ad_type === 'app_website';
-      const done   = isCPC ? clickedAds.has(ad.id) : watchedAds.has(ad.id);
+      const isVid  = ad.ad_type === 'video';
+      const isCPC  = !isVid; // image, social_link, app_website are click-based; video is view-based
+      const done   = isVid ? watchedAds.has(ad.id) : clickedAds.has(ad.id);
       const coins  = coinMap[ad.ad_type] || 300;
       const emoji  = emojiMap[ad.ad_type] || '📢';
       const showWA = ad.whatsapp_number && ad.ad_type === 'video';
@@ -1098,11 +1099,9 @@
       const cpc       = cpcReward[ad.ad_type];
       const isSoc     = ad.ad_type === 'social_link';
       const isImg     = ad.ad_type === 'image';
-      const isVid2    = ad.ad_type === 'video';
-      const btnVerb   = isSoc ? '👍 Like' : isVid2 ? '▶ Watch' : '👆 Click';
-      const doneLabel = isSoc ? '✅ Liked' : isVid2 ? '✅ Watched' : '✅ Clicked';
+      const btnVerb   = isSoc ? '👍 Like' : isVid ? '▶ Watch' : '👆 Click';
+      const doneLabel = isSoc ? '✅ Liked' : isVid ? '✅ Watched' : '✅ Clicked';
 
-      const isVid = ad.ad_type === 'video';
       const btnOnclick = done ? ''
         : isImg ? `openAdViewer('${ad.id}', this)`
         : isSoc  ? `openSocialViewer('${ad.id}', this)`
