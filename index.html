@@ -279,18 +279,18 @@
 
     /* ── PORTAL CARDS ── */
     .portal-card {
-      position: relative; border-radius: 20px; overflow: hidden;
-      padding: 2rem 1.5rem; text-align: center;
-      border: none; background: transparent;
-      transition: transform .25s;
+      position: relative; border-radius: 16px; overflow: hidden;
+      padding: 1.2rem 1rem; text-align: center;
+      border: 1.5px solid #eee; background: var(--white);
+      transition: transform .25s, box-shadow .25s;
       cursor: pointer; height: 100%;
     }
-    .portal-card:hover { transform: translateY(-6px); }
+    .portal-card:hover { transform: translateY(-5px); box-shadow: 0 10px 28px rgba(0,0,0,0.1); }
 
     .portal-glow { display: none; }
 
-    .portal-icon { margin-bottom: .8rem; line-height: 1; }
-    .portal-icon svg { width: 90px; height: 90px; }
+    .portal-icon { margin-bottom: .5rem; line-height: 1; }
+    .portal-icon svg { width: 70px; height: 70px; }
 
     .portal-badge {
       display: inline-block; border-radius: 20px;
@@ -615,8 +615,8 @@
       .dash-tabs { font-size: 0.78rem; }
       /* Portal cards: single column on mobile */
       #portal-grid { grid-template-columns: 1fr !important; max-width: 100% !important; gap: 1rem !important; padding: 0 .5rem; }
-      .portal-card { padding: 1.2rem .8rem; }
-      .portal-icon svg { width: 70px; height: 70px; }
+      .portal-card { padding: .9rem .7rem; }
+      .portal-icon svg { width: 55px; height: 55px; }
       .portal-card h3 { font-size: 1.05rem; }
       .portal-card p { font-size: .82rem; margin-bottom: .8rem; }
       .portal-perks { margin-bottom: 1rem; }
@@ -673,7 +673,7 @@
       <h2>Choose Your Portal</h2>
       <p class="subtitle">Are you here to earn coins or grow your business?</p>
     </div>
-    <div id="portal-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;max-width:780px;margin:0 auto;">
+    <div id="portal-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;max-width:520px;margin:0 auto;">
 
       <!-- VIEWER CARD -->
       <a href="/viewer-dashboard" style="text-decoration:none;" id="portal-viewer-wrap">
@@ -1146,7 +1146,7 @@
       document.getElementById('portal-adv-wrap').style.display    = 'block';
       document.getElementById('portal-admin-wrap').style.display  = 'none';
       document.getElementById('portal-grid').style.gridTemplateColumns = '1fr 1fr';
-      document.getElementById('portal-grid').style.maxWidth = '780px';
+      document.getElementById('portal-grid').style.maxWidth = '520px';
     }
   });
 
