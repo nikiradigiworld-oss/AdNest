@@ -1683,7 +1683,14 @@
 
   init();
 </script>
-<script>if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js').catch(() => {}); }</script>
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+    navigator.serviceWorker.addEventListener('message', e => {
+      if (e.data?.type === 'SW_UPDATED') window.location.reload();
+    });
+  }
+</script>
 
 <!-- ── Social Media Ad Viewer Modal ──────────────────── -->
 <div class="ad-viewer-overlay" id="sm-viewer-overlay">

@@ -412,7 +412,14 @@
     setTimeout(() => { window.location.href = '/'; }, 2000);
   }
 </script>
-<script>if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js').catch(() => {}); }</script>
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+    navigator.serviceWorker.addEventListener('message', e => {
+      if (e.data?.type === 'SW_UPDATED') window.location.reload();
+    });
+  }
+</script>
 
 </body>
 </html>
