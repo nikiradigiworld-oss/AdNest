@@ -281,26 +281,16 @@
     .portal-card {
       position: relative; border-radius: 20px; overflow: hidden;
       padding: 2rem 1.5rem; text-align: center;
-      border: 2px solid #eee; background: var(--white);
-      transition: transform .25s, box-shadow .25s, border-color .25s;
+      border: none; background: transparent;
+      transition: transform .25s;
       cursor: pointer; height: 100%;
     }
-    .portal-card:hover { transform: translateY(-6px); box-shadow: 0 16px 40px rgba(0,0,0,0.14); }
-    #portal-viewer:hover    { border-color: #25D366; }
-    #portal-advertiser:hover { border-color: var(--red); }
-    #portal-admin:hover      { border-color: #FFD700; }
+    .portal-card:hover { transform: translateY(-6px); }
 
-    .portal-glow {
-      position: absolute; inset: 0; opacity: 0;
-      transition: opacity .3s; pointer-events: none;
-    }
-    #portal-viewer:hover    .portal-glow { opacity: 1; }
-    #portal-advertiser:hover .portal-glow { opacity: 1; }
-    .viewer-glow { background: radial-gradient(circle at 50% 0%, rgba(37,211,102,0.12), transparent 70%); }
-    .adv-glow    { background: radial-gradient(circle at 50% 0%, rgba(139,26,26,0.10), transparent 70%); }
-    .admin-glow  { background: radial-gradient(circle at 50% 0%, rgba(255,215,0,0.15),  transparent 70%); }
+    .portal-glow { display: none; }
 
-    .portal-icon { font-size: 1.2rem; margin-bottom: .5rem; line-height: 1; }
+    .portal-icon { margin-bottom: .8rem; line-height: 1; }
+    .portal-icon svg { width: 90px; height: 90px; }
 
     .portal-badge {
       display: inline-block; border-radius: 20px;
@@ -625,8 +615,8 @@
       .dash-tabs { font-size: 0.78rem; }
       /* Portal cards: single column on mobile */
       #portal-grid { grid-template-columns: 1fr !important; max-width: 100% !important; gap: 1rem !important; padding: 0 .5rem; }
-      .portal-card { padding: 1.4rem 1.2rem; }
-      .portal-icon { font-size: 1rem; }
+      .portal-card { padding: 1.2rem .8rem; }
+      .portal-icon svg { width: 70px; height: 70px; }
       .portal-card h3 { font-size: 1.05rem; }
       .portal-card p { font-size: .82rem; margin-bottom: .8rem; }
       .portal-perks { margin-bottom: 1rem; }
@@ -688,8 +678,30 @@
       <!-- VIEWER CARD -->
       <a href="/viewer-dashboard" style="text-decoration:none;" id="portal-viewer-wrap">
         <div class="portal-card" id="portal-viewer">
-          <div class="portal-glow viewer-glow"></div>
-          <div class="portal-icon">👁️</div>
+          <div class="portal-icon">
+            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+              <!-- Screen -->
+              <rect x="8" y="14" width="84" height="55" rx="10" fill="#e8faf0" stroke="#25D366" stroke-width="3"/>
+              <!-- Eye whites -->
+              <ellipse cx="50" cy="41" rx="22" ry="14" fill="white"/>
+              <!-- Iris -->
+              <circle cx="50" cy="41" r="9" fill="#25D366"/>
+              <!-- Pupil -->
+              <circle cx="50" cy="41" r="4" fill="#145a32"/>
+              <!-- Shine -->
+              <circle cx="46" cy="38" r="2" fill="white" opacity=".8"/>
+              <!-- Stand -->
+              <rect x="43" y="69" width="14" height="8" rx="2" fill="#25D366" opacity=".6"/>
+              <rect x="34" y="76" width="32" height="5" rx="3" fill="#25D366" opacity=".5"/>
+              <!-- Coins -->
+              <circle cx="22" cy="88" r="9" fill="#FFD700" stroke="#d4a000" stroke-width="1.5"/>
+              <text x="22" y="93" text-anchor="middle" font-size="10" fill="#7a5c00" font-weight="bold" font-family="Arial">₹</text>
+              <circle cx="50" cy="88" r="9" fill="#FFD700" stroke="#d4a000" stroke-width="1.5"/>
+              <text x="50" y="93" text-anchor="middle" font-size="10" fill="#7a5c00" font-weight="bold" font-family="Arial">₹</text>
+              <circle cx="78" cy="88" r="9" fill="#FFD700" stroke="#d4a000" stroke-width="1.5"/>
+              <text x="78" y="93" text-anchor="middle" font-size="10" fill="#7a5c00" font-weight="bold" font-family="Arial">₹</text>
+            </svg>
+          </div>
           <div class="portal-badge viewer-badge">VIEWER</div>
           <h3>Watch &amp; Earn</h3>
           <p>Watch ads from local businesses and earn real coins. Convert coins to cash rewards instantly.</p>
@@ -705,8 +717,23 @@
       <!-- ADVERTISER CARD -->
       <a href="/advertiser-dashboard" style="text-decoration:none;" id="portal-adv-wrap">
         <div class="portal-card" id="portal-advertiser">
-          <div class="portal-glow adv-glow"></div>
-          <div class="portal-icon">📢</div>
+          <div class="portal-icon">
+            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+              <!-- Megaphone cone -->
+              <polygon points="38,30 80,14 80,70 38,54" fill="#c41e1e"/>
+              <!-- Speaker box -->
+              <rect x="16" y="31" width="23" height="22" rx="5" fill="#8b1a1a"/>
+              <!-- Handle -->
+              <rect x="20" y="53" width="14" height="18" rx="4" fill="#8b1a1a"/>
+              <!-- Sound waves -->
+              <path d="M85,30 Q94,42 85,54" stroke="#FFD700" stroke-width="3" fill="none" stroke-linecap="round"/>
+              <path d="M90,22 Q103,42 90,62" stroke="#FFD700" stroke-width="2" fill="none" stroke-linecap="round" opacity=".6"/>
+              <!-- Stars/sparks -->
+              <circle cx="30" cy="18" r="3" fill="#FFD700" opacity=".8"/>
+              <circle cx="20" cy="26" r="2" fill="#FFD700" opacity=".6"/>
+              <circle cx="38" cy="14" r="2.5" fill="#FFD700" opacity=".7"/>
+            </svg>
+          </div>
           <div class="portal-badge adv-badge">ADVERTISER</div>
           <h3>Advertise &amp; Grow</h3>
           <p>Run targeted ads across pincodes, districts &amp; states. Reach real local customers fast.</p>
