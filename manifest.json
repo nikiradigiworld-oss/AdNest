@@ -2,7 +2,7 @@
   "name": "Anaar – Incentive & Cashback Advertising",
   "short_name": "Anaar",
   "description": "Watch ads to earn coins and cash. Grow your business with targeted advertising.",
-  "start_url": "/index.html",
+  "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
@@ -28,13 +28,13 @@
     {
       "name": "Watch Ads",
       "short_name": "Watch",
-      "url": "/viewer-dashboard.html",
+      "url": "/viewer-dashboard",
       "description": "Watch ads and earn coins"
     },
     {
       "name": "Post Ad",
       "short_name": "Advertise",
-      "url": "/advertiser-dashboard.html",
+      "url": "/advertiser-dashboard",
       "description": "Post and manage your ads"
     }
   ],
