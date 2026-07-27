@@ -538,7 +538,7 @@
             <span id="cost-display">₹1.50 + ₹0.27 = ₹1.77</span>
           </div>
 
-          <button class="btn-submit" onclick="submitAd()">🚀 Post Ad Now</button>
+          <button class="btn-submit" onclick="submitAd()">🚀 Submit Ad for Review</button>
         </div>
       </div>
     </div>
@@ -1167,7 +1167,7 @@
       const path = `${user.id}/${Date.now()}.${ext}`;
       const { error: upErr } = await db.storage.from('ad-media').upload(path, _pendingMediaFile, { cacheControl: '3600', upsert: false });
       if (upErr) {
-        if (btn) btn.textContent = '🚀 Post Ad Now';
+        if (btn) btn.textContent = '🚀 Submit Ad for Review';
         showAlert('post', '❌ Media upload failed: ' + upErr.message, 'error');
         return;
       }
@@ -1197,7 +1197,7 @@
         } catch(e) { /* fall back to Supabase Storage URL */ }
       }
 
-      if (btn) btn.textContent = '🚀 Post Ad Now';
+      if (btn) btn.textContent = '🚀 Submit Ad for Review';
     }
 
     const waFmt = wa ? (wa.startsWith('+') ? wa : '+91' + wa.replace(/\D/g,'')) : null;
@@ -1228,7 +1228,7 @@
     _walletBalance  = _coinWalletCash + _advWalletBal;
     _updateWalletUI();
 
-    showAlert('post', '✅ Ad is now live! Viewers can start watching and earning.', 'success');
+    showAlert('post', '✅ Ad submitted for review! You will be notified once approved.', 'success');
     document.getElementById('ad-title').value = '';
     document.getElementById('ad-whatsapp').value = '';
     document.getElementById('ad-link').value = '';
