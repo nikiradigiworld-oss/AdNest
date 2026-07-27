@@ -6,6 +6,7 @@
   <title>Viewer Dashboard – Anaar</title>
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#0d0d0d" />
+  <meta name="app-version" content="31" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="Anaar" />
   <link rel="apple-touch-icon" href="icon.svg" />
@@ -780,6 +781,12 @@
 </div>
 
 <script>
+  // Force reload if browser is running old cached code
+  (function() {
+    const v = document.querySelector('meta[name="app-version"]')?.content;
+    if (!v || parseInt(v) < 31) { window.location.reload(true); }
+  })();
+
   let currentUser = null;
   let watchedAds  = new Set();
   let clickedAds  = new Set();
