@@ -546,13 +546,14 @@
     <!-- MY ADS VIEW -->
     <div class="view" id="view-myads">
       <div class="page-title">📋 My Ads</div>
+      <div id="alert-myads" class="alert"></div>
       <div class="panel">
         <div class="panel-head"><h3>All Campaigns</h3></div>
         <div class="panel-body" style="padding:0;overflow-x:auto">
           <table class="ads-table">
             <thead>
               <tr>
-                <th>Title</th><th>Type</th><th>Views Ordered</th><th>Delivered</th><th>Status</th><th>Cost</th>
+                <th>Title</th><th>Type</th><th>Views Ordered</th><th>Delivered</th><th>Status</th><th>Cost</th><th>Actions</th>
               </tr>
             </thead>
             <tbody id="ads-tbody">
@@ -971,15 +972,24 @@
         tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#aaa;padding:2rem">No ads yet. Post your first ad!</td></tr>';
         return;
       }
-      tbody.innerHTML = ads.map(a => `
-        <tr>
+      tbody.innerHTML = ads.map(a => {
+        const canPause = a.status === 'active' || a.status === 'paused';
+        const pauseBtn = canPause
+          ? `<button onclick="pauseAd('${a.id}','${a.status}')" style="padding:.3rem .7rem;border:none;border-radius:6px;cursor:pointer;font-size:.78rem;font-weight:700;margin-right:.3rem;background:${a.status==='active'?'rgba(255,200,0,.15)':'rgba(0,200,100,.15)'};color:${a.status==='active'?'#FFD700':'#4ade80'};">${a.status==='active'?'⏸ Pause':'▶ Resume'}</button>`
+          : '';
+        return `<tr>
           <td><strong>${a.title}</strong></td>
           <td>${a.ad_type}</td>
           <td>${(a.views_ordered||0).toLocaleString()}</td>
           <td>${(a.views_delivered||0).toLocaleString()}</td>
           <td><span class="status-badge status-${a.status}">${a.status}</span></td>
           <td>₹${(a.budget_total||0).toFixed(2)}</td>
-        </tr>`).join('');
+          <td style="white-space:nowrap">
+            ${pauseBtn}
+            <button onclick="deleteAd('${a.id}')" style="padding:.3rem .7rem;border:none;border-radius:6px;cursor:pointer;font-size:.78rem;font-weight:700;background:rgba(220,50,50,.15);color:#f87171;">🗑 Delete</button>
+          </td>
+        </tr>`;
+      }).join('');
     } catch(err) {
       if (tbody && !tbody.querySelector('tr td strong')) {
         tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#aaa;padding:2rem">Could not load ads. Refresh to retry.</td></tr>';
@@ -987,6 +997,22 @@
     }
   }
 
+
+  async function pauseAd(adId, currentStatus) {
+    const newStatus = currentStatus === 'active' ? 'paused' : 'active';
+    const { error } = await db.from('ads').update({ status: newStatus }).eq('id', adId);
+    if (error) { showAlert('myads', 'Could not update ad: ' + error.message, 'error'); return; }
+    showAlert('myads', newStatus === 'paused' ? 'Ad paused.' : 'Ad resumed.', 'success');
+    loadMyAds();
+  }
+
+  async function deleteAd(adId) {
+    if (!confirm('Delete this ad permanently? This cannot be undone.')) return;
+    const { error } = await db.from('ads').delete().eq('id', adId);
+    if (error) { showAlert('myads', 'Could not delete ad: ' + error.message, 'error'); return; }
+    showAlert('myads', 'Ad deleted.', 'success');
+    loadMyAds();
+  }
 
   // ── Cost calculator ───────────────────────────────────
   function recalc() {
