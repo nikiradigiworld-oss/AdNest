@@ -1182,12 +1182,16 @@
       const list = (rpcData.ads || []);
       list.forEach(ad => { _adCache[ad.id] = ad; });
 
-      // 3. Re-render and save to cache
+      // 3. Re-render and save to cache (clear cache if no ads)
       _renderAds(list);
       try {
-        localStorage.setItem(CACHE_KEY, JSON.stringify({
-          ads: list, watched: [...watchedAds], clicked: [...clickedAds], ts: Date.now()
-        }));
+        if (list.length === 0) {
+          localStorage.removeItem(CACHE_KEY);
+        } else {
+          localStorage.setItem(CACHE_KEY, JSON.stringify({
+            ads: list, watched: [...watchedAds], clicked: [...clickedAds], ts: Date.now()
+          }));
+        }
       } catch(e) {}
     } catch(err) {
       const grid = document.getElementById('ads-grid');
