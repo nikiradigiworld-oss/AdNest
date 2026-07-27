@@ -1,4 +1,4 @@
-const CACHE_NAME = 'anaar-v33';
+const CACHE_NAME = 'anaar-v34';
 const BASE = '';
 const PRECACHE_URLS = [
   BASE + '/',
