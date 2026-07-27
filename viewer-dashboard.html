@@ -890,10 +890,10 @@
       await db.from('users').update({ referral_code: code }).eq('id', currentUser.id);
     }
     document.getElementById('ref-code-display').textContent = code;
-    document.getElementById('ref-link-input').value = `${BASE_URL}/signup.html?ref=${code}`;
+    document.getElementById('ref-link-input').value = `${BASE_URL}/signup?ref=${code}`;
 
-    // Referral stats (SECURITY DEFINER bypasses RLS to count referred users)
-    const { data: refStats } = await db.rpc('get_referral_stats', { p_user_id: currentUser.id });
+    // Referral stats (SECURITY DEFINER uses auth.uid() directly — no param needed)
+    const { data: refStats } = await db.rpc('get_referral_stats');
     document.getElementById('ref-count').textContent        = refStats?.referral_count ?? 0;
     document.getElementById('ref-earned-coins').textContent = Number(refStats?.coins_earned ?? 0).toLocaleString();
     document.getElementById('ref-earned-cash').textContent  = '₹' + Number(refStats?.cash_earned ?? 0).toFixed(2);
@@ -980,7 +980,7 @@
   async function loadWallet() {
     const [{ data }, { data: refStats }] = await Promise.all([
       db.rpc('get_viewer_stats', { p_user_id: currentUser.id }),
-      db.rpc('get_referral_stats', { p_user_id: currentUser.id }),
+      db.rpc('get_referral_stats'),
     ]);
 
     const coins    = data?.total_coins || 0;
