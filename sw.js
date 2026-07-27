@@ -1,4 +1,4 @@
-const CACHE_NAME = 'anaar-v31';
+const CACHE_NAME = 'anaar-v32';
 const BASE = '';
 const PRECACHE_URLS = [
   BASE + '/',
@@ -57,7 +57,15 @@ self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
   if (!event.request.url.startsWith(self.location.origin)) return;
 
-  // Network-first: always try fresh, fall back to cache offline
+  // HTML navigation requests: always fetch from network (never serve stale HTML)
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request).catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
+  // Assets (icons, manifest, etc): network-first with cache fallback
   event.respondWith(
     fetch(event.request).then(response => {
       if (response && response.status === 200) {
