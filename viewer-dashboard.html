@@ -6,7 +6,7 @@
   <title>Viewer Dashboard – Anaar</title>
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#0d0d0d" />
-  <meta name="app-version" content="31" />
+  <meta name="app-version" content="32" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="Anaar" />
   <link rel="apple-touch-icon" href="icon.svg" />
@@ -784,7 +784,7 @@
   // Force reload if browser is running old cached code
   (function() {
     const v = document.querySelector('meta[name="app-version"]')?.content;
-    if (!v || parseInt(v) < 31) { window.location.reload(true); }
+    if (!v || parseInt(v) < 32) { window.location.reload(true); }
   })();
 
   let currentUser = null;
@@ -976,19 +976,24 @@
     window.location.href = '/login';
   }
 
-  // ── Load wallet via RPC ──────────────────────────────
+  // ── Load wallet via direct queries (bypasses RPC) ────
   async function loadWallet() {
-    const [{ data }, { data: refStats }] = await Promise.all([
-      db.rpc('get_viewer_stats', { p_user_id: currentUser.id }),
+    const [
+      { data: wallet },
+      { count: watchCount },
+      { data: refStats },
+    ] = await Promise.all([
+      db.from('coin_wallets').select('coins, cash_value').eq('user_id', currentUser.id).single(),
+      db.from('ad_views').select('*', { count: 'exact', head: true }).eq('viewer_id', currentUser.id),
       db.rpc('get_referral_stats'),
     ]);
 
-    const coins    = data?.total_coins || 0;
-    const cash     = data?.cash_value  || 0;
+    const coins = wallet?.coins    || 0;
+    const cash  = wallet?.cash_value || 0;
 
     document.getElementById('stat-coins').textContent     = Number(coins).toLocaleString();
     document.getElementById('stat-cash').textContent      = '₹' + parseFloat(cash).toFixed(2);
-    document.getElementById('stat-watched').textContent   = data?.ads_watched  || 0;
+    document.getElementById('stat-watched').textContent   = watchCount || 0;
     document.getElementById('nav-coins').textContent      = Number(coins).toLocaleString();
     document.getElementById('wallet-coins').textContent   = Number(coins).toLocaleString();
     document.getElementById('wallet-cash').textContent    = parseFloat(cash).toFixed(2);
@@ -1165,21 +1170,23 @@
       }
     } catch(e) {}
 
-    // 2. Fetch fresh data via single SECURITY DEFINER RPC (bypasses RLS, session-safe)
+    // 2. Fetch fresh data via direct table queries
     try {
-      const _adsTimeout = new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 10000));
-      const { data: rpcData, error: rpcErr } = await Promise.race([
-        db.rpc('get_active_ads_for_viewer', { p_user_id: currentUser.id }),
-        _adsTimeout,
+      const [
+        { data: adsData,    error: adsErr    },
+        { data: viewsData,  error: viewsErr  },
+        { data: clicksData, error: clicksErr },
+      ] = await Promise.all([
+        db.from('ads')
+          .select('id,title,ad_type,content_url,target_area,target_value,whatsapp_number,views_ordered,budget_total,rate_per_1k')
+          .eq('status', 'active'),
+        db.from('ad_views').select('ad_id').eq('viewer_id', currentUser.id),
+        db.from('ad_clicks').select('ad_id').eq('viewer_id', currentUser.id),
       ]);
-      if (rpcErr) throw new Error(rpcErr.message);
-      if (!rpcData?.success) {
-        if (rpcData?.error === 'Not authenticated') { window.location.href = '/login'; return; }
-        throw new Error('RPC failed');
-      }
-      watchedAds = new Set((rpcData.watched || []).filter(Boolean));
-      clickedAds = new Set((rpcData.clicked || []).filter(Boolean));
-      const list = (rpcData.ads || []);
+      if (adsErr) throw new Error(adsErr.message);
+      watchedAds = new Set((viewsData  || []).map(r => r.ad_id).filter(Boolean));
+      clickedAds = new Set((clicksData || []).map(r => r.ad_id).filter(Boolean));
+      const list = (adsData || []);
       list.forEach(ad => { _adCache[ad.id] = ad; });
 
       // 3. Re-render and save to cache (clear cache if no ads)
