@@ -1,0 +1,68 @@
+.page { min-height: 100vh; background: linear-gradient(135deg, #8B1A1A 0%, #B22222 60%, #5a0000 100%); display: flex; align-items: center; justify-content: center; padding: 1.5rem; }
+.card { background: #fff; border-radius: 24px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); width: 100%; max-width: 440px; overflow: hidden; }
+.header { background: #8B1A1A; padding: 2rem 2rem 1.5rem; text-align: center; }
+.header h1 { color: #fff; font-size: 1.5rem; font-weight: 800; }
+.header p  { color: rgba(255,255,255,.75); font-size: .85rem; margin-top: .3rem; }
+.logo { width: 60px; height: 60px; border-radius: 50%; background: #FFD700; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 1.6rem; color: #8B1A1A; margin: 0 auto 1rem; }
+
+.dots { display: flex; justify-content: center; gap: 8px; padding: 1.2rem 2rem 0; }
+.dot  { height: 8px; width: 8px; border-radius: 50%; background: #ddd; transition: all .3s; }
+.dot.active { background: #8B1A1A; width: 24px; border-radius: 4px; }
+.dot.done   { background: #27ae60; }
+
+.body { padding: 1.5rem 2rem 2rem; }
+.stepTitle { font-size: 1.1rem; font-weight: 800; color: #1a1a1a; margin-bottom: .2rem; }
+.stepSub   { font-size: .83rem; color: #777; margin-bottom: 1.4rem; }
+
+.alert { border-radius: 8px; padding: .7rem 1rem; font-size: .82rem; font-weight: 600; margin-bottom: 1rem; }
+.error   { background: #fdecea; color: #e74c3c; }
+.success { background: #eafaf1; color: #27ae60; }
+
+.field { margin-bottom: 1rem; }
+.field label { display: block; font-size: .82rem; font-weight: 600; color: #444; margin-bottom: .4rem; }
+.inputWrap { position: relative; }
+.inputWrap input, .select {
+  width: 100%; padding: .72rem 2.4rem .72rem 2.4rem;
+  border: 1.5px solid #e0e0e0; border-radius: 10px;
+  font-size: .93rem; color: #1a1a1a; outline: none;
+  transition: border .2s; background: #fff;
+}
+.select { appearance: none; cursor: pointer; padding-left: 2.4rem; }
+.inputWrap input:focus, .select:focus { border-color: #8B1A1A; }
+.icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 1rem; pointer-events: none; }
+.eye  { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; user-select: none; }
+
+.pwBar  { height: 4px; border-radius: 2px; background: #eee; margin-top: .4rem; overflow: hidden; }
+.pwFill { height: 100%; border-radius: 2px; transition: width .3s, background .3s; }
+.pwHint { font-size: .75rem; color: #999; margin-top: .3rem; }
+
+.twoCol { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; }
+
+.checkRow { display: flex; align-items: flex-start; gap: .5rem; font-size: .8rem; color: #555; margin-top: .5rem; cursor: pointer; }
+.checkRow input { margin-top: 2px; accent-color: #8B1A1A; flex-shrink: 0; }
+.checkRow a { color: #8B1A1A; }
+
+.btn { display: block; width: 100%; background: #8B1A1A; color: #fff; border: none; border-radius: 12px; padding: .85rem; font-size: 1rem; font-weight: 700; cursor: pointer; transition: opacity .2s; margin-top: 1.2rem; }
+.btn:hover    { opacity: .88; }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.btnSkip { display: block; width: 100%; background: transparent; border: 1.5px solid #e0e0e0; border-radius: 12px; padding: .7rem; font-size: .88rem; font-weight: 600; color: #888; cursor: pointer; margin-top: .6rem; transition: border .2s; }
+.btnSkip:hover { border-color: #aaa; color: #555; }
+
+.link { background: none; border: none; color: #8B1A1A; font-weight: 700; cursor: pointer; font-size: inherit; padding: 0; }
+.link:hover { text-decoration: underline; }
+.foot { text-align: center; margin-top: 1.2rem; font-size: .83rem; color: #888; }
+
+.roleGrid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: .8rem; margin-bottom: 1rem; }
+@media (max-width: 400px) { .roleGrid { grid-template-columns: 1fr 1fr; } .roleGrid > :last-child { grid-column: 1 / -1; } }
+.roleCard { border: 2px solid #e0e0e0; border-radius: 14px; padding: 1.2rem .8rem; text-align: center; cursor: pointer; transition: all .2s; }
+.roleCard:hover, .roleCard.selected { border-color: #8B1A1A; background: #fff0f0; }
+.rIcon { font-size: 2.2rem; margin-bottom: .5rem; }
+.roleCard h3 { font-size: .9rem; font-weight: 700; color: #1a1a1a; }
+.roleCard p  { font-size: .75rem; color: #888; margin-top: .2rem; }
+
+.success { text-align: center; padding: .5rem 0 1rem; }
+.successIcon { font-size: 4rem; margin-bottom: 1rem; }
+.success h2 { font-size: 1.3rem; font-weight: 800; color: #1a1a1a; margin-bottom: .5rem; }
+.success p  { font-size: .88rem; color: #666; margin-bottom: 1.5rem; line-height: 1.6; }
+.verifyNote { background: #fffbe6; border: 1px solid #ffe082; border-radius: 8px; padding: .8rem 1rem; font-size: .82rem; color: #795548; margin-bottom: 1rem; }
+.btnGold { display: inline-block; background: #FFD700; color: #8B1A1A; border: none; border-radius: 12px; padding: .75rem 2rem; font-size: .95rem; font-weight: 800; cursor: pointer; }
