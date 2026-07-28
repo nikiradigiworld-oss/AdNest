@@ -326,7 +326,7 @@ export default function Admin() {
         </div>
         <div className={s.navRight}>
           <span className={s.adminBadge}>🛡 Admin</span>
-          <button className={s.logoutBtn} onClick={() => db.auth.signOut()}>Sign Out</button>
+          <button className={s.logoutBtn} onClick={() => db.auth.signOut().then(() => nav('/login', { replace: true }))}>Sign Out</button>
         </div>
       </nav>
 

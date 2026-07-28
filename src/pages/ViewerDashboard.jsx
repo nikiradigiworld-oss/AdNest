@@ -271,7 +271,7 @@ export default function ViewerDashboard() {
           {user?.user_metadata?.role === 'admin' && (
             <button className={s.navLink} onClick={() => nav('/admin')}>Admin</button>
           )}
-          <button className={s.logoutBtn} onClick={() => db.auth.signOut()}>Sign Out</button>
+          <button className={s.logoutBtn} onClick={() => db.auth.signOut().then(() => nav('/login', { replace: true }))}>Sign Out</button>
         </div>
       </nav>
 
