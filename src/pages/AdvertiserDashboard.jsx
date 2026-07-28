@@ -8,7 +8,7 @@ const RATES = { national:2.5, state:3.5, district:5.0 }
 export default function AdvertiserDashboard() {
   const nav = useNavigate()
   const [user,    setUser]    = useState(null)
-  const [tab,     setTab]     = useState('post')
+  const [tab,     setTab]     = useState('myads')
   const [walBal,  setWalBal]  = useState(0)
   const [myAds,   setMyAds]   = useState([])
   const [stats,   setStats]   = useState({})
@@ -233,7 +233,7 @@ export default function AdvertiserDashboard() {
         {/* Sidebar (desktop) */}
         <aside className={s.sidebar}>
           {[
-            { id:'post',    icon:'📤', label:'Post Ad' },
+            { id:'post',    icon:'📤', label:'Post Ad', onClick: () => nav('/post-ad') },
             { id:'myads',   icon:'📋', label:'My Ads',  onClick: () => { setTab('myads'); loadMyAds() } },
             { id:'profile', icon:'👤', label:'Profile',  onClick: () => { setTab('profile'); loadProfile() } },
             { id:'chat',    icon:'💬', label:'Support',  onClick: () => { setTab('chat'); loadChat() } },
@@ -406,7 +406,7 @@ export default function AdvertiserDashboard() {
       {/* Mobile bottom nav */}
       <nav className={s.mobileNav}>
         {[
-          { id:'post',    icon:'📤', label:'Post' },
+          { id:'post',    icon:'📤', label:'Post',  onClick: () => nav('/post-ad') },
           { id:'myads',   icon:'📋', label:'My Ads',  onClick:()=>{setTab('myads');loadMyAds()} },
           { id:'profile', icon:'👤', label:'Profile',  onClick:()=>{setTab('profile');loadProfile()} },
           { id:'chat',    icon:'💬', label:'Support',  onClick:()=>{setTab('chat');loadChat()} },

@@ -6,6 +6,7 @@ import Login from './pages/Login'
 import Signup from './pages/Signup'
 import ViewerDashboard from './pages/ViewerDashboard'
 import AdvertiserDashboard from './pages/AdvertiserDashboard'
+import PostAd from './pages/PostAd'
 import Admin from './pages/Admin'
 
 function ProtectedRoute({ element, requireAdmin }) {
@@ -40,6 +41,7 @@ export default function App() {
       <Route path="/signup"              element={<Signup />} />
       <Route path="/viewer-dashboard"    element={<ProtectedRoute element={<ViewerDashboard />} />} />
       <Route path="/advertiser-dashboard" element={<ProtectedRoute element={<AdvertiserDashboard />} />} />
+      <Route path="/post-ad"              element={<ProtectedRoute element={<PostAd />} />} />
       <Route path="/admin"               element={<ProtectedRoute element={<Admin />} requireAdmin />} />
       <Route path="*"                    element={<Navigate to="/" replace />} />
     </Routes>
