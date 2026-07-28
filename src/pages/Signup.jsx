@@ -8,7 +8,7 @@ export default function Signup() {
   const [params] = useSearchParams()
 
   const [step,     setStep]    = useState(1)
-  const [role,     setRole]    = useState(null)
+  const [role,     setRole]    = useState(params.get('role') || null)
   const [alert,    setAlert]   = useState({ msg: '', type: '' })
   const [loading,  setLoading] = useState(false)
 
