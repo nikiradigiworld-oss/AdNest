@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#8B1A1A" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Anaar" />
+    <link rel="apple-touch-icon" href="/icon.svg" />
+    <title>Anaar – Earn Coins, Watch Ads</title>
+    <script>
+      // SPA: restore path encoded by 404.html
+      (function () {
+        var p = new URLSearchParams(location.search).get('p');
+        if (p) {
+          var rest = location.search.slice(1)
+            .replace(/(?:^|&)p=[^&]*/, '').replace(/^&/, '');
+          window.history.replaceState(
+            null, null,
+            '/' + decodeURIComponent(p) + (rest ? '?' + rest : '') + location.hash
+          );
+        }
+      })();
+    </script>
+    <script type="module" crossorigin src="/assets/index-Vvr-F4R9.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-BENLRVG4.css">
+  </head>
+  <body>
+    <div id="root"></div>
+    <div id="toast"></div>
+  </body>
+</html>
