@@ -35,9 +35,15 @@ export default function PostAd() {
         nav('/', { replace: true }); return
       }
       setUser(u)
-      // fetch advertiser id
-      const { data } = await db.from('advertisers').select('id').eq('user_id', u.id).single()
-      if (data) setAdvId(data.id)
+      // fetch advertiser record, auto-create if 'both' role doesn't have one
+      let { data: adv } = await db.from('advertisers').select('id').eq('user_id', u.id).single()
+      if (!adv) {
+        const { data: created } = await db.from('advertisers')
+          .insert({ user_id: u.id, business_name: u.user_metadata?.name || 'My Business', wallet_balance: 0 })
+          .select('id').single()
+        adv = created
+      }
+      if (adv) setAdvId(adv.id)
     })
   }, [nav])
 
