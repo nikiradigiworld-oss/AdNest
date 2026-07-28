@@ -195,8 +195,10 @@ export default function AdvertiserDashboard() {
   }
 
   async function sendChat() {
-    if (!chatInput.trim()) return
-    await db.from('support_messages').insert({ user_id: user.id, message: chatInput.trim(), sender: 'user' })
+    const msg = chatInput.trim()
+    if (!msg || !user) return
+    const { error } = await db.from('support_messages').insert({ user_id: user.id, message: msg, sender: 'user' })
+    if (error) { console.error('chat send error:', error); return }
     setChatInput('')
     loadChat()
   }
