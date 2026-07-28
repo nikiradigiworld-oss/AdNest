@@ -24,8 +24,39 @@
 .refreshBtn { background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.15); color:#fff; border-radius:8px; padding:5px 12px; font-size:.82rem; font-weight:600; cursor:pointer; }
 .refreshBtn:hover { background:rgba(255,255,255,.15); }
 
+/* Body: sidebar + content wrapper */
+.body { display:flex; flex:1; overflow:hidden; }
+
+/* Left Sidebar */
+.sidebar {
+  width:220px; flex-shrink:0;
+  background:#1a0a0a; border-right:1px solid rgba(255,255,255,.07);
+  display:flex; flex-direction:column; gap:.25rem;
+  padding:.75rem .5rem;
+  position:sticky; top:56px; height:calc(100vh - 56px); overflow-y:auto;
+}
+.sideItem {
+  display:flex; align-items:center; gap:.75rem;
+  width:100%; padding:.7rem .9rem; border:none; border-radius:12px;
+  background:transparent; color:rgba(255,255,255,.55);
+  font-size:.88rem; font-weight:600; cursor:pointer; text-align:left;
+  transition:background .15s, color .15s; position:relative;
+}
+.sideItem:hover { background:rgba(255,255,255,.07); color:#fff; }
+.sideActive { background:rgba(139,26,26,.3) !important; color:#FFD700 !important; }
+.sideIcon { font-size:1.2rem; position:relative; flex-shrink:0; line-height:1; }
+.sideLabel { font-size:.87rem; font-weight:700; }
+.sideDot { width:8px; height:8px; border-radius:50%; background:#e74c3c; position:absolute; top:-2px; right:-4px; }
+
+/* On mobile: collapse sidebar to icon-only strip */
+@media(max-width:600px) {
+  .sidebar { width:56px; padding:.75rem .2rem; }
+  .sideLabel { display:none; }
+  .sideItem { justify-content:center; padding:.75rem 0; gap:0; }
+}
+
 /* Main */
-.main { flex:1; overflow-y:auto; padding:1rem; padding-bottom:80px; }
+.main { flex:1; overflow-y:auto; padding:1rem; }
 
 /* Stats grid */
 .statsGrid { display:grid; grid-template-columns:repeat(2,1fr); gap:.75rem; margin-bottom:1.2rem; }
@@ -87,7 +118,7 @@
 .walletTab { display:flex; flex-direction:column; gap:.85rem; }
 
 /* Chat */
-.chatTab { display:flex; flex-direction:column; height:calc(100vh - 160px); }
+.chatTab { display:flex; flex-direction:column; height:calc(100vh - 80px); }
 .chatTitle { font-size:1.1rem; font-weight:800; margin-bottom:.75rem; }
 .chatMsgs { flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:.5rem; padding:.5rem 0; }
 .chatEmpty { color:#555; font-size:.87rem; text-align:center; padding:2rem; }
@@ -101,18 +132,6 @@
 .chatInput { display:flex; gap:.5rem; padding:.75rem 0 0; border-top:1px solid rgba(255,255,255,.08); }
 .chatInput input { flex:1; padding:.65rem .9rem; border:1px solid rgba(255,255,255,.12); border-radius:10px; background:rgba(255,255,255,.06); color:#fff; font-size:.9rem; outline:none; }
 .chatInput button { padding:.65rem 1.2rem; background:#8B1A1A; border:none; border-radius:10px; color:#fff; font-weight:700; cursor:pointer; }
-
-/* Bottom nav */
-.bottomNav {
-  position:fixed; bottom:0; left:0; right:0; z-index:100;
-  background:#1a0a0a; border-top:1px solid rgba(255,255,255,.08);
-  display:flex; height:64px;
-}
-.navItem { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; background:none; border:none; color:rgba(255,255,255,.45); cursor:pointer; transition:color .2s; padding:0; }
-.navItem.navActive { color:#FFD700; }
-.navIcon { font-size:1.3rem; position:relative; }
-.navDot  { width:8px; height:8px; border-radius:50%; background:#e74c3c; position:absolute; top:-2px; right:-4px; }
-.navLabel{ font-size:.65rem; font-weight:700; letter-spacing:.03em; }
 
 /* Modal */
 .modalOverlay { position:fixed; inset:0; background:rgba(0,0,0,.8); z-index:200; display:flex; align-items:flex-end; justify-content:center; padding:.75rem; }

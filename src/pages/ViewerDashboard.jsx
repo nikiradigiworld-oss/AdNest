@@ -227,11 +227,13 @@ export default function ViewerDashboard() {
   }
 
   async function sendChat() {
-    if (!chatInput.trim()) return
+    const msg = chatInput.trim()
+    if (!msg || !user) return
     setChatLoading(true)
-    await db.from('support_messages').insert({ user_id: user.id, message: chatInput.trim(), sender: 'user' })
-    setChatInput('')
+    const { error } = await db.from('support_messages').insert({ user_id: user.id, message: msg, sender: 'user' })
     setChatLoading(false)
+    if (error) { showToast('Send failed: ' + error.message, 'error'); return }
+    setChatInput('')
     loadChat()
   }
 
@@ -278,8 +280,37 @@ export default function ViewerDashboard() {
         </div>
       </nav>
 
-      {/* Main content */}
-      <main className={s.main}>
+      {/* Body: sidebar + content */}
+      <div className={s.body}>
+
+        {/* Left Sidebar */}
+        <aside className={s.sidebar}>
+          {[
+            { id:'wallet',  icon:'🪙', label:'Wallet' },
+            { id:'ads',     icon:'📢', label:'Ads' },
+            { id:'profile', icon:'👤', label:'Profile', onClick: () => { setTab('profile'); loadProfile() } },
+            { id:'chat',    icon:'💬', label:'Support', onClick: () => { setTab('chat'); loadChat() } },
+          ].map(item => (
+            <button key={item.id}
+              className={`${s.sideItem} ${tab===item.id?s.sideActive:''}`}
+              onClick={() => { if (item.onClick) item.onClick(); else setTab(item.id) }}>
+              <span className={s.sideIcon}>
+                {item.icon}
+                {item.id==='chat' && unread && <span className={s.sideDot}/>}
+              </span>
+              <span className={s.sideLabel}>{item.label}</span>
+            </button>
+          ))}
+          {user?.user_metadata?.role === 'both' && (
+            <button className={s.sideItem} onClick={() => nav('/post-ad')}>
+              <span className={s.sideIcon}>📤</span>
+              <span className={s.sideLabel}>Post Ad</span>
+            </button>
+          )}
+        </aside>
+
+        {/* Main content */}
+        <main className={s.main}>
 
         {/* Wallet Tab */}
         {tab === 'wallet' && (
@@ -479,30 +510,8 @@ export default function ViewerDashboard() {
             </div>
           </div>
         )}
-      </main>
-
-      {/* Bottom Nav */}
-      <nav className={s.bottomNav}>
-        {[
-          { id:'wallet', icon:'🪙', label:'Wallet' },
-          { id:'ads',    icon:'📢', label:'Ads' },
-          { id:'profile',icon:'👤', label:'Profile', onClick: () => { setTab('profile'); loadProfile() } },
-          { id:'chat',   icon:'💬', label:'Support', onClick: () => { setTab('chat'); loadChat() } },
-        ].map(item => (
-          <button key={item.id}
-            className={`${s.navItem} ${tab===item.id?s.navActive:''}`}
-            onClick={() => { if (item.onClick) item.onClick(); else setTab(item.id) }}>
-            <span className={s.navIcon}>{item.icon}{item.id==='chat'&&unread&&<span className={s.navDot}/>}</span>
-            <span className={s.navLabel}>{item.label}</span>
-          </button>
-        ))}
-        {(user?.user_metadata?.role === 'both') && (
-          <button className={s.navItem} onClick={() => nav('/post-ad')}>
-            <span className={s.navIcon}>📤</span>
-            <span className={s.navLabel}>Post Ad</span>
-          </button>
-        )}
-      </nav>
+        </main>
+      </div>
 
       {/* Image Ad Modal */}
       {adModal && (
