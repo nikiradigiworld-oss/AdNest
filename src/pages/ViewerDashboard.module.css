@@ -73,6 +73,16 @@
 .input:focus { border-color:rgba(255,200,0,.5); }
 .input option { background:#1a1a2e; color:#fff; }
 
+/* Post Ad banner for 'both' role */
+.postAdBanner {
+  display:flex; align-items:center; gap:.75rem;
+  background:linear-gradient(90deg,#8B1A1A,#B22222);
+  border-radius:14px; padding:.9rem 1.1rem; cursor:pointer;
+  color:#fff; transition:opacity .2s;
+}
+.postAdBanner:hover { opacity:.88; }
+.postAdBanner > span:first-child { font-size:1.6rem; }
+
 /* Withdrawal */
 .walletTab { display:flex; flex-direction:column; gap:.85rem; }
 

@@ -284,6 +284,16 @@ export default function ViewerDashboard() {
         {/* Wallet Tab */}
         {tab === 'wallet' && (
           <div className={s.walletTab}>
+            {user?.user_metadata?.role === 'both' && (
+              <div className={s.postAdBanner} onClick={() => nav('/post-ad')}>
+                <span>📢</span>
+                <div>
+                  <div style={{fontWeight:800,fontSize:'.95rem'}}>Post an Ad</div>
+                  <div style={{fontSize:'.75rem',opacity:.8}}>Advertise your business to viewers</div>
+                </div>
+                <span style={{marginLeft:'auto',fontSize:'1.2rem'}}>→</span>
+              </div>
+            )}
             <div className={s.statsGrid}>
               <div className={s.statCard}><div className={s.sIcon}>🪙</div><div className={s.sLabel}>Total Coins</div><div className={s.sValue}>{Number(coins).toLocaleString()}</div></div>
               <div className={s.statCard}><div className={s.sIcon}>₹</div><div className={s.sLabel}>Cash Value</div><div className={s.sValue}>₹{parseFloat(cash).toFixed(2)}</div></div>
@@ -486,6 +496,12 @@ export default function ViewerDashboard() {
             <span className={s.navLabel}>{item.label}</span>
           </button>
         ))}
+        {(user?.user_metadata?.role === 'both') && (
+          <button className={s.navItem} onClick={() => nav('/post-ad')}>
+            <span className={s.navIcon}>📤</span>
+            <span className={s.navLabel}>Post Ad</span>
+          </button>
+        )}
       </nav>
 
       {/* Image Ad Modal */}
