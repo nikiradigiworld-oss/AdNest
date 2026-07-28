@@ -58,6 +58,25 @@
 /* Main */
 .main { flex:1; overflow-y:auto; padding:1rem; }
 
+/* Share buttons */
+.shareGrid { display:grid; grid-template-columns:1fr 1fr; gap:.55rem; margin-bottom:.25rem; }
+@media(min-width:480px){ .shareGrid { grid-template-columns:repeat(3,1fr); } }
+.shareBtn {
+  display:flex; align-items:center; justify-content:center; gap:.5rem;
+  padding:.6rem .5rem; border:none; border-radius:10px;
+  font-size:.8rem; font-weight:700; cursor:pointer; transition:opacity .2s, transform .1s;
+  color:#fff;
+}
+.shareBtn:hover { opacity:.88; transform:translateY(-1px); }
+.shareBtn:active { transform:translateY(0); }
+.shareIcon { display:flex; align-items:center; flex-shrink:0; }
+.shareWhatsapp { background:#25D366; }
+.shareTelegram { background:#229ED9; }
+.shareTwitter  { background:#000; border:1px solid rgba(255,255,255,.2); }
+.shareFacebook { background:#1877F2; }
+.shareCopy     { background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.2); color:#fff; }
+.shareCopied   { background:rgba(39,174,96,.2); border-color:rgba(39,174,96,.5); color:#2ecc71; }
+
 /* Stats grid */
 .statsGrid { display:grid; grid-template-columns:repeat(2,1fr); gap:.75rem; margin-bottom:1.2rem; }
 @media(min-width:480px){ .statsGrid { grid-template-columns:repeat(3,1fr); } }
