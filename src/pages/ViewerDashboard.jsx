@@ -63,10 +63,11 @@ export default function ViewerDashboard() {
     try {
       const H = await restHeaders()
       const uid = user.id
-      const [walletRes, watchRes, refRes] = await Promise.all([
+      const [walletRes, watchRes, refRes, wdRes] = await Promise.all([
         fetch(REST + 'coin_wallets?select=coins,cash_value&user_id=eq.' + uid + '&limit=1', { headers: H }),
         fetch(REST + 'ad_views?select=id&viewer_id=eq.' + uid, { method:'HEAD', headers:{...H,'Prefer':'count=exact'} }),
         fetch(REST + 'referral_earnings?select=referred_user_id,coins_earned,cash_earned&referrer_id=eq.' + uid, { headers: H }),
+        fetch(REST + 'withdrawal_requests?select=amount_rupees,status,requested_at,upi_id,bank_account_no&user_id=eq.' + uid + '&order=requested_at.desc&limit=50', { headers: H }),
       ])
       const walletArr = walletRes.ok ? await walletRes.json() : []
       const wallet    = Array.isArray(walletArr) ? walletArr[0] : walletArr
@@ -81,6 +82,7 @@ export default function ViewerDashboard() {
       setCash(wallet?.cash_value || 0)
       setWatchCount(wc)
       setRefCount(rc); setRefCoins(rco); setRefCash(rca)
+      if (wdRes.ok) setWdHistory(await wdRes.json())
     } catch(e) { console.error('loadWallet', e) }
   }
 
@@ -146,9 +148,6 @@ export default function ViewerDashboard() {
         await db.from('users').update({ referral_code: code }).eq('id', user.id)
       }
       setRefCode(code)
-      // Load withdrawal history
-      const wRes = await fetch(REST + 'withdrawal_requests?select=amount_rupees,status,requested_at&user_id=eq.' + user.id + '&order=requested_at.desc&limit=5', { headers: H })
-      if (wRes.ok) setWdHistory(await wRes.json())
     } catch(e) { console.error('loadProfile', e) }
   }
 
@@ -371,16 +370,41 @@ export default function ViewerDashboard() {
                   background:wdMsg.ok?'rgba(39,174,96,.15)':'rgba(231,76,60,.15)',
                   color:wdMsg.ok?'#2ecc71':'#e74c3c',fontSize:'.83rem',fontWeight:600}}>{wdMsg.msg}</div>}
                 <button className={s.btnPrimary} onClick={requestWithdrawal}>💸 Request Withdrawal</button>
-                {wdHistory.length > 0 && <div style={{marginTop:'1rem'}}>
-                  <div style={{fontSize:'.75rem',fontWeight:700,color:'#aaa',marginBottom:'.5rem',textTransform:'uppercase',letterSpacing:'.05em'}}>Recent Requests</div>
-                  {wdHistory.map((r,i)=>(
-                    <div key={i} style={{display:'flex',justifyContent:'space-between',padding:'.45rem 0',borderBottom:'1px solid rgba(255,255,255,.06)',fontSize:'.82rem'}}>
-                      <span>₹{parseFloat(r.amount_rupees).toFixed(2)}</span>
-                      <span style={{color:r.status==='completed'?'#27ae60':r.status==='rejected'?'#e74c3c':r.status==='processing'?'#f39c12':'#888',fontWeight:700,textTransform:'capitalize'}}>{r.status}</span>
-                      <span style={{color:'#666',fontSize:'.74rem'}}>{new Date(r.requested_at).toLocaleDateString('en-IN')}</span>
-                    </div>
-                  ))}
-                </div>}
+              </div>
+            </div>
+
+            {/* Withdrawal History */}
+            <div className={s.panel}>
+              <div className={s.panelTitle}>📋 Withdrawal History</div>
+              <div className={s.panelBody}>
+                {wdHistory.length === 0 ? (
+                  <div style={{textAlign:'center',padding:'1.5rem 0',color:'#555',fontSize:'.87rem'}}>No withdrawal requests yet.</div>
+                ) : (
+                  <div className={s.wdList}>
+                    {wdHistory.map((r,i) => {
+                      const statusMap = {
+                        pending:    { color:'#f39c12', bg:'rgba(243,156,18,.12)',  icon:'⏳', label:'Pending'    },
+                        processing: { color:'#3498db', bg:'rgba(52,152,219,.12)', icon:'🔄', label:'Processing' },
+                        completed:  { color:'#27ae60', bg:'rgba(39,174,96,.12)',  icon:'✅', label:'Completed'  },
+                        rejected:   { color:'#e74c3c', bg:'rgba(231,76,60,.12)', icon:'❌', label:'Rejected'   },
+                      }
+                      const st = statusMap[r.status] || { color:'#888', bg:'rgba(255,255,255,.06)', icon:'❓', label: r.status }
+                      return (
+                        <div key={i} className={s.wdCard}>
+                          <div className={s.wdTop}>
+                            <span className={s.wdAmount}>₹{parseFloat(r.amount_rupees).toFixed(2)}</span>
+                            <span className={s.wdBadge} style={{color:st.color, background:st.bg}}>
+                              {st.icon} {st.label}
+                            </span>
+                          </div>
+                          <div className={s.wdDate}>
+                            Requested: {new Date(r.requested_at).toLocaleString('en-IN',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
               </div>
             </div>
           </div>
