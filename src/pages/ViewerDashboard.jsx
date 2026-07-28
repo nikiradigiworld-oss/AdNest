@@ -123,7 +123,7 @@ export default function ViewerDashboard() {
     if (!user) return
     try {
       const H = await restHeaders()
-      const res = await fetch(REST + 'support_messages?select=id&is_admin=eq.true&is_read=eq.false&user_id=eq.' + user.id, {
+      const res = await fetch(REST + 'support_messages?select=id&sender=eq.admin&is_read=eq.false&user_id=eq.' + user.id, {
         method: 'HEAD', headers: { ...H, 'Prefer': 'count=exact' }
       })
       const cnt = parseInt((res.headers.get('content-range')||'').split('/')[1]||'0', 10) || 0
@@ -217,10 +217,10 @@ export default function ViewerDashboard() {
   async function loadChat() {
     try {
       const H = await restHeaders()
-      const res = await fetch(REST + 'support_messages?select=message,is_admin,created_at&user_id=eq.' + user.id + '&order=created_at.asc&limit=50', { headers: H })
+      const res = await fetch(REST + 'support_messages?select=message,sender,created_at&user_id=eq.' + user.id + '&order=created_at.asc&limit=50', { headers: H })
       if (res.ok) setChatMsgs(await res.json())
       // Mark admin messages as read
-      await db.from('support_messages').update({ is_read: true }).eq('user_id', user.id).eq('is_admin', true).eq('is_read', false)
+      await db.from('support_messages').update({ is_read: true }).eq('user_id', user.id).eq('sender', 'admin').eq('is_read', false)
       setUnread(false)
       setTimeout(() => { if (chatRef.current) chatRef.current.scrollTop = chatRef.current.scrollHeight }, 100)
     } catch(e) {}
@@ -229,7 +229,7 @@ export default function ViewerDashboard() {
   async function sendChat() {
     if (!chatInput.trim()) return
     setChatLoading(true)
-    await db.from('support_messages').insert({ user_id: user.id, message: chatInput.trim(), is_admin: false })
+    await db.from('support_messages').insert({ user_id: user.id, message: chatInput.trim(), sender: 'user' })
     setChatInput('')
     setChatLoading(false)
     loadChat()
@@ -466,7 +466,7 @@ export default function ViewerDashboard() {
             <div className={s.chatMsgs} ref={chatRef}>
               {chatMsgs.length === 0 && <div className={s.chatEmpty}>No messages yet. Send us a message!</div>}
               {chatMsgs.map((m, i) => (
-                <div key={i} className={m.is_admin ? s.chatAdmin : s.chatUser}>
+                <div key={i} className={m.sender === 'admin' ? s.chatAdmin : s.chatUser}>
                   <div className={s.chatBubble}>{m.message}</div>
                   <div className={s.chatTime}>{new Date(m.created_at).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}</div>
                 </div>

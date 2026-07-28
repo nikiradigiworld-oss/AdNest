@@ -96,7 +96,7 @@ export default function AdvertiserDashboard() {
     if (!user) return
     try {
       const H = await restHeaders()
-      const res = await fetch(REST + 'support_messages?select=id&is_admin=eq.true&is_read=eq.false&user_id=eq.' + user.id, {
+      const res = await fetch(REST + 'support_messages?select=id&sender=eq.admin&is_read=eq.false&user_id=eq.' + user.id, {
         method:'HEAD', headers:{...H,'Prefer':'count=exact'}
       })
       const cnt = parseInt((res.headers.get('content-range')||'').split('/')[1]||'0', 10) || 0
@@ -186,9 +186,9 @@ export default function AdvertiserDashboard() {
   async function loadChat() {
     try {
       const H = await restHeaders()
-      const res = await fetch(REST + 'support_messages?select=message,is_admin,created_at&user_id=eq.' + user.id + '&order=created_at.asc&limit=50', { headers: H })
+      const res = await fetch(REST + 'support_messages?select=message,sender,created_at&user_id=eq.' + user.id + '&order=created_at.asc&limit=50', { headers: H })
       if (res.ok) setChatMsgs(await res.json())
-      await db.from('support_messages').update({ is_read: true }).eq('user_id', user.id).eq('is_admin', true).eq('is_read', false)
+      await db.from('support_messages').update({ is_read: true }).eq('user_id', user.id).eq('sender', 'admin').eq('is_read', false)
       setUnread(false)
       setTimeout(() => { if (chatRef.current) chatRef.current.scrollTop = chatRef.current.scrollHeight }, 100)
     } catch(e) {}
@@ -196,7 +196,7 @@ export default function AdvertiserDashboard() {
 
   async function sendChat() {
     if (!chatInput.trim()) return
-    await db.from('support_messages').insert({ user_id: user.id, message: chatInput.trim(), is_admin: false })
+    await db.from('support_messages').insert({ user_id: user.id, message: chatInput.trim(), sender: 'user' })
     setChatInput('')
     loadChat()
   }
@@ -386,8 +386,8 @@ export default function AdvertiserDashboard() {
                 <div style={{flex:1,overflowY:'auto',padding:'1rem',display:'flex',flexDirection:'column',gap:'.5rem'}} ref={chatRef}>
                   {chatMsgs.length===0 && <div style={{color:'#aaa',textAlign:'center',padding:'2rem'}}>No messages yet.</div>}
                   {chatMsgs.map((m,i)=>(
-                    <div key={i} style={{display:'flex',justifyContent:m.is_admin?'flex-start':'flex-end'}}>
-                      <div style={{background:m.is_admin?'#f0f0f0':'#8B1A1A',color:m.is_admin?'#333':'#fff',padding:'.6rem .9rem',borderRadius:12,fontSize:'.87rem',maxWidth:'75%'}}>{m.message}</div>
+                    <div key={i} style={{display:'flex',justifyContent:m.sender==='admin'?'flex-start':'flex-end'}}>
+                      <div style={{background:m.sender==='admin'?'#f0f0f0':'#8B1A1A',color:m.sender==='admin'?'#333':'#fff',padding:'.6rem .9rem',borderRadius:12,fontSize:'.87rem',maxWidth:'75%'}}>{m.message}</div>
                     </div>
                   ))}
                 </div>

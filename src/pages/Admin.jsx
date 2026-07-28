@@ -138,13 +138,13 @@ export default function Admin() {
   async function loadSupport() {
     try {
       const H = await restHeaders()
-      const res = await fetch(REST + 'support_messages?select=user_id,created_at,message,is_admin,is_read&order=created_at.desc', { headers: H })
+      const res = await fetch(REST + 'support_messages?select=user_id,created_at,message,sender,is_read&order=created_at.desc', { headers: H })
       if (!res.ok) return
       const msgs = await res.json()
       const map = {}
       msgs.forEach(m => {
         if (!map[m.user_id]) map[m.user_id] = { user_id: m.user_id, last: m.message, unread: 0, time: m.created_at }
-        if (!m.is_admin && !m.is_read) map[m.user_id].unread++
+        if (m.sender === 'user' && !m.is_read) map[m.user_id].unread++
       })
       setConvos(Object.values(map))
     } catch(e) {}
@@ -155,21 +155,21 @@ export default function Admin() {
     try {
       const H = await restHeaders()
       const [msgsRes, userRes] = await Promise.all([
-        fetch(REST + 'support_messages?select=message,is_admin,created_at&user_id=eq.' + userId + '&order=created_at.asc', { headers: H }),
+        fetch(REST + 'support_messages?select=message,sender,created_at&user_id=eq.' + userId + '&order=created_at.asc', { headers: H }),
         fetch(REST + 'users?select=name,email&id=eq.' + userId + '&limit=1', { headers: H }),
       ])
       if (msgsRes.ok) setChatMsgs(await msgsRes.json())
       const userArr = userRes.ok ? await userRes.json() : []
       setSelConvo({ id: userId, name: userArr[0]?.name || userArr[0]?.email || userId.slice(0,8) })
       setTimeout(() => { if (chatRef.current) chatRef.current.scrollTop = chatRef.current.scrollHeight }, 100)
-      await db.from('support_messages').update({ is_read: true }).eq('user_id', userId).eq('is_admin', false)
+      await db.from('support_messages').update({ is_read: true }).eq('user_id', userId).eq('sender', 'user')
       loadSupport()
     } catch(e) {}
   }
 
   async function sendSupportReply() {
     if (!replyInput.trim() || !selConvo?.id) return
-    await db.from('support_messages').insert({ user_id: selConvo.id, message: replyInput.trim(), is_admin: true })
+    await db.from('support_messages').insert({ user_id: selConvo.id, message: replyInput.trim(), sender: 'admin' })
     setReplyInput('')
     openConvo(selConvo.id)
   }
@@ -535,8 +535,8 @@ export default function Admin() {
                     <div className={s.chatHeader}>{selConvo.name}</div>
                     <div className={s.chatMsgs} ref={chatRef}>
                       {chatMsgs.map((m,i) => (
-                        <div key={i} style={{display:'flex',justifyContent:m.is_admin?'flex-end':'flex-start'}}>
-                          <div style={{background:m.is_admin?'#8B1A1A':'#f0f0f0',color:m.is_admin?'#fff':'#333',padding:'.6rem .9rem',borderRadius:12,fontSize:'.86rem',maxWidth:'75%'}}>{m.message}</div>
+                        <div key={i} style={{display:'flex',justifyContent:m.sender==='admin'?'flex-end':'flex-start'}}>
+                          <div style={{background:m.sender==='admin'?'#8B1A1A':'#f0f0f0',color:m.sender==='admin'?'#fff':'#333',padding:'.6rem .9rem',borderRadius:12,fontSize:'.86rem',maxWidth:'75%'}}>{m.message}</div>
                         </div>
                       ))}
                     </div>
