@@ -5,10 +5,12 @@ import App from './App'
 import './index.css'
 
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js').catch(() => {})
-  navigator.serviceWorker.addEventListener('message', e => {
-    if (e.data?.type === 'SW_UPDATED') window.location.reload()
+  // Unregister any old service workers, then register fresh
+  navigator.serviceWorker.getRegistrations().then(regs => {
+    const stale = regs.filter(r => r.active?.scriptURL && !r.active.scriptURL.includes('sw.js'))
+    stale.forEach(r => r.unregister())
   })
+  navigator.serviceWorker.register('/sw.js').catch(() => {})
 }
 
 export function showToast(msg, type = 'info') {
