@@ -1,0 +1,69 @@
+/* Overlay */
+.overlay {
+  position:fixed; inset:0; z-index:9999;
+  background:rgba(0,0,0,.65); backdrop-filter:blur(4px);
+  display:flex; align-items:center; justify-content:center;
+  padding:1rem;
+}
+
+/* Card */
+.modal {
+  background:#1a0a0a; border:1px solid rgba(255,215,0,.25);
+  border-radius:20px; padding:1.75rem 1.5rem;
+  width:100%; max-width:400px;
+  box-shadow:0 24px 64px rgba(0,0,0,.6);
+  animation:pop .18s ease;
+}
+@keyframes pop { from { transform:scale(.93); opacity:0 } to { transform:scale(1); opacity:1 } }
+
+.title {
+  font-size:1.1rem; font-weight:900; color:#FFD700;
+  text-align:center; margin-bottom:.35rem;
+}
+.sub {
+  font-size:.8rem; color:rgba(255,255,255,.45);
+  text-align:center; margin-bottom:1.25rem;
+}
+
+/* Role cards */
+.roles { display:flex; flex-direction:column; gap:.75rem; margin-bottom:1.25rem; }
+
+.roleCard {
+  display:flex; align-items:center; gap:1rem;
+  background:rgba(255,255,255,.05); border:1.5px solid rgba(255,255,255,.1);
+  border-radius:14px; padding:.9rem 1rem;
+  cursor:pointer; transition:all .15s;
+}
+.roleCard:hover:not(.current):not(.loading) {
+  background:rgba(139,26,26,.3); border-color:#FFD700;
+}
+.roleCard.current {
+  background:rgba(255,215,0,.1); border-color:#FFD700; cursor:default;
+}
+.roleCard.loading { opacity:.5; cursor:wait; }
+
+.roleIcon { font-size:1.6rem; flex-shrink:0; }
+.roleInfo { flex:1; }
+.roleName { font-size:.92rem; font-weight:800; color:#fff; margin-bottom:.15rem; }
+.roleDesc { font-size:.75rem; color:rgba(255,255,255,.45); }
+.currentBadge {
+  font-size:.68rem; font-weight:700; background:#FFD700; color:#1a0a0a;
+  border-radius:20px; padding:2px 8px; flex-shrink:0;
+}
+.checkIcon { font-size:1rem; color:#FFD700; flex-shrink:0; }
+
+/* Cancel */
+.cancel {
+  width:100%; padding:.7rem;
+  background:transparent; border:1px solid rgba(255,255,255,.15);
+  color:rgba(255,255,255,.5); border-radius:10px;
+  font-size:.82rem; font-weight:600; cursor:pointer;
+  transition:all .15s;
+}
+.cancel:hover { background:rgba(255,255,255,.07); color:#fff; }
+
+/* Switching spinner */
+.switching {
+  text-align:center; color:rgba(255,255,255,.6);
+  font-size:.82rem; margin-bottom:.75rem;
+}

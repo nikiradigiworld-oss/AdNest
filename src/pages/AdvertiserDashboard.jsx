@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { db, REST, restHeaders } from '../lib/supabase'
 import s from './AdvertiserDashboard.module.css'
+import RoleSwitchModal from '../components/RoleSwitchModal'
 
 const RATES = { national:2.5, state:3.5, district:5.0 }
 
@@ -31,6 +32,7 @@ export default function AdvertiserDashboard() {
   // Profile
   const [profile, setProfile]   = useState({})
   const [profMsg,  setProfMsg]  = useState('')
+  const [showRoleModal, setShowRoleModal] = useState(false)
 
   // Chat
   const [chatMsgs,  setChatMsgs]  = useState([])
@@ -42,6 +44,20 @@ export default function AdvertiserDashboard() {
       if (event === 'SIGNED_OUT') nav('/login', { replace: true })
     })
   }, [nav])
+
+  async function switchRole(newRole) {
+    const { error } = await db.auth.updateUser({ data: { role: newRole } })
+    if (error) { alert('Failed to switch role: ' + error.message); return }
+    const H = await restHeaders()
+    await fetch(REST + 'users?user_id=eq.' + user.id, {
+      method: 'PATCH',
+      headers: { ...H, 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ role: newRole }),
+    })
+    setShowRoleModal(false)
+    if (newRole === 'viewer' || newRole === 'both') nav('/viewer-dashboard', { replace: true })
+    else nav('/advertiser-dashboard', { replace: true })
+  }
 
   useEffect(() => {
     db.auth.getUser().then(({ data: { user: u } }) => {
@@ -227,6 +243,7 @@ export default function AdvertiserDashboard() {
           {user?.user_metadata?.role === 'admin' && (
             <button className={s.navLink} onClick={() => nav('/admin')}>Admin</button>
           )}
+          <button className={s.navLink} onClick={() => setShowRoleModal(true)}>Switch Role</button>
           <button className={s.logoutBtn} onClick={() => db.auth.signOut().then(() => nav('/login', { replace: true }))}>Sign Out</button>
         </div>
       </nav>
@@ -420,6 +437,14 @@ export default function AdvertiserDashboard() {
           </button>
         ))}
       </nav>
+
+      {showRoleModal && (
+        <RoleSwitchModal
+          currentRole={user?.user_metadata?.role || 'advertiser'}
+          onSwitch={switchRole}
+          onClose={() => setShowRoleModal(false)}
+        />
+      )}
     </div>
   )
 }

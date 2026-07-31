@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { db, SUPABASE_URL, SUPABASE_ANON, restHeaders, REST } from '../lib/supabase'
 import s from './ViewerDashboard.module.css'
+import RoleSwitchModal from '../components/RoleSwitchModal'
 
 export default function ViewerDashboard() {
   const nav = useNavigate()
@@ -30,6 +31,7 @@ export default function ViewerDashboard() {
   const [wdMsg,     setWdMsg]     = useState({ msg:'',ok:false })
   const [wdHistory, setWdHistory] = useState([])
   const [copied,    setCopied]    = useState(false)
+  const [showRoleModal, setShowRoleModal] = useState(false)
 
   // Chat
   const [chatMsgs,  setChatMsgs]  = useState([])
@@ -42,6 +44,20 @@ export default function ViewerDashboard() {
       if (event === 'SIGNED_OUT') nav('/login', { replace: true })
     })
   }, [nav])
+
+  async function switchRole(newRole) {
+    const { error } = await db.auth.updateUser({ data: { role: newRole } })
+    if (error) { alert('Failed to switch role: ' + error.message); return }
+    const H = await restHeaders()
+    await fetch(REST + 'users?user_id=eq.' + user.id, {
+      method: 'PATCH',
+      headers: { ...H, 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ role: newRole }),
+    })
+    setShowRoleModal(false)
+    if (newRole === 'advertiser') nav('/advertiser-dashboard', { replace: true })
+    else nav('/viewer-dashboard', { replace: true })
+  }
 
   useEffect(() => {
     if (!user) return
@@ -298,6 +314,7 @@ export default function ViewerDashboard() {
           {(user?.user_metadata?.role === 'both') && (
             <button className={s.navLink} onClick={() => nav('/post-ad')}>📢 Post Ad</button>
           )}
+          <button className={s.navLink} onClick={() => setShowRoleModal(true)}>Switch Role</button>
           <button className={s.logoutBtn} onClick={() => db.auth.signOut().then(() => nav('/login', { replace: true }))}>Sign Out</button>
         </div>
       </nav>
@@ -626,6 +643,14 @@ export default function ViewerDashboard() {
             <p style={{fontSize:'.82rem',color:'rgba(255,255,255,.6)',textAlign:'center',marginTop:'.5rem'}}>Watch the full video to earn coins</p>
           </div>
         </div>
+      )}
+
+      {showRoleModal && (
+        <RoleSwitchModal
+          currentRole={user?.user_metadata?.role || 'viewer'}
+          onSwitch={switchRole}
+          onClose={() => setShowRoleModal(false)}
+        />
       )}
     </div>
   )
