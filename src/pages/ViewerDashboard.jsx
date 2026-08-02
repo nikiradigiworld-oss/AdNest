@@ -33,6 +33,12 @@ export default function ViewerDashboard() {
   const [copied,    setCopied]    = useState(false)
   const [showRoleModal, setShowRoleModal] = useState(false)
 
+  // Image ad timer
+  const [adCountdown,  setAdCountdown]  = useState(0)
+  const [adEarned,     setAdEarned]     = useState(false)
+  const [showWaPrompt, setShowWaPrompt] = useState(false)
+  const adTimerRef = useRef(null)
+
   // Chat
   const [chatMsgs,  setChatMsgs]  = useState([])
   const [chatInput, setChatInput] = useState('')
@@ -57,6 +63,50 @@ export default function ViewerDashboard() {
     setShowRoleModal(false)
     if (newRole === 'advertiser') nav('/advertiser-dashboard', { replace: true })
     else nav('/viewer-dashboard', { replace: true })
+  }
+
+  // Start 15-sec countdown whenever an image ad modal opens
+  useEffect(() => {
+    if (!adModal) {
+      clearInterval(adTimerRef.current)
+      setAdCountdown(0); setAdEarned(false); setShowWaPrompt(false)
+      return
+    }
+    setAdCountdown(15); setAdEarned(false); setShowWaPrompt(false)
+    adTimerRef.current = setInterval(() => {
+      setAdCountdown(prev => {
+        if (prev <= 1) { clearInterval(adTimerRef.current); return 0 }
+        return prev - 1
+      })
+    }, 1000)
+    return () => clearInterval(adTimerRef.current)
+  }, [adModal])
+
+  // Auto-earn when countdown hits 0
+  useEffect(() => {
+    if (adCountdown === 0 && adModal && !adEarned) earnAdCoins(adModal)
+  }, [adCountdown]) // eslint-disable-line
+
+  async function earnAdCoins(ad) {
+    const { data, error } = await db.rpc('record_ad_click', { p_viewer_id: user.id, p_ad_id: ad.id })
+    if (error || !data?.success) {
+      showToast(error?.message?.includes('already') ? '✅ Already earned' : '❌ Error', 'error')
+      setAdModal(null); return
+    }
+    setAdEarned(true)
+    const earned = data.coins_earned || 0
+    const cashEarned = data.cash_earned || 0
+    showToast(`🪙 +${earned} coins  ₹${Number(cashEarned).toFixed(2)} earned!`)
+    setClickedAds(prev => new Set([...prev, ad.id]))
+    loadWallet()
+    db.rpc('credit_referral_bonus', { p_viewer_id: user.id, p_ad_id: ad.id })
+    if (ad.whatsapp_number) setShowWaPrompt(true)
+    else setAdModal(null)
+  }
+
+  function closeAdModal() {
+    clearInterval(adTimerRef.current)
+    setAdModal(null); setAdCountdown(0); setAdEarned(false); setShowWaPrompt(false)
   }
 
   useEffect(() => {
@@ -612,20 +662,54 @@ export default function ViewerDashboard() {
 
       {/* Image Ad Modal */}
       {adModal && (
-        <div className={s.modalOverlay} onClick={()=>setAdModal(null)}>
+        <div className={s.modalOverlay}>
           <div className={s.modal} onClick={e=>e.stopPropagation()}>
-            <button className={s.modalClose} onClick={()=>setAdModal(null)}>✕</button>
-            <h3 className={s.modalTitle}>{adModal.title}</h3>
-            {adModal.content_url && <img src={adModal.content_url} alt={adModal.title} className={s.adImg} />}
-            {adModal.whatsapp_number && (
-              <a href={`https://wa.me/${adModal.whatsapp_number}`} target="_blank" rel="noreferrer" className={s.waBtn}>
-                💬 WhatsApp
-              </a>
+
+            {showWaPrompt ? (
+              /* ── WhatsApp Contact Prompt ── */
+              <div className={s.waPrompt}>
+                <div className={s.waPromptIcon}>💬</div>
+                <div className={s.waPromptTitle}>Contact Advertiser?</div>
+                <div className={s.waPromptSub}>Connect with the advertiser on WhatsApp</div>
+                <div className={s.waPromptBtns}>
+                  <a
+                    href={`https://wa.me/${adModal.whatsapp_number}`}
+                    target="_blank" rel="noreferrer"
+                    className={s.waYesBtn}
+                    onClick={closeAdModal}
+                  >
+                    ✅ Yes, Contact
+                  </a>
+                  <button className={s.waSkipBtn} onClick={closeAdModal}>Skip</button>
+                </div>
+              </div>
+            ) : (
+              /* ── Image + Countdown ── */
+              <>
+                <h3 className={s.modalTitle}>{adModal.title}</h3>
+                {adModal.content_url && (
+                  <img src={adModal.content_url} alt={adModal.title} className={s.adImg} />
+                )}
+                <div className={s.adTimerRow}>
+                  {adCountdown > 0 ? (
+                    <>
+                      <div className={s.adTimerRing}>
+                        <svg viewBox="0 0 44 44" className={s.adTimerSvg}>
+                          <circle cx="22" cy="22" r="18" className={s.adTimerBg} />
+                          <circle cx="22" cy="22" r="18" className={s.adTimerArc}
+                            style={{ strokeDashoffset: 113 - (113 * (15 - adCountdown) / 15) }} />
+                        </svg>
+                        <span className={s.adTimerNum}>{adCountdown}</span>
+                      </div>
+                      <span className={s.adTimerLabel}>Watch for {adCountdown}s to earn 🪙 coins</span>
+                    </>
+                  ) : (
+                    <div className={s.adTimerDone}>⏳ Crediting coins to your wallet…</div>
+                  )}
+                </div>
+              </>
             )}
-            <button className={s.btnPrimary} style={{marginTop:'.75rem'}}
-              onClick={e => { clickAd(adModal, e.currentTarget); setAdModal(null) }}>
-              👆 Interact & Earn 🪙
-            </button>
+
           </div>
         </div>
       )}

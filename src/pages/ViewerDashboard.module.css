@@ -168,5 +168,58 @@
 .adVideo { width:100%; border-radius:12px; margin-bottom:.75rem; max-height:300px; }
 .waBtn   { display:block; width:100%; text-align:center; background:#25D366; color:#fff; border-radius:10px; padding:.65rem; font-size:.9rem; font-weight:700; text-decoration:none; margin-bottom:.5rem; }
 
+/* ── Ad countdown timer ─────────────────────────── */
+.adTimerRow {
+  display:flex; align-items:center; gap:.9rem;
+  background:rgba(255,255,255,.05); border-radius:14px;
+  padding:.75rem 1rem; margin-top:.25rem;
+}
+.adTimerRing { position:relative; width:44px; height:44px; flex-shrink:0; }
+.adTimerSvg  { width:44px; height:44px; transform:rotate(-90deg); }
+.adTimerBg   { fill:none; stroke:rgba(255,255,255,.12); stroke-width:4; }
+.adTimerArc  {
+  fill:none; stroke:#FFD700; stroke-width:4;
+  stroke-linecap:round;
+  stroke-dasharray:113;
+  stroke-dashoffset:0;
+  transition:stroke-dashoffset 1s linear;
+}
+.adTimerNum  {
+  position:absolute; inset:0;
+  display:flex; align-items:center; justify-content:center;
+  font-size:.85rem; font-weight:900; color:#FFD700;
+}
+.adTimerLabel { font-size:.83rem; color:rgba(255,255,255,.7); font-weight:600; line-height:1.4; }
+.adTimerDone  {
+  width:100%; text-align:center;
+  font-size:.88rem; font-weight:700; color:#FFD700;
+  animation:pulse 1s ease-in-out infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+
+/* ── WhatsApp contact prompt ────────────────────── */
+.waPrompt { text-align:center; padding:.5rem 0 .25rem; }
+.waPromptIcon  { font-size:3rem; margin-bottom:.6rem; }
+.waPromptTitle { font-size:1.1rem; font-weight:900; color:#fff; margin-bottom:.35rem; }
+.waPromptSub   { font-size:.82rem; color:rgba(255,255,255,.5); margin-bottom:1.4rem; }
+.waPromptBtns  { display:flex; flex-direction:column; gap:.6rem; }
+.waYesBtn {
+  display:block; width:100%; text-align:center;
+  background:#25D366; color:#fff;
+  border-radius:12px; padding:.82rem;
+  font-size:.97rem; font-weight:800; text-decoration:none;
+  transition:opacity .15s;
+}
+.waYesBtn:hover { opacity:.88; }
+.waSkipBtn {
+  width:100%; padding:.75rem;
+  background:rgba(255,255,255,.07);
+  border:1px solid rgba(255,255,255,.15);
+  color:rgba(255,255,255,.55);
+  border-radius:12px; font-size:.9rem; font-weight:600; cursor:pointer;
+  transition:all .15s;
+}
+.waSkipBtn:hover { background:rgba(255,255,255,.13); color:#fff; }
+
 .btnPrimary { display:block; width:100%; padding:.75rem; background:#8B1A1A; color:#fff; border:none; border-radius:10px; font-size:.95rem; font-weight:700; cursor:pointer; transition:opacity .2s; }
 .btnPrimary:hover { opacity:.88; }
