@@ -338,7 +338,8 @@ export default function Admin() {
               <span>{t.icon}</span><span>{t.label}</span>
             </div>
           ))}
-          <div className={s.sbItem} onClick={() => nav('/')}><span>🏠</span><span>Back to Site</span></div>
+          <div className={s.sbItem} onClick={() => nav('/viewer-dashboard')}><span>👁️</span><span>Viewer Dashboard</span></div>
+          <div className={s.sbItem} onClick={() => nav('/advertiser-dashboard')}><span>📢</span><span>Advertiser Dashboard</span></div>
         </aside>
 
         {/* Main */}
