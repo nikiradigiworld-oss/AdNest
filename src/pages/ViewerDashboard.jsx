@@ -660,6 +660,26 @@ export default function ViewerDashboard() {
         </main>
       </div>
 
+      {/* Mobile Bottom Tab Bar */}
+      <nav className={s.mobileBottomNav}>
+        {[
+          { id:'wallet',  icon:'🪙', label:'Wallet' },
+          { id:'ads',     icon:'📢', label:'Ads' },
+          { id:'profile', icon:'👤', label:'Profile', onClick: () => { setTab('profile'); loadProfile() } },
+          { id:'chat',    icon:'💬', label:'Support',  onClick: () => { setTab('chat'); loadChat() } },
+        ].map(item => (
+          <button key={item.id}
+            className={`${s.mNavItem} ${tab===item.id?s.mNavActive:''}`}
+            onClick={() => { if (item.onClick) item.onClick(); else setTab(item.id) }}>
+            <span className={s.mNavIcon}>
+              {item.icon}
+              {item.id==='chat' && unread && <span className={s.sideDot}/>}
+            </span>
+            <span>{item.label}</span>
+          </button>
+        ))}
+      </nav>
+
       {/* Image Ad Modal */}
       {adModal && (
         <div className={s.modalOverlay}>

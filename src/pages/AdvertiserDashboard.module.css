@@ -21,7 +21,7 @@
 .logoutBtn:hover { background:rgba(255,255,255,.2); color:#fff; }
 
 /* Layout */
-.layout { display:flex; flex:1; overflow:hidden; height:calc(100vh - 56px - 64px); }
+.layout { display:flex; flex:1; overflow:hidden; height:calc(100vh - 56px - 60px); }
 @media(min-width:768px){ .layout { height:calc(100vh - 56px); } }
 
 /* Sidebar */
@@ -97,7 +97,8 @@
 .btnSubmit:disabled { opacity:.5; cursor:not-allowed; }
 
 /* Ads table */
-.adsTable { width:100%; border-collapse:collapse; font-size:.85rem; }
+.tableWrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.adsTable { width:100%; border-collapse:collapse; font-size:.85rem; min-width:480px; }
 .adsTable th { background:#f8f8f8; padding:.7rem .9rem; font-size:.75rem; font-weight:700; color:#777; text-transform:uppercase; letter-spacing:.04em; text-align:left; border-bottom:2px solid #efefef; }
 .adsTable td { padding:.75rem .9rem; border-bottom:1px solid #f5f5f5; vertical-align:middle; }
 .adsTable tr:last-child td { border-bottom:none; }
@@ -111,9 +112,17 @@
 
 /* Mobile bottom nav */
 .mobileNav {
-  display:flex; position:fixed; bottom:0; left:0; right:0; z-index:100;
-  background:#fff; border-top:1.5px solid #e8e8e8; height:64px;
+  display: flex; position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+  background: #fff; border-top: 1.5px solid #e8e8e8; height: 60px;
+  padding-bottom: env(safe-area-inset-bottom);
 }
 @media(min-width:768px){ .mobileNav { display:none; } }
-.mNavItem { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; background:none; border:none; color:#aaa; cursor:pointer; padding:0; transition:color .2s; }
-.mNavActive { color:#8B1A1A; }
+.mNavItem {
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 3px; background: none; border: none; color: #bbb;
+  cursor: pointer; padding: 0; transition: color .2s;
+  font-size: .62rem; font-weight: 700;
+  -webkit-tap-highlight-color: transparent;
+}
+.mNavItem span:first-child { font-size: 1.25rem; }
+.mNavActive { color: #8B1A1A; }

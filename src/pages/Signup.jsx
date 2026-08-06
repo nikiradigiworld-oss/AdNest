@@ -314,7 +314,7 @@ export default function Signup() {
           </>}
 
           {step === 4 && (
-            <div className={s.success}>
+            <div className={s.successState}>
               <div className={s.successIcon}>🎉</div>
               <h2>{successTitle}</h2>
               <div className={s.verifyNote}>
